@@ -5,42 +5,32 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>SlimeTube</title>
+        <title>[[title]]</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
         <link rel="stylesheet" type="text/css" href="watch.css">
     </head>
     <body>
-        <div id="navbar">
-            <div id="navbar-links">
-                <a href="/" id="navbar-platform-title">Slimy Tube</a>
-                <a href="/account.html" id="navbar-account-link">account</a>
-            </div>
-        </div>
+        <%view navbar %>
 
         <div id="main-content">
             <div id="left-section">
                 <video
                     id="video-element"
-                    poster="https://images-cdn.bridgemanimages.com/api/1.0/image/600wm.XXX.82908230.7055475/3277749.jpg"
+                    poster="/thumbnail/[[video_id]]"
                     controls>
 
-                    <source src="https://ftp.ireview.games/Unlisted/2026-07-22_16-29-47.mov" type="video/quicktime" />
+                    <source src="/video/[[video_id]]" type="video/quicktime" />
                     !the video tag is unsupported on this browser!
                 </video>
 
                 <div id="video-info-section">
-                    <div id="video-title">This is a very long and very short Video Title</div>
+                    <div id="video-title">[[video_title]]</div>
                     <div id="video-statline">
-                        <div id="video-views">100 views</div>
-                        <div id="video-age">2 days ago</div>
+                        <div id="video-views">[[video_views]]</div>
+                        <div id="video-age">[[video_age]]</div>
                     </div>
                     <hr>
-                    <div id="video-description">
-                        This is the video description, it is very interesting etc. etc.
-                        This is the video description, it is very interesting etc. etc.
-                        This is the video description, it is very interesting etc. etc.
-                        This is the video description, it is very interesting etc. etc.
-                    </div>
+                    <div id="video-description">[[video_description]]</div>
                 </div>
 
                 <div id="video-controls">

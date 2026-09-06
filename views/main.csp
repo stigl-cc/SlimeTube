@@ -1,22 +1,15 @@
-<%c++ %>
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>SlimeTube</title>
+        <title>[[title]]</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
         <link rel="stylesheet" type="text/css" href="index.css">
     </head>
     <body>
-        <div id="navbar">
-            <div id="navbar-links">
-                <a href="/" id="navbar-platform-title">Slimy Tube</a>
-                <a href="/account.html" id="navbar-account-link">account</a>
-            </div>
-        </div>
-
+        <%view navbar %>
         <div id="main-content">
         </div>
         <template id="preview-template">
