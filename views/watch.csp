@@ -1,0 +1,83 @@
+<%c++ %>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>SlimeTube</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="stylesheet" type="text/css" href="watch.css">
+    </head>
+    <body>
+        <div id="navbar">
+            <div id="navbar-links">
+                <a href="/" id="navbar-platform-title">Slimy Tube</a>
+                <a href="/account.html" id="navbar-account-link">account</a>
+            </div>
+        </div>
+
+        <div id="main-content">
+            <div id="left-section">
+                <video
+                    id="video-element"
+                    poster="https://images-cdn.bridgemanimages.com/api/1.0/image/600wm.XXX.82908230.7055475/3277749.jpg"
+                    controls>
+
+                    <source src="https://ftp.ireview.games/Unlisted/2026-07-22_16-29-47.mov" type="video/quicktime" />
+                    !the video tag is unsupported on this browser!
+                </video>
+
+                <div id="video-info-section">
+                    <div id="video-title">This is a very long and very short Video Title</div>
+                    <div id="video-statline">
+                        <div id="video-views">100 views</div>
+                        <div id="video-age">2 days ago</div>
+                    </div>
+                    <hr>
+                    <div id="video-description">
+                        This is the video description, it is very interesting etc. etc.
+                        This is the video description, it is very interesting etc. etc.
+                        This is the video description, it is very interesting etc. etc.
+                        This is the video description, it is very interesting etc. etc.
+                    </div>
+                </div>
+
+                <div id="video-controls">
+                    <label for="quality-selector">Quality:</label>
+                    <select onchange= "change_playback_quality()" id="quality-selector">
+                        <option value="720">720p</option>
+                        <option value="1080">1080p</option>
+                    </select>
+
+                    <label for="speed-selector">Speed:</label>
+                    <select onchange="change_playback_speed()" id="speed-selector">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.50">0.50x</option>
+                        <option selected="selected" value="1.00">1.00x</option>
+                        <option value="1.50">1.50x</option>
+                        <option value="2.00">2.00x</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="right-section">
+
+            </div>
+        </div>
+
+        <template id="preview-template">
+            <div class="preview">
+                <div class="preview-image-container">
+                    <img class="preview-image" src="">
+                    <div class="preview-text preview-length"></div>
+                </div>
+                <div class="preview-text preview-title"></div>
+                <div class="preview-text preview-channel"></div>
+                <div class="preview-text preview-stats"></div>
+            </div>
+        </template>
+        <script src="script.js"></script>
+        <script src="watch.js"></script>
+    </body>
+</html>

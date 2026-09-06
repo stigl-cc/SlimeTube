@@ -1,0 +1,36 @@
+<%c++ %>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>SlimeTube</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="stylesheet" type="text/css" href="index.css">
+    </head>
+    <body>
+        <div id="navbar">
+            <div id="navbar-links">
+                <a href="/" id="navbar-platform-title">Slimy Tube</a>
+                <a href="/account.html" id="navbar-account-link">account</a>
+            </div>
+        </div>
+
+        <div id="main-content">
+        </div>
+        <template id="preview-template">
+            <div class="preview">
+                <div class="preview-image-container">
+                    <img class="preview-image" src="">
+                    <div class="preview-text preview-length"></div>
+                </div>
+                <div class="preview-text preview-title"></div>
+                <div class="preview-text preview-channel"></div>
+                <div class="preview-text preview-stats"></div>
+            </div>
+        </template>
+        <script src="script.js"></script>
+        <script src="index.js"></script>
+    </body>
+</html>
