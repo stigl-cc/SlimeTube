@@ -1,0 +1,123 @@
+:root {
+    --text-color: #eeeeee;
+    --background-color: #222232;
+    --highlighted-color: #333342;
+
+    --navbar-bottom-color: #2233ee;
+    --navbar-account-link-color: lightblue;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: "Lucida Console", monospace;
+    letter-spacing: 1px;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    padding: 0px 10px 10px 10px;
+}
+
+
+/* navbar section */
+#navbar {
+    position: sticky;
+    top: 0;
+    background-color: var(--background-color);
+    padding-top: 5px;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--navbar-bottom-color);
+    z-index: 2;
+}
+
+#navbar-links {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#navbar-account-link {
+    color: var(--navbar-account-link-color);
+    text-decoration: none;
+}
+
+#navbar-account-link:hover {
+    cursor: pointer;
+}
+
+#navbar-platform-title {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+#navbar-platform-title:hover {
+    cursor: pointer;
+}
+
+
+/* video preview */
+.preview {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.preview:hover {
+    background-color: var(--highlighted-color);
+    cursor: pointer;
+}
+
+.preview-text {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    line-height: 1.4;
+}
+
+.preview img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: block;
+    object-fit: contain;
+    background-color: black;
+}
+
+.preview-image-container {
+    position: relative;
+}
+
+.preview-length {
+    font-size: 13px;
+    color: var(--text-color);
+    background-color: var(--highlighted-color);
+    font-size: 15px;
+
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+}
+
+.preview-title {
+    line-height: 1;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.preview-channel {
+    font-size: 15px;
+}
+
+.preview-stats {
+    font-size: 15px;
+}

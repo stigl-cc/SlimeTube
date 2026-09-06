@@ -1,0 +1,109 @@
+{
+    "ssl": {
+        "cert": "data/certs/server.crt",
+        "key": "data/certs/server.key",
+        "conf": [
+            ["Options", "Compression"]
+        ]
+    },
+
+    "listeners": [
+        {
+            "address": "0.0.0.0",
+            "port": 8080,
+            "https": false
+        },
+        {
+            "address": "0.0.0.0",
+            "port": 8081,
+            "https": true,
+            "use_old_tls": true,
+        }
+    ],
+
+    "db_clients": [
+        {
+            "name": "default",
+            "rdbms": "sqlite3",
+            "filename":"data/database.db",
+            "connection_number": 1,
+        }
+    ],
+
+    "app": {
+        "number_of_threads": 4,
+        "upload_path":"../data/uploads",
+        "max_connections": 10000,
+        "max_connections_per_ip": 10,
+
+        "client_max_websocket_message_size": "128K",
+        "client_max_body_size": "10M",
+        "client_max_memory_body_size": "10M",
+
+        "load_dynamic_views": false,
+
+        "server_header_field": "SlimyTube",
+        "enable_server_header": true,
+        "enable_date_header": true,
+
+        "run_as_daemon": false,
+        "handle_sig_term": true,
+        "relaunch_on_error": false,
+        "reuse_port": true,
+
+        "use_sendfile": true,
+        "use_gzip": true,
+        "use_brotli": false,
+
+        "static_files_cache_time": 60,
+        "gzip_static": true,
+        "br_static": true,        
+
+        "enable_session":  true,
+        "session_timeout": 604800,
+        "session_same_site" : "Lax",
+        "session_cookie_key": "SessionId",
+        "session_max_age": 2628000,
+
+        "document_root": "./static/",
+        "home_page": "index.html",
+
+        "use_implicit_page": true,
+        "implicit_page": "index.html",
+
+        "static_file_headers": [
+            {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+            }
+        ],
+
+        "json_parser_stack_limit": 1000,
+        "enable_unicode_escaping_in_json": true,
+        "float_precision_in_json": {
+            "precision": 0,
+            "precision_type": "significant"
+        },
+
+        "file_types": [
+            "html",
+            "js",
+            "css",
+        ],
+
+        "mime" : {
+            "text/html" : "html",
+            "text/css" : "css",
+            "text/javascript" : "js",
+        },
+
+        "log": {
+            "log_path": "",
+            "logfile_base_name": "",
+            "log_size_limit": 1000000,
+            "log_level": "DEBUG",
+            "display_local_time" : false
+        },
+    },
+    "plugins": [],
+}

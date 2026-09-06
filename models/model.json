@@ -1,0 +1,23 @@
+{
+    "rdbms": "sqlite3",
+    "filename":"database.db",
+    "tables": [
+        "users",
+        "videos",
+    ],
+    "relationships": {
+        "enabled": true,
+        "items": [
+            {
+                "type": "has many",
+                "original_table_name": "users",
+                "original_table_alias": "user",
+                "original_key": "id",
+                "target_table_name": "videos",
+                "target_table_alias": "video",
+                "target_key": "channel",
+                "enable_reverse": true
+            }
+        ]
+    }
+}

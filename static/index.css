@@ -1,0 +1,39 @@
+:root {
+    --preview-gap: 10px;
+    --preview-width: 20%;
+}
+
+#main-content {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--preview-gap);
+}
+
+.preview {
+    width: calc(var(--preview-width) - var(--preview-gap));
+}
+
+@media (max-width: 1600px) {
+    :root {
+        --preview-width: 25%;
+    }
+}
+
+@media (max-width: 1200px) {
+    :root {
+        --preview-width: 33.333%;
+    }
+}
+
+@media (max-width: 1000px) {
+    :root {
+        --preview-width: 50%;
+    }
+}
+
+@media (max-width: 800px) {
+    :root {
+        --preview-width: 100%;
+    }
+}
