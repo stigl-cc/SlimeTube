@@ -31,7 +31,6 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
     FileRangeParseResult parse_result = FileRangeParseResult::SinglePart;
 
     if(header.empty()) {
-        parse_result = FileRangeParseResult::SinglePart;
         ranges.emplace_back(0, file_length - 1);
     } else parse_result = parseRangeHeader(header, file_length, ranges);
 
@@ -53,9 +52,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
 
         case drogon::SinglePart:
         case drogon::MultiPart: {
-            res = HttpResponse::newFileResponse(path,
-                ranges[0].start, ranges[0].end - ranges[0].start, true, "",
-                drogon::CT_VIDEO_MP4, "", req);
+            res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", drogon::CT_VIDEO_MP4, "video/mp4", req);
             callback(res);
             return;
         }

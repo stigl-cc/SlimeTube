@@ -1,5 +1,8 @@
+const speed_select = document.getElementById("speed-selector");
+const quality_select = document.getElementById("quality-selector");
+
 function change_playback_speed() {
-    const playback_speed = document.getElementById("speed-selector").value;
+    const playback_speed = speed_select.value;
     console.log(`Changing playback speed to ${playback_speed}.`);
     document.getElementById('video-element').playbackRate = playback_speed;
 
@@ -11,11 +14,11 @@ function change_playback_speed() {
 }
 
 function change_playback_quality() {
-    const playback_quality = document.getElementById("quality-selector").value;
+    const playback_quality = quality_select.value;
     console.log(`Changing playback quality to ${playback_quality}.`);
 
     if ('URLSearchParams' in window) {
-        var searchParams = new URLSearchParams(window.location.search);
+        const searchParams = new URLSearchParams(window.location.search);
         searchParams.set("quality", playback_quality);
         window.location.search = searchParams.toString();
     }
@@ -47,3 +50,23 @@ function on_keypress(event) {
 }
 
 addEventListener("keydown", on_keypress);
+
+const searchParams = new URLSearchParams(window.location.search);
+
+if(searchParams.has("quality")) {
+    const quality = searchParams.get("quality");
+    for(let i =0; i < quality_select.length; ++i) {
+        if(quality_select.options[i].value == quality) {
+            quality_select.value = quality;
+        }
+    }
+}
+
+if(searchParams.has("speed")) {
+    const speed = searchParams.get("speed");
+    for(let i =0; i < speed_select.length; ++i) {
+        if(speed_select.options[i].value == speed) {
+            speed_select.value = speed;
+        }
+    }
+}

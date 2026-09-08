@@ -27,5 +27,6 @@
             </a>
             <%c++ }%>
         </div>
+        <%view footer %>
     </body>
 </html>

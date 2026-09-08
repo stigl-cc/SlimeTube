@@ -24,8 +24,8 @@
                 <div id="video-info-section">
                     <div id="video-title">[[video_title]]</div>
                     <div id="video-statline">
-                        <div id="video-views">[[video_views]]</div>
-                        <div id="video-age">[[video_age]]</div>
+                        <div id="video-views">[[video_views]] views</div>
+                        <div id="video-age">[[video_age]] ago</div>
                     </div>
                     <hr>
                     <div id="video-description">[[video_description]]</div>
@@ -50,21 +50,24 @@
             </div>
 
             <div id="right-section">
-
+                <%c++
+                    auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
+                    for(const auto& preview : previews) {%>
+                <a class="preview-link" href="/watch/{%preview.at("id")%}">
+                    <div class="preview">
+                        <div class="preview-image-container">
+                            <img class="preview-image" src="/thumbnail/{%preview.at("id")%}">
+                            <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                        </div>
+                        <div class="preview-text preview-title">{%preview.at("title")%}</div>
+                        <div class="preview-text preview-channel">{%preview.at("channel")%}</div>
+                        <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
+                    </div>
+                </a>
+                <%c++ }%>
             </div>
         </div>
-
-        <template id="preview-template">
-            <div class="preview">
-                <div class="preview-image-container">
-                    <img class="preview-image" src="">
-                    <div class="preview-text preview-length"></div>
-                </div>
-                <div class="preview-text preview-title"></div>
-                <div class="preview-text preview-channel"></div>
-                <div class="preview-text preview-stats"></div>
-            </div>
-        </template>
+        <%view footer %>
         <script src="/script.js"></script>
         <script src="/watch.js"></script>
     </body>

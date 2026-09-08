@@ -63,6 +63,29 @@ body {
     cursor: pointer;
 }
 
+/* footer section */
+#footer {
+    background-color: : var(--background-color);
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    padding-top: 5px;
+    margin-top: 10px;
+
+    border-top-style: solid;
+    border-top-color: var(--navbar-bottom-color);
+}
+
+#footer-links {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#footer-about-link {
+    color: var(--navbar-account-link-color);
+    text-decoration: none;
+}
 
 /* video preview */
 .preview {
