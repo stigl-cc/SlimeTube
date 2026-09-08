@@ -1,94 +1,63 @@
-#include "ResourceController.h"
+#include <controllers/ResourceController.h>
 
 #include <lib/drogon/lib/src/RangeParser.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
-#include <fstream>
+#include <filesystem>
+#include <system_error>
 
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
-    HttpResponsePtr res = HttpResponse::newFileResponse("../videos/video-01.png");
+    HttpResponsePtr res = HttpResponse::newFileResponse("../videos/video-04.png");
     callback(res);
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
-    std::string header = req.get()->getHeader("Range");
+    std::string path = "../videos/video-04.mp4";
+    std::string header = req->getHeader("Range");
+    HttpResponsePtr res;
 
-    HttpResponsePtr res = HttpResponse::newHttpResponse();
+    std::error_code ec;
+    size_t file_length = std::filesystem::file_size(path, ec);
 
-    std::ifstream ifs("../videos/video-01.mp4", std::ios::in | std::ios::binary | std::ios::ate);
-    if(!ifs.is_open()) {
+    if(ec) {
+        res = HttpResponse::newHttpResponse();
         res->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
         callback(res);
         return;
     }
 
-    ssize_t file_length = ifs.tellg();
-
     std::vector<FileRange> ranges;
+    FileRangeParseResult parse_result = FileRangeParseResult::SinglePart;
 
-    switch(parseRangeHeader(header, file_length, ranges)) {
+    if(header.empty()) {
+        parse_result = FileRangeParseResult::SinglePart;
+        ranges.emplace_back(0, file_length - 1);
+    } else parse_result = parseRangeHeader(header, file_length, ranges);
+
+    switch(parse_result) {
         case drogon::InvalidRange:
+            res = HttpResponse::newHttpResponse();
             res->setContentTypeCode(drogon::CT_NONE);
             res->setStatusCode(drogon::k400BadRequest);
             callback(res);
             return;
 
         case drogon::NotSatisfiable:
+            res = HttpResponse::newHttpResponse();
             res->setContentTypeCode(drogon::CT_NONE);
             res->setStatusCode(drogon::k416RequestedRangeNotSatisfiable);
             res->addHeader("Content-Range", std::format("bytes */{}", file_length));
             callback(res);
             return;
 
-        case drogon::SinglePart: {
-            const FileRange& range = ranges[0];
-            std::string video_buffer(range.end - range.start, 0);
-
-            ifs.seekg(range.start, std::ios::beg);
-            ifs.read(video_buffer.data(), video_buffer.size());
-
-            res->setStatusCode(drogon::k206PartialContent);
-            res->setContentTypeCode(drogon::CT_VIDEO_MP4);
-            res->addHeader("Content-Range", std::format("bytes {}-{}/{}", ranges[0].start, ranges[0].end, file_length));
-            res->addHeader("Accept-Ranges", "bytes");
-            res->setBody(video_buffer);
+        case drogon::SinglePart:
+        case drogon::MultiPart: {
+            res = HttpResponse::newFileResponse(path,
+                ranges[0].start, ranges[0].end - ranges[0].start, true, "",
+                drogon::CT_VIDEO_MP4, "", req);
             callback(res);
             return;
-        }
-        case drogon::MultiPart: {
-            size_t total_lenght = 0;
-            for(const FileRange& range : ranges)
-                total_lenght += range.end - range.start;
-
-            std::ostringstream oss;
-            for(const FileRange& range : ranges) {
-                std::string str(range.end - range.start, '0');
-
-                ifs.seekg(range.start, std::ios::beg);
-                ifs.read(str.data(), str.size());
-                oss
-                    << "--DR_BOUNDARY_3214\r\n"
-                    << "";
-                oss.write(str.data(), str.size());
-            }
-
-            if(ifs.fail()) {
-                ifs.close();
-
-                res->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-                callback(res);
-                return;
-            }
-
-            ifs.close();
-
-            res->addHeader("Accept-Ranges", "bytes");
-            res->setStatusCode(drogon::k206PartialContent);
-            res->setContentTypeCode(drogon::CT_VIDEO_MP4);
-            res->setBody(oss.str());
-            callback(res);
-            break;
         }
     }
 }
