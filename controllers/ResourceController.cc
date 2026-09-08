@@ -1,24 +1,25 @@
 #include "ResourceController.h"
 
 #include <algorithm>
+#include <charconv>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
+#include <optional>
 #include <sstream>
+#include <stdexcept>
 
 using std::optional;
 
 inline optional<int64_t> parse_int(const std::string &str) {
-    std::istringstream iss(str);
-    int64_t value;
+    int64_t result = {};
+    std::from_chars_result err = std::from_chars(str.data(), str.data() + str.size(), result);
+    if(err.ec != std::errc() || (err.ptr - str.size()) != str.data())
+        return std::nullopt;
 
-    iss >> value;
-    if (iss.fail() || !iss.eof()) {
-        return {};
-    }
-
-    return value;
+    return result;
 }
+
 inline void trim(std::string &str) {
     str.erase(0, str.find_first_not_of(' '));
     str.erase(str.find_last_not_of(' ') + 1);
@@ -54,19 +55,18 @@ uint32_t parseRangeHeader(const HttpRequestPtr& req, std::vector<std::pair<size_
         if (start.empty()) {
             if (end.empty() || end.at(0) == '-') // handles "" or "-"
                 return 400;
-
-            if(!end_int.has_value())
+            if(!end_int.has_value()) // handles "-abc"
                 return 400;
-            ssize_t endOffset = std::min<int64_t>(body_size, end_int.value());
 
+            ssize_t endOffset = std::min<int64_t>(body_size, end_int.value());
             // "-20"
             ranges.emplace_back(
                 body_size - endOffset,
                 endOffset);
         } else {
-            if(!start_int.has_value())
+            if(!start_int.has_value()) // handles "abc-..."
                 return 400;
-            if(start_int.value() >= body_size)
+            if(start_int.value() >= body_size) // handles "20000000-..."
                 return 416;
 
             if (end.empty()) {
@@ -76,9 +76,9 @@ uint32_t parseRangeHeader(const HttpRequestPtr& req, std::vector<std::pair<size_
                     body_size - start_int.value()
                 );
             } else {
-                if(!end_int.has_value() || start_int < 0)
+                if(!end_int.has_value()) // handles "123-abc"
                     return 400;
-                if(start_int.value() > end_int.value())
+                if(start_int.value() > end_int.value()) // handles "20-10"
                     return 416;
 
                 // "10-20"
@@ -89,7 +89,7 @@ uint32_t parseRangeHeader(const HttpRequestPtr& req, std::vector<std::pair<size_
             }
         }
     }
-    return 200;
+    return 206;
 }
 
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
@@ -104,6 +104,12 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
     for(auto range : ranges) {
         std::cout << range.first << " " << range.second << "\n";
     }
+
+    if(code == 400) {
+        HttpResponsePtr res = HttpResponse::newHttpResponse();
+    }
+    
+    res400
     HttpResponsePtr res = HttpResponse::newFileResponse("../videos/video-01.mp4", -100, 10, true, "", drogon::CT_NONE, "video/mp4", req);
     callback(res);
 }
