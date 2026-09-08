@@ -1,4 +1,3 @@
-<%c++ %>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -6,12 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]]</title>
-        <link rel="stylesheet" type="text/css" href="styles.css">
-        <link rel="stylesheet" type="text/css" href="watch.css">
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/watch.css">
     </head>
     <body>
         <%view navbar %>
-
         <div id="main-content">
             <div id="left-section">
                 <video
@@ -19,7 +17,7 @@
                     poster="/thumbnail/[[video_id]]"
                     controls>
 
-                    <source src="/video/[[video_id]]" type="video/quicktime" />
+                    <source src="/video/[[video_id]]" type="video/mp4" />
                     !the video tag is unsupported on this browser!
                 </video>
 
@@ -67,7 +65,7 @@
                 <div class="preview-text preview-stats"></div>
             </div>
         </template>
-        <script src="script.js"></script>
-        <script src="watch.js"></script>
+        <script src="/script.js"></script>
+        <script src="/watch.js"></script>
     </body>
 </html>

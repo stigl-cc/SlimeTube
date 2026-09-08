@@ -5,25 +5,27 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]]</title>
-        <link rel="stylesheet" type="text/css" href="styles.css">
-        <link rel="stylesheet" type="text/css" href="index.css">
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/index.css">
     </head>
     <body>
         <%view navbar %>
         <div id="main-content">
-        </div>
-        <template id="preview-template">
-            <div class="preview">
-                <div class="preview-image-container">
-                    <img class="preview-image" src="">
-                    <div class="preview-text preview-length"></div>
+            <%c++
+                auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
+                for(const auto& preview : previews) {%>
+            <a class="preview-link" href="/watch/{%preview.at("id")%}">
+                <div class="preview">
+                    <div class="preview-image-container">
+                        <img class="preview-image" src="/thumbnail/{%preview.at("id")%}">
+                        <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                    </div>
+                    <div class="preview-text preview-title">{%preview.at("title")%}</div>
+                    <div class="preview-text preview-channel">{%preview.at("channel")%}</div>
+                    <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
                 </div>
-                <div class="preview-text preview-title"></div>
-                <div class="preview-text preview-channel"></div>
-                <div class="preview-text preview-stats"></div>
-            </div>
-        </template>
-        <script src="script.js"></script>
-        <script src="index.js"></script>
+            </a>
+            <%c++ }%>
+        </div>
     </body>
 </html>

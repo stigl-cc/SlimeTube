@@ -1,0 +1,6 @@
+<div id="navbar">
+     <div id="navbar-links">
+          <a href="/" id="navbar-platform-title">[[title]]</a>
+          <a href="/account" id="navbar-account-link">account</a>
+     </div>
+</div>

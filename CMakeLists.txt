@@ -52,3 +52,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE -ffunction-sections -fdata-sectio
 target_link_options(${PROJECT_NAME} PRIVATE -Wl,--gc-sections -Wl,--as-needed)
 
 add_subdirectory(test ${CMAKE_CURRENT_BINARY_DIR}/test)
+
+add_custom_target(run
+  COMMAND slimytube
+  DEPENDS slimytube
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)

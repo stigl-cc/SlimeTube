@@ -71,6 +71,13 @@ body {
     padding: 0;
 }
 
+.preview-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+}
+
 .preview:hover {
     background-color: var(--highlighted-color);
     cursor: pointer;

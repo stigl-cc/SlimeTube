@@ -13,7 +13,7 @@ function change_playback_speed() {
 function change_playback_quality() {
     const playback_quality = document.getElementById("quality-selector").value;
     console.log(`Changing playback quality to ${playback_quality}.`);
-    
+
     if ('URLSearchParams' in window) {
         var searchParams = new URLSearchParams(window.location.search);
         searchParams.set("quality", playback_quality);
@@ -22,6 +22,9 @@ function change_playback_quality() {
 }
 
 function on_keypress(event) {
+    if (event.altKey || event.ctrlKey || event.shiftKey || event.metaKey)
+        return;
+
     const video_element = document.getElementById('video-element');
     if(video_element) {
         if(event.code === "Space") {
