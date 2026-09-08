@@ -1,96 +1,10 @@
 #include "ResourceController.h"
 
-#include <algorithm>
-#include <charconv>
+#include <lib/drogon/lib/src/RangeParser.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
-#include <optional>
-#include <sstream>
-#include <stdexcept>
-
-using std::optional;
-
-inline optional<int64_t> parse_int(const std::string &str) {
-    int64_t result = {};
-    std::from_chars_result err = std::from_chars(str.data(), str.data() + str.size(), result);
-    if(err.ec != std::errc() || (err.ptr - str.size()) != str.data())
-        return std::nullopt;
-
-    return result;
-}
-
-inline void trim(std::string &str) {
-    str.erase(0, str.find_first_not_of(' '));
-    str.erase(str.find_last_not_of(' ') + 1);
-}
-
-uint32_t parseRangeHeader(const HttpRequestPtr& req, std::vector<std::pair<size_t, size_t>>& ranges, ssize_t body_size) {
-    std::string header = req.get()->getHeader("Range");
-
-    size_t unitIndex = header.find('=');
-    if (unitIndex == std::string::npos)
-        return 400;
-
-    std::string unit = header.substr(0, unitIndex);
-    std::stringstream ss(header.substr(unitIndex + 1));
-    std::string segment;
-
-    while(std::getline(ss, segment, ',')) {
-        size_t index = segment.find('-');
-        if(index == std::string::npos)
-            return 400;
-
-        std::string
-            start = segment.substr(0, index),
-            end = segment.substr(index + 1);
-
-        trim(start);
-        trim(end);
-
-        optional<int64_t>
-            start_int = parse_int(start),
-            end_int = parse_int(end);
-
-        if (start.empty()) {
-            if (end.empty() || end.at(0) == '-') // handles "" or "-"
-                return 400;
-            if(!end_int.has_value()) // handles "-abc"
-                return 400;
-
-            ssize_t endOffset = std::min<int64_t>(body_size, end_int.value());
-            // "-20"
-            ranges.emplace_back(
-                body_size - endOffset,
-                endOffset);
-        } else {
-            if(!start_int.has_value()) // handles "abc-..."
-                return 400;
-            if(start_int.value() >= body_size) // handles "20000000-..."
-                return 416;
-
-            if (end.empty()) {
-                // "10-"
-                ranges.emplace_back(
-                    start_int.value(),
-                    body_size - start_int.value()
-                );
-            } else {
-                if(!end_int.has_value()) // handles "123-abc"
-                    return 400;
-                if(start_int.value() > end_int.value()) // handles "20-10"
-                    return 416;
-
-                // "10-20"
-                ranges.emplace_back(
-                    start_int.value(),
-                    std::min<ssize_t>(body_size, end_int.value() + 1) - start_int.value()
-                );
-            }
-        }
-    }
-    return 206;
-}
+#include <fstream>
 
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
     HttpResponsePtr res = HttpResponse::newFileResponse("../videos/video-01.png");
@@ -98,20 +12,85 @@ void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std:
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
-    std::vector<std::pair<size_t, size_t>> ranges;
-    int code = parseRangeHeader(req, ranges, 9000);
+    std::string header = req.get()->getHeader("Range");
 
-    for(auto range : ranges) {
-        std::cout << range.first << " " << range.second << "\n";
+    HttpResponsePtr res = HttpResponse::newHttpResponse();
+
+    std::ifstream ifs("../videos/video-01.mp4", std::ios::in | std::ios::binary | std::ios::ate);
+    if(!ifs.is_open()) {
+        res->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+        callback(res);
+        return;
     }
 
-    if(code == 400) {
-        HttpResponsePtr res = HttpResponse::newHttpResponse();
+    ssize_t file_length = ifs.tellg();
+
+    std::vector<FileRange> ranges;
+
+    switch(parseRangeHeader(header, file_length, ranges)) {
+        case drogon::InvalidRange:
+            res->setContentTypeCode(drogon::CT_NONE);
+            res->setStatusCode(drogon::k400BadRequest);
+            callback(res);
+            return;
+
+        case drogon::NotSatisfiable:
+            res->setContentTypeCode(drogon::CT_NONE);
+            res->setStatusCode(drogon::k416RequestedRangeNotSatisfiable);
+            res->addHeader("Content-Range", std::format("bytes */{}", file_length));
+            callback(res);
+            return;
+
+        case drogon::SinglePart: {
+            const FileRange& range = ranges[0];
+            std::string video_buffer(range.end - range.start, 0);
+
+            ifs.seekg(range.start, std::ios::beg);
+            ifs.read(video_buffer.data(), video_buffer.size());
+
+            res->setStatusCode(drogon::k206PartialContent);
+            res->setContentTypeCode(drogon::CT_VIDEO_MP4);
+            res->addHeader("Content-Range", std::format("bytes {}-{}/{}", ranges[0].start, ranges[0].end, file_length));
+            res->addHeader("Accept-Ranges", "bytes");
+            res->setBody(video_buffer);
+            callback(res);
+            return;
+        }
+        case drogon::MultiPart: {
+            size_t total_lenght = 0;
+            for(const FileRange& range : ranges)
+                total_lenght += range.end - range.start;
+
+            std::ostringstream oss;
+            for(const FileRange& range : ranges) {
+                std::string str(range.end - range.start, '0');
+
+                ifs.seekg(range.start, std::ios::beg);
+                ifs.read(str.data(), str.size());
+                oss
+                    << "--DR_BOUNDARY_3214\r\n"
+                    << "";
+                oss.write(str.data(), str.size());
+            }
+
+            if(ifs.fail()) {
+                ifs.close();
+
+                res->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+                callback(res);
+                return;
+            }
+
+            ifs.close();
+
+            res->addHeader("Accept-Ranges", "bytes");
+            res->setStatusCode(drogon::k206PartialContent);
+            res->setContentTypeCode(drogon::CT_VIDEO_MP4);
+            res->setBody(oss.str());
+            callback(res);
+            break;
+        }
     }
-    
-    res400
-    HttpResponsePtr res = HttpResponse::newFileResponse("../videos/video-01.mp4", -100, 10, true, "", drogon::CT_NONE, "video/mp4", req);
-    callback(res);
 }
 
 void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
