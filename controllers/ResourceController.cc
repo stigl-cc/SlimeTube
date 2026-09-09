@@ -27,12 +27,14 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
         return;
     }
 
-    std::vector<FileRange> ranges;
-    FileRangeParseResult parse_result = FileRangeParseResult::SinglePart;
-
     if(header.empty()) {
-        ranges.emplace_back(0, file_length - 1);
-    } else parse_result = parseRangeHeader(header, file_length, ranges);
+        res = HttpResponse::newFileResponse(path, "", drogon::CT_VIDEO_MP4, "video/mp4", req);
+        callback(res);
+        return;
+    }
+
+    std::vector<FileRange> ranges;
+    FileRangeParseResult parse_result = parseRangeHeader(header, file_length, ranges);
 
     switch(parse_result) {
         case drogon::InvalidRange:
