@@ -17,7 +17,7 @@
             <a class="preview-link" href="/watch/{%preview.at("id")%}">
                 <div class="preview">
                     <div class="preview-image-container">
-                        <img class="preview-image" src="/thumbnail/{%preview.at("id")%}">
+                        <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
                         <div class="preview-text preview-length">{%preview.at("length")%}</div>
                     </div>
                     <div class="preview-text preview-title">{%preview.at("title")%}</div>

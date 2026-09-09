@@ -14,10 +14,10 @@
             <div id="left-section">
                 <video
                     id="video-element"
-                    poster="/thumbnail/[[video_id]]"
+                    poster="/rsc/thumbnail/[[video_id]]"
                     controls>
 
-                    <source src="/video/[[video_id]]" type="video/mp4" />
+                    <source src="/rsc/video/[[video_id]]" type="video/mp4" />
                     !the video tag is unsupported on this browser!
                 </video>
 
@@ -57,7 +57,7 @@
                 <a class="preview-link" href="/watch/{%preview.at("id")%}">
                     <div class="preview">
                         <div class="preview-image-container">
-                            <img class="preview-image" src="/thumbnail/{%preview.at("id")%}">
+                            <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
                             <div class="preview-text preview-length">{%preview.at("length")%}</div>
                         </div>
                         <div class="preview-text preview-title">{%preview.at("title")%}</div>
