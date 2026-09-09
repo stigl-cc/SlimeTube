@@ -1,26 +1,23 @@
-/**
- *
- *  Authenticator.cc
- *
- */
+#include <drogon/HttpAppFramework.h>
+#include <drogon/orm/Criteria.h>
+#include <drogon/orm/DbClient.h>
+#include <drogon/orm/Mapper.h>
+#include <filters/Authenticator.h>
 
-#include "Authenticator.h"
+#include <models/Users.h>
+#include <models/Videos.h>
 
-using namespace drogon;
+using namespace drogon_model::SlimyTube;
 
-void Authenticator::doFilter(const HttpRequestPtr &req,
-                         FilterCallback &&fcb,
-                         FilterChainCallback &&fccb)
-{
-    //Edit your logic here
-    if (1)
-    {
-        //Passed
-        fccb();
-        return;
+namespace orm = drogon::orm;
+
+void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
+    if(req->session()->find("id")) {
+        req->session()->get<uint64_t>("id");
+        orm::DbClientPtr db = drogon::app().getDbClient("default");
+        drogon::orm::Mapper<Users> user_mapper(db);
+        user_mapper.findOne(drogon::orm::Criteria(Users::Cols::_id, drogon::orm::CompareOperator::EQ));
+    } else {
+
     }
-    //Check failed
-    auto res = drogon::HttpResponse::newHttpResponse();
-    res->setStatusCode(k500InternalServerError);
-    fcb(res);
 }

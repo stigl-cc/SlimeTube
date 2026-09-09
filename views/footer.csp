@@ -1,5 +1,5 @@
 <div id="footer">
     <div id="footer-links">
-        <a href="/about" id="footer-about-link">About [[title]]</a>
+        <a href="/about" id="footer-about-link">about [[title]]</a>
     </div>
 </div>

@@ -1,6 +1,7 @@
 {
     "rdbms": "sqlite3",
-    "filename":"database.db",
+    "filename": "data/database.db",
+    "namespace" : "SlimyTube",
     "tables": [
         "users",
         "videos",

@@ -1,21 +1,17 @@
-/**
- *
- *  Authenticator.h
- *
- */
-
 #pragma once
 
-#include <drogon/HttpFilter.h>
-using namespace drogon;
+#include <drogon/HttpMiddleware.h>
+#include <drogon/HttpRequest.h>
+#include <drogon/drogon_callbacks.h>
 
+using drogon::HttpMiddleware,
+    drogon::HttpRequestPtr,
+    drogon::MiddlewareCallback,
+    drogon::MiddlewareNextCallback;
 
-class Authenticator : public HttpFilter<Authenticator>
-{
-  public:
-    Authenticator() {}
-    void doFilter(const HttpRequestPtr &req,
-                  FilterCallback &&fcb,
-                  FilterChainCallback &&fccb) override;
-};
-
+namespace SlimyTube {
+    class Authenticator : public HttpMiddleware<Authenticator> {
+        public:
+        void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
+    };
+}

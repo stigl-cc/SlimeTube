@@ -1,3 +1,4 @@
+#include <drogon/HttpResponse.h>
 #include <drogon/drogon.h>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
@@ -20,6 +21,11 @@ int main() {
     app().setStaticFileHeaders({
             { "Access-Control-Allow-Origin", "*" },
         });
+
+    HttpViewData data;
+    data.insert("title", "SlimyTube");
+    const HttpResponsePtr res404 = HttpResponse::newHttpViewResponse("error404", data);
+    app().setCustom404Page(res404, true);
 
     app()
         .setFloatPrecisionInJson(0, "significant")

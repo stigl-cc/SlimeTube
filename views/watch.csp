@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>[[title]]</title>
+        <title>[[title]] - [[video_title]]</title>
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/watch.css">
     </head>
@@ -24,8 +24,9 @@
                 <div id="video-info-section">
                     <div id="video-title">[[video_title]]</div>
                     <div id="video-statline">
-                        <div id="video-views">[[video_views]] views</div>
-                        <div id="video-age">[[video_age]] ago</div>
+                        <div class="video-stat" id="video-views">[[video_views]] views</div>
+                        <div class="video-stat" id="video-age">[[video_age]] ago</div>
+                        <a class="video-stat" id="video-channel" href="/channel/[[video_channel_id]]">[[video_channel_name]]</a>
                     </div>
                     <hr>
                     <div id="video-description">[[video_description]]</div>

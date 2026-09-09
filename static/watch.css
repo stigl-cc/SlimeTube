@@ -55,9 +55,20 @@ hr {
     gap: 10px;
 }
 
+.video-stat:not(:last-child)::after {
+    content: "•";
+    margin-left: 10px;
+}
+
+#video-channel {
+    color: /*#4e6efe*/var(--link-color);
+    text-decoration: none;
+}
+
 #video-description {
     word-wrap: break-word;
     max-width: 160ch;
+    padding-bottom: 5px;
 }
 
 /* right side */
