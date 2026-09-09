@@ -1,7 +1,12 @@
 #pragma once
 #include <drogon/HttpController.h>
+#include <drogon/HttpRequest.h>
 
-using namespace drogon;
+using drogon::HttpMethod::Get,
+    drogon::HttpMethod::Post,
+    drogon::HttpMethod::Put,
+    drogon::HttpRequestPtr,
+    drogon::HttpResponsePtr;
 
 namespace SlimyTube {
     class ResourceController : public drogon::HttpController<ResourceController> {

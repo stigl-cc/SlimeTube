@@ -7,8 +7,10 @@
 #include <filesystem>
 #include <system_error>
 
+using namespace drogon;
+
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
-    HttpResponsePtr res = HttpResponse::newFileResponse("../videos/video-04.png");
+    HttpResponsePtr res = drogon::HttpResponse::newFileResponse("../videos/video-04.png");
     callback(res);
 }
 

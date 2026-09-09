@@ -1,3 +1,4 @@
+#include <Session.hh>
 #include <drogon/HttpAppFramework.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
@@ -11,23 +12,24 @@
 
 using namespace drogon_model::SlimyTube;
 namespace orm = drogon::orm;
-
-constexpr const std::string_view userIdSessionKey = "userId";
+using drogon::HttpStatusCode,
+    drogon::ContentType,
+    drogon::HttpResponse;
 
 void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
     orm::DbClientPtr db = drogon::app().getDbClient();
-    drogon::orm::Mapper<Users> user_mapper(db);
+    orm::Mapper<Users> user_mapper(db);
 
-    if(req->session()->find(userIdSessionKey.data())) {
-        uint32_t userId = req->session()->get<uint32_t>(userIdSessionKey.data());
+    if(req->session()->find(Session::keyUserId.data())) {
+        uint32_t userId = req->session()->get<uint32_t>(Session::keyUserId.data());
 
         req->attributes()->insert("userId", userId);
 
         //Users u = user_mapper.findByPrimaryKey(userId);
         //std::cout << u.getValueOfName() << "\n";
-        mcb(drogon::HttpResponse::newHttpResponse(static_cast<drogon::HttpStatusCode>(userId), drogon::ContentType::CT_NONE));
+        mcb(HttpResponse::newHttpResponse(static_cast<HttpStatusCode>(userId), ContentType::CT_NONE));
     } else {
-        req->session()->insert(userIdSessionKey.data(), uint32_t(12));
-        mcb(drogon::HttpResponse::newHttpResponse(drogon::k401Unauthorized, drogon::ContentType::CT_NONE));
+        req->session()->insert(Session::keyUserId.data(), uint32_t(12));
+        mcb(HttpResponse::newHttpResponse(drogon::k401Unauthorized, ContentType::CT_NONE));
     }
 }

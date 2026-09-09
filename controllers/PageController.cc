@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-using drogon::HttpViewData, drogon::HttpResponse;
+using namespace drogon;
 
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const {
     std::vector<std::unordered_map<std::string, std::string>> previews;
