@@ -15,7 +15,7 @@ namespace SlimyTube {
         public:
     METHOD_LIST_BEGIN
         ADD_METHOD_TO(RecordController::userRegister, "/user", Post);
-        ADD_METHOD_TO(RecordController::userDelete, "/user", Delete);
+        ADD_METHOD_TO(RecordController::userDelete, "/user", Delete, "SlimyTube::Authenticator");
         ADD_METHOD_TO(RecordController::userChangeName, "/user/name", Post);
         ADD_METHOD_TO(RecordController::userChangePass, "/user/password", Post);
     METHOD_LIST_END

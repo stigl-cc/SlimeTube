@@ -2,9 +2,11 @@
 
 #include <Session.hh>
 #include <Users.h>
+#include <Videos.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 #include <drogon/orm/Criteria.h>
+
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 #include <openssl/err.h>
@@ -33,9 +35,6 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         return;
     }
 
-    Users user;
-    user.setName(name);
-
     uint8_t hash[32], salt[16];
 
     if(!RAND_bytes(salt, sizeof(salt))) {
@@ -46,6 +45,7 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         return;
     }
 
+    // add salt to password string (to be hashed)
     pass.append(salt, salt + sizeof(salt));
 
     if(SHA256(reinterpret_cast<const uint8_t*>(pass.c_str()), pass.size(), hash) == nullptr) {
@@ -56,17 +56,27 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         return;
     }
 
+    Users user;
+    user.setName(name);
     user.setSalt(std::string(reinterpret_cast<char*>(salt), sizeof(salt)));
     user.setHash(std::string(reinterpret_cast<char*>(hash), sizeof(hash)));
 
     user_mapper.insert(user);
-
-    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k201Created, ContentType::CT_NONE));
 }
 
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);
+
+    uint32_t userId = req->attributes()->get<uint32_t>("userId");
+    Users user = user_mapper.findByPrimaryKey(userId);
+
+    // Delete all videos made by the account
+    drogon::orm::Mapper<Videos> video_mapper(db);
+    std::vector<Videos> videos = user.getVideos(db);
+    for(const Videos& video : videos)
+        video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
 
     user_mapper.deleteByPrimaryKey(req->getAttributes()->get<uint32_t>(keyUserId.data()));
     req->session()->erase(keyUserId.data());
