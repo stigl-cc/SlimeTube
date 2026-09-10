@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS videos (
-    uuid TEXT NOT NULL UNIQUE,
+    uuid TEXT PRIMARY KEY NOT NULL UNIQUE,
     channel INTEGER NOT NULL,
 
     title TEXT,

@@ -15,7 +15,7 @@
                 "original_table_alias": "user",
                 "original_key": "id",
                 "target_table_name": "videos",
-                "target_table_alias": "video",
+                "target_table_alias": "videos",
                 "target_key": "channel",
                 "enable_reverse": true
             }

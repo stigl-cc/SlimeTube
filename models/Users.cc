@@ -834,7 +834,7 @@ bool Users::validJsonOfField(size_t index,
     }
     return true;
 }
-std::vector<Videos> Users::getVideo(const DbClientPtr &clientPtr) const {
+std::vector<Videos> Users::getVideos(const DbClientPtr &clientPtr) const {
     static const std::string sql = "select * from videos where channel = ?";
     Result r(nullptr);
     {
@@ -852,9 +852,9 @@ std::vector<Videos> Users::getVideo(const DbClientPtr &clientPtr) const {
     return ret;
 }
 
-void Users::getVideo(const DbClientPtr &clientPtr,
-                     const std::function<void(std::vector<Videos>)> &rcb,
-                     const ExceptionCallback &ecb) const
+void Users::getVideos(const DbClientPtr &clientPtr,
+                      const std::function<void(std::vector<Videos>)> &rcb,
+                      const ExceptionCallback &ecb) const
 {
     static const std::string sql = "select * from videos where channel = ?";
     *clientPtr << sql

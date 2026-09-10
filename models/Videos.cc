@@ -20,12 +20,12 @@ const std::string Videos::Cols::_title = "title";
 const std::string Videos::Cols::_description = "description";
 const std::string Videos::Cols::_views = "views";
 const std::string Videos::Cols::_creation_time = "creation_time";
-const std::string Videos::primaryKeyName = "";
-const bool Videos::hasPrimaryKey = false;
+const std::string Videos::primaryKeyName = "uuid";
+const bool Videos::hasPrimaryKey = true;
 const std::string Videos::tableName = "videos";
 
 const std::vector<typename Videos::MetaData> Videos::metaData_={
-{"uuid","std::string","text",0,0,0,1},
+{"uuid","std::string","text",0,0,1,1},
 {"channel","int64_t","integer",8,0,0,1},
 {"title","std::string","text",0,0,0,0},
 {"description","std::string","text",0,0,0,0},
@@ -228,7 +228,6 @@ void Videos::updateByMasqueradedJson(const Json::Value &pJson,
     }
     if(!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0]))
     {
-        dirtyFlag_[0] = true;
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
             uuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
@@ -280,7 +279,6 @@ void Videos::updateByJson(const Json::Value &pJson) noexcept(false)
 {
     if(pJson.isMember("uuid"))
     {
-        dirtyFlag_[0] = true;
         if(!pJson["uuid"].isNull())
         {
             uuid_=std::make_shared<std::string>(pJson["uuid"].asString());
@@ -348,6 +346,11 @@ void Videos::setUuid(std::string &&pUuid) noexcept
 {
     uuid_ = std::make_shared<std::string>(std::move(pUuid));
     dirtyFlag_[0] = true;
+}
+const typename Videos::PrimaryKeyType & Videos::getPrimaryKey() const
+{
+    assert(uuid_);
+    return *uuid_;
 }
 
 const int64_t &Videos::getValueOfChannel() const noexcept
@@ -973,6 +976,11 @@ bool Videos::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(0, "uuid", pJson["uuid"], err, false))
             return false;
     }
+    else
+    {
+        err = "The value of primary key must be set in the json object for update";
+        return false;
+    }
     if(pJson.isMember("channel"))
     {
         if(!validJsonOfField(1, "channel", pJson["channel"], err, false))
@@ -1015,6 +1023,11 @@ bool Videos::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
           if(!validJsonOfField(0, pMasqueradingVector[0], pJson[pMasqueradingVector[0]], err, false))
               return false;
       }
+    else
+    {
+        err = "The value of primary key must be set in the json object for update";
+        return false;
+    }
       if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
       {
           if(!validJsonOfField(1, pMasqueradingVector[1], pJson[pMasqueradingVector[1]], err, false))

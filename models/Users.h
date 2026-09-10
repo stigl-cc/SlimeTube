@@ -148,10 +148,10 @@ class Users
     std::string toString() const;
     Json::Value toMasqueradedJson(const std::vector<std::string> &pMasqueradingVector) const;
     /// Relationship interfaces
-    std::vector<Videos> getVideo(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getVideo(const drogon::orm::DbClientPtr &clientPtr,
-                  const std::function<void(std::vector<Videos>)> &rcb,
-                  const drogon::orm::ExceptionCallback &ecb) const;
+    std::vector<Videos> getVideos(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getVideos(const drogon::orm::DbClientPtr &clientPtr,
+                   const std::function<void(std::vector<Videos>)> &rcb,
+                   const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Users>;
     friend drogon::orm::BaseBuilder<Users, true, true>;
