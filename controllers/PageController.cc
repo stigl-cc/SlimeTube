@@ -7,7 +7,7 @@
 
 using namespace drogon;
 
-void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const {
+void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     std::vector<std::unordered_map<std::string, std::string>> previews;
     for(int i =0; i < 23; i++) {
         previews.emplace_back(std::unordered_map<std::string, std::string>{
@@ -24,11 +24,10 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
     data.insert("title", "SlimyTube");
     data.insert("previews", previews);
 
-    HttpResponsePtr res = HttpResponse::newHttpViewResponse("main.csp", data);
-    callback(res);
+    respond(HttpResponse::newHttpViewResponse("main.csp", data));
 }
 
-void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& video_id) const {
+void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
     std::vector<std::unordered_map<std::string, std::string>> previews;
     for(int i =0; i < 23; i++) {
         previews.emplace_back(std::unordered_map<std::string, std::string>{
@@ -51,10 +50,9 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     data.insert("video_age", "2y");
     data.insert("video_description", "A cool video!");
 
-    HttpResponsePtr res = HttpResponse::newHttpViewResponse("watch.csp", data);
-    callback(res);
+    respond(HttpResponse::newHttpViewResponse("watch.csp", data));
 }
 
-void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const {
+void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
 
 }

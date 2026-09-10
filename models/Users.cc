@@ -25,8 +25,8 @@ const std::string Users::tableName = "users";
 const std::vector<typename Users::MetaData> Users::metaData_={
 {"id","int64_t","integer",8,1,1,0},
 {"name","std::string","text",0,0,0,1},
-{"hash","std::string","text",0,0,0,1},
-{"salt","std::string","text",0,0,0,1}
+{"hash","std::vector<char>","blob",0,0,0,1},
+{"salt","std::vector<char>","blob",0,0,0,1}
 };
 const std::string &Users::getColumnName(size_t index) noexcept(false)
 {
@@ -47,11 +47,11 @@ Users::Users(const Row &r, const ssize_t indexOffset) noexcept
         }
         if(!r["hash"].isNull())
         {
-            hash_=std::make_shared<std::string>(r["hash"].as<std::string>());
+            hash_=std::make_shared<std::vector<char>>(r["hash"].as<std::vector<char>>());
         }
         if(!r["salt"].isNull())
         {
-            salt_=std::make_shared<std::string>(r["salt"].as<std::string>());
+            salt_=std::make_shared<std::vector<char>>(r["salt"].as<std::vector<char>>());
         }
     }
     else
@@ -76,12 +76,12 @@ Users::Users(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 2;
         if(!r[index].isNull())
         {
-            hash_=std::make_shared<std::string>(r[index].as<std::string>());
+            hash_=std::make_shared<std::vector<char>>(r[index].as<std::vector<char>>());
         }
         index = offset + 3;
         if(!r[index].isNull())
         {
-            salt_=std::make_shared<std::string>(r[index].as<std::string>());
+            salt_=std::make_shared<std::vector<char>>(r[index].as<std::vector<char>>());
         }
     }
 
@@ -115,7 +115,8 @@ Users::Users(const Json::Value &pJson, const std::vector<std::string> &pMasquera
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            hash_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+            auto str = pJson[pMasqueradingVector[2]].asString();
+            hash_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -123,7 +124,8 @@ Users::Users(const Json::Value &pJson, const std::vector<std::string> &pMasquera
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            salt_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+            auto str = pJson[pMasqueradingVector[3]].asString();
+            salt_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
 }
@@ -151,7 +153,8 @@ Users::Users(const Json::Value &pJson) noexcept(false)
         dirtyFlag_[2]=true;
         if(!pJson["hash"].isNull())
         {
-            hash_=std::make_shared<std::string>(pJson["hash"].asString());
+            auto str = pJson["hash"].asString();
+            hash_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(pJson.isMember("salt"))
@@ -159,7 +162,8 @@ Users::Users(const Json::Value &pJson) noexcept(false)
         dirtyFlag_[3]=true;
         if(!pJson["salt"].isNull())
         {
-            salt_=std::make_shared<std::string>(pJson["salt"].asString());
+            auto str = pJson["salt"].asString();
+            salt_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
 }
@@ -192,7 +196,8 @@ void Users::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            hash_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+            auto str = pJson[pMasqueradingVector[2]].asString();
+            hash_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -200,7 +205,8 @@ void Users::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            salt_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+            auto str = pJson[pMasqueradingVector[3]].asString();
+            salt_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
 }
@@ -227,7 +233,8 @@ void Users::updateByJson(const Json::Value &pJson) noexcept(false)
         dirtyFlag_[2] = true;
         if(!pJson["hash"].isNull())
         {
-            hash_=std::make_shared<std::string>(pJson["hash"].asString());
+            auto str = pJson["hash"].asString();
+            hash_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(pJson.isMember("salt"))
@@ -235,7 +242,8 @@ void Users::updateByJson(const Json::Value &pJson) noexcept(false)
         dirtyFlag_[3] = true;
         if(!pJson["salt"].isNull())
         {
-            salt_=std::make_shared<std::string>(pJson["salt"].asString());
+            auto str = pJson["salt"].asString();
+            salt_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
 }
@@ -289,47 +297,61 @@ void Users::setName(std::string &&pName) noexcept
     dirtyFlag_[1] = true;
 }
 
-const std::string &Users::getValueOfHash() const noexcept
+const std::vector<char> &Users::getValueOfHash() const noexcept
 {
-    static const std::string defaultValue = std::string();
+    static const std::vector<char> defaultValue = std::vector<char>();
     if(hash_)
         return *hash_;
     return defaultValue;
 }
-const std::shared_ptr<std::string> &Users::getHash() const noexcept
+std::string Users::getValueOfHashAsString() const noexcept
+{
+    static const std::string defaultValue = std::string();
+    if(hash_)
+        return std::string(hash_->data(),hash_->size());
+    return defaultValue;
+}
+const std::shared_ptr<std::vector<char>> &Users::getHash() const noexcept
 {
     return hash_;
 }
-void Users::setHash(const std::string &pHash) noexcept
+void Users::setHash(const std::vector<char> &pHash) noexcept
 {
-    hash_ = std::make_shared<std::string>(pHash);
+    hash_ = std::make_shared<std::vector<char>>(pHash);
     dirtyFlag_[2] = true;
 }
-void Users::setHash(std::string &&pHash) noexcept
+void Users::setHash(const std::string &pHash) noexcept
 {
-    hash_ = std::make_shared<std::string>(std::move(pHash));
+    hash_ = std::make_shared<std::vector<char>>(pHash.c_str(),pHash.c_str()+pHash.length());
     dirtyFlag_[2] = true;
 }
 
-const std::string &Users::getValueOfSalt() const noexcept
+const std::vector<char> &Users::getValueOfSalt() const noexcept
 {
-    static const std::string defaultValue = std::string();
+    static const std::vector<char> defaultValue = std::vector<char>();
     if(salt_)
         return *salt_;
     return defaultValue;
 }
-const std::shared_ptr<std::string> &Users::getSalt() const noexcept
+std::string Users::getValueOfSaltAsString() const noexcept
+{
+    static const std::string defaultValue = std::string();
+    if(salt_)
+        return std::string(salt_->data(),salt_->size());
+    return defaultValue;
+}
+const std::shared_ptr<std::vector<char>> &Users::getSalt() const noexcept
 {
     return salt_;
 }
-void Users::setSalt(const std::string &pSalt) noexcept
+void Users::setSalt(const std::vector<char> &pSalt) noexcept
 {
-    salt_ = std::make_shared<std::string>(pSalt);
+    salt_ = std::make_shared<std::vector<char>>(pSalt);
     dirtyFlag_[3] = true;
 }
-void Users::setSalt(std::string &&pSalt) noexcept
+void Users::setSalt(const std::string &pSalt) noexcept
 {
-    salt_ = std::make_shared<std::string>(std::move(pSalt));
+    salt_ = std::make_shared<std::vector<char>>(pSalt.c_str(),pSalt.c_str()+pSalt.length());
     dirtyFlag_[3] = true;
 }
 
@@ -460,7 +482,7 @@ Json::Value Users::toJson() const
     }
     if(getHash())
     {
-        ret["hash"]=getValueOfHash();
+        ret["hash"]=drogon::utils::base64Encode((const unsigned char *)getHash()->data(),getHash()->size());
     }
     else
     {
@@ -468,7 +490,7 @@ Json::Value Users::toJson() const
     }
     if(getSalt())
     {
-        ret["salt"]=getValueOfSalt();
+        ret["salt"]=drogon::utils::base64Encode((const unsigned char *)getSalt()->data(),getSalt()->size());
     }
     else
     {
@@ -514,7 +536,7 @@ Json::Value Users::toMasqueradedJson(
         {
             if(getHash())
             {
-                ret[pMasqueradingVector[2]]=getValueOfHash();
+                ret[pMasqueradingVector[2]]=drogon::utils::base64Encode((const unsigned char *)getHash()->data(),getHash()->size());
             }
             else
             {
@@ -525,7 +547,7 @@ Json::Value Users::toMasqueradedJson(
         {
             if(getSalt())
             {
-                ret[pMasqueradingVector[3]]=getValueOfSalt();
+                ret[pMasqueradingVector[3]]=drogon::utils::base64Encode((const unsigned char *)getSalt()->data(),getSalt()->size());
             }
             else
             {
@@ -553,7 +575,7 @@ Json::Value Users::toMasqueradedJson(
     }
     if(getHash())
     {
-        ret["hash"]=getValueOfHash();
+        ret["hash"]=drogon::utils::base64Encode((const unsigned char *)getHash()->data(),getHash()->size());
     }
     else
     {
@@ -561,7 +583,7 @@ Json::Value Users::toMasqueradedJson(
     }
     if(getSalt())
     {
-        ret["salt"]=getValueOfSalt();
+        ret["salt"]=drogon::utils::base64Encode((const unsigned char *)getSalt()->data(),getSalt()->size());
     }
     else
     {

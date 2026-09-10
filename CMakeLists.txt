@@ -30,6 +30,9 @@ set(BUILD_DOC OFF CACHE BOOL "Disable DOC" FORCE)
 
 add_subdirectory(lib/drogon ${CMAKE_CURRENT_BINARY_DIR}/drogon SYSTEM)
 
+# Set up openssl (for user password hashing)
+find_package(OpenSSL)
+
 # Setup the main project
 add_executable(${PROJECT_NAME} main.cc)
 
@@ -39,7 +42,7 @@ aux_source_directory(models MODEL_SRC)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views ${CMAKE_CURRENT_BINARY_DIR}/views)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE drogon)
+target_link_libraries(${PROJECT_NAME} PRIVATE drogon ssl)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/models)
 target_sources(${PROJECT_NAME}
                PRIVATE

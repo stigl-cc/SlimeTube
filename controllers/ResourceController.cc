@@ -9,12 +9,12 @@
 
 using namespace drogon;
 
-void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
+void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
     HttpResponsePtr res = drogon::HttpResponse::newFileResponse("../videos/video-04.png");
-    callback(res);
+    respond(res);
 }
 
-void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
+void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
     std::string path = "../videos/video-04.mp4";
     std::string header = req->getHeader("Range");
     HttpResponsePtr res;
@@ -25,13 +25,13 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
     if(ec) {
         res = HttpResponse::newHttpResponse();
         res->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(res);
+        respond(res);
         return;
     }
 
     if(header.empty()) {
         res = HttpResponse::newFileResponse(path, "", drogon::CT_VIDEO_MP4, "video/mp4", req);
-        callback(res);
+        respond(res);
         return;
     }
 
@@ -43,7 +43,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
             res = HttpResponse::newHttpResponse();
             res->setContentTypeCode(drogon::CT_NONE);
             res->setStatusCode(drogon::k400BadRequest);
-            callback(res);
+            respond(res);
             return;
 
         case drogon::NotSatisfiable:
@@ -51,22 +51,26 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
             res->setContentTypeCode(drogon::CT_NONE);
             res->setStatusCode(drogon::k416RequestedRangeNotSatisfiable);
             res->addHeader("Content-Range", std::format("bytes */{}", file_length));
-            callback(res);
+            respond(res);
             return;
 
         case drogon::SinglePart:
         case drogon::MultiPart: {
+            // TODO: Impose a size limit for the 0- requests
+            //ranges[0].end = std::min(ranges[0].start + 1024 * 1024, ranges[0].end);
             res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", drogon::CT_VIDEO_MP4, "video/mp4", req);
-            callback(res);
+            if(res->getStatusCode() == HttpStatusCode::k200OK)
+                res->setStatusCode(HttpStatusCode::k206PartialContent);
+            respond(res);
             return;
         }
     }
 }
 
-void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
+void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
 
 }
 
-void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const {
+void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
 
 }

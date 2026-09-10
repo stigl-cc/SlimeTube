@@ -14,6 +14,7 @@
             <div id="left-section">
                 <video
                     id="video-element"
+                    preload="none"
                     poster="/rsc/thumbnail/[[video_id]]"
                     controls>
 
@@ -69,7 +70,6 @@
             </div>
         </div>
         <%view footer %>
-        <script src="/script.js"></script>
         <script src="/watch.js"></script>
     </body>
 </html>

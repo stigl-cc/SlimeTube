@@ -120,21 +120,25 @@ class Users
 
     /**  For column hash  */
     ///Get the value of the column hash, returns the default value if the column is null
-    const std::string &getValueOfHash() const noexcept;
+    const std::vector<char> &getValueOfHash() const noexcept;
+    ///Return the column value by std::string with binary data
+    std::string getValueOfHashAsString() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getHash() const noexcept;
+    const std::shared_ptr<std::vector<char>> &getHash() const noexcept;
     ///Set the value of the column hash
+    void setHash(const std::vector<char> &pHash) noexcept;
     void setHash(const std::string &pHash) noexcept;
-    void setHash(std::string &&pHash) noexcept;
 
     /**  For column salt  */
     ///Get the value of the column salt, returns the default value if the column is null
-    const std::string &getValueOfSalt() const noexcept;
+    const std::vector<char> &getValueOfSalt() const noexcept;
+    ///Return the column value by std::string with binary data
+    std::string getValueOfSaltAsString() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getSalt() const noexcept;
+    const std::shared_ptr<std::vector<char>> &getSalt() const noexcept;
     ///Set the value of the column salt
+    void setSalt(const std::vector<char> &pSalt) noexcept;
     void setSalt(const std::string &pSalt) noexcept;
-    void setSalt(std::string &&pSalt) noexcept;
 
 
     static size_t getColumnNumber() noexcept {  return 4;  }
@@ -165,8 +169,8 @@ class Users
     void updateId(const uint64_t id);
     std::shared_ptr<int64_t> id_;
     std::shared_ptr<std::string> name_;
-    std::shared_ptr<std::string> hash_;
-    std::shared_ptr<std::string> salt_;
+    std::shared_ptr<std::vector<char>> hash_;
+    std::shared_ptr<std::vector<char>> salt_;
     struct MetaData
     {
         const std::string colName_;

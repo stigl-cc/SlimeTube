@@ -1,9 +1,15 @@
+#include <drogon/Cookie.h>
 #include <drogon/HttpResponse.h>
+#include <drogon/HttpViewData.h>
 #include <drogon/drogon.h>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
 
-using drogon::app;
+using
+    drogon::HttpViewData,
+    drogon::HttpResponse,
+    drogon::Cookie,
+    drogon::app;
 
 int main() {
     app().loadConfigFile("config.json");
