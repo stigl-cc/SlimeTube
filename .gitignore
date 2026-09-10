@@ -1,5 +1,5 @@
 build/
 
 # Runtime directories
-certs/
 data/
+data/certs/
