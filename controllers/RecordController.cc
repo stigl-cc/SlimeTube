@@ -68,6 +68,11 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k201Created, ContentType::CT_NONE));
 }
 
+void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>("userId"));
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
+}
+
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);

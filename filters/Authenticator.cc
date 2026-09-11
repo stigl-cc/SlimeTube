@@ -75,7 +75,6 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
 
         // authentication successful
         userId = users[0].getValueOfId();
-        req->session()->insert(Session::keyUserId.data(), uint32_t(userId));
     }
 
     req->attributes()->insert("userId", userId);
