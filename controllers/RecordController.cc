@@ -1,14 +1,16 @@
 #include <controllers/RecordController.h>
 
-#include <Session.hh>
-#include <Users.h>
-#include <Videos.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 #include <drogon/orm/Criteria.h>
 
+#include <models/Session.hh>
+#include <models/Users.h>
+#include <models/Videos.h>
+
+#include <openssl/crypto.h>
 #include <openssl/rand.h>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 #include <openssl/err.h>
 
 using namespace drogon;
@@ -45,10 +47,11 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         return;
     }
 
-    // add salt to password string (to be hashed)
-    pass.append(salt, salt + sizeof(salt));
-
-    if(SHA256(reinterpret_cast<const uint8_t*>(pass.c_str()), pass.size(), hash) == nullptr) {
+    if(!PKCS5_PBKDF2_HMAC(
+            pass.data(), pass.size(),
+            salt, sizeof(salt),
+            1024, EVP_sha256(),
+            sizeof(hash), hash)) {
         LOG_WARN << "SHA256 Failed";
         ERR_print_errors_fp(stderr);
 

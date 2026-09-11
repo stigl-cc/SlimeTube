@@ -11,9 +11,10 @@
 #include <models/Users.h>
 #include <models/Videos.h>
 
-#include <openssl/sha.h>
-#include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+
 
 using namespace drogon_model::SlimyTube;
 namespace orm = drogon::orm;
@@ -55,10 +56,11 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
 
         uint8_t hash[32];
 
-        // add salt to password string (to be hashed)
-        pass.append(salt.begin(), salt.end());
-
-        if(SHA256(reinterpret_cast<const uint8_t*>(pass.c_str()), pass.size(), hash) == nullptr) {
+        if(!PKCS5_PBKDF2_HMAC(
+                pass.data(), pass.size(),
+                reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
+                1024, EVP_sha256(),
+                sizeof(hash), hash)) {
             LOG_WARN << "SHA256 Failed";
             ERR_print_errors_fp(stderr);
 
@@ -67,7 +69,7 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
         }
 
         if(CRYPTO_memcmp(hash, correct_hash.data(), correct_hash.size())) {
-            mcb(HttpResponse::newHttpResponse(drogon::k401Unauthorized, ContentType::CT_NONE));
+            mcb(HttpResponse::newHttpResponse(HttpStatusCode::k401Unauthorized, ContentType::CT_NONE));
             return;
         }
 
