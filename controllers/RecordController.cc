@@ -52,7 +52,7 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
             salt, sizeof(salt),
             1024, EVP_sha256(),
             sizeof(hash), hash)) {
-        LOG_WARN << "SHA256 Failed";
+        LOG_WARN << "PBKDF2 Failed";
         ERR_print_errors_fp(stderr);
 
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, ContentType::CT_NONE));

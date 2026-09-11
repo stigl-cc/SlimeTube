@@ -61,7 +61,7 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
                 reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
                 1024, EVP_sha256(),
                 sizeof(hash), hash)) {
-            LOG_WARN << "SHA256 Failed";
+            LOG_WARN << "PBKDF2 Failed";
             ERR_print_errors_fp(stderr);
 
             mcb(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, ContentType::CT_NONE));
