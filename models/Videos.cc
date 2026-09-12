@@ -14,18 +14,18 @@ using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
 
-const std::string Videos::Cols::_uuid = "uuid";
+const std::string Videos::Cols::_id = "id";
 const std::string Videos::Cols::_channel = "channel";
 const std::string Videos::Cols::_title = "title";
 const std::string Videos::Cols::_description = "description";
 const std::string Videos::Cols::_views = "views";
 const std::string Videos::Cols::_creation_time = "creation_time";
-const std::string Videos::primaryKeyName = "uuid";
+const std::string Videos::primaryKeyName = "id";
 const bool Videos::hasPrimaryKey = true;
 const std::string Videos::tableName = "videos";
 
 const std::vector<typename Videos::MetaData> Videos::metaData_={
-{"uuid","std::string","text",0,0,1,1},
+{"id","std::string","text",0,0,1,1},
 {"channel","int64_t","integer",8,0,0,1},
 {"title","std::string","text",0,0,0,0},
 {"description","std::string","text",0,0,0,0},
@@ -41,9 +41,9 @@ Videos::Videos(const Row &r, const ssize_t indexOffset) noexcept
 {
     if(indexOffset < 0)
     {
-        if(!r["uuid"].isNull())
+        if(!r["id"].isNull())
         {
-            uuid_=std::make_shared<std::string>(r["uuid"].as<std::string>());
+            id_=std::make_shared<std::string>(r["id"].as<std::string>());
         }
         if(!r["channel"].isNull())
         {
@@ -78,7 +78,7 @@ Videos::Videos(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 0;
         if(!r[index].isNull())
         {
-            uuid_=std::make_shared<std::string>(r[index].as<std::string>());
+            id_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 1;
         if(!r[index].isNull())
@@ -121,7 +121,7 @@ Videos::Videos(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[0] = true;
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            uuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
+            id_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -168,12 +168,12 @@ Videos::Videos(const Json::Value &pJson, const std::vector<std::string> &pMasque
 
 Videos::Videos(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("uuid"))
+    if(pJson.isMember("id"))
     {
         dirtyFlag_[0]=true;
-        if(!pJson["uuid"].isNull())
+        if(!pJson["id"].isNull())
         {
-            uuid_=std::make_shared<std::string>(pJson["uuid"].asString());
+            id_=std::make_shared<std::string>(pJson["id"].asString());
         }
     }
     if(pJson.isMember("channel"))
@@ -230,7 +230,7 @@ void Videos::updateByMasqueradedJson(const Json::Value &pJson,
     {
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            uuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
+            id_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -277,11 +277,11 @@ void Videos::updateByMasqueradedJson(const Json::Value &pJson,
 
 void Videos::updateByJson(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("uuid"))
+    if(pJson.isMember("id"))
     {
-        if(!pJson["uuid"].isNull())
+        if(!pJson["id"].isNull())
         {
-            uuid_=std::make_shared<std::string>(pJson["uuid"].asString());
+            id_=std::make_shared<std::string>(pJson["id"].asString());
         }
     }
     if(pJson.isMember("channel"))
@@ -326,31 +326,31 @@ void Videos::updateByJson(const Json::Value &pJson) noexcept(false)
     }
 }
 
-const std::string &Videos::getValueOfUuid() const noexcept
+const std::string &Videos::getValueOfId() const noexcept
 {
     static const std::string defaultValue = std::string();
-    if(uuid_)
-        return *uuid_;
+    if(id_)
+        return *id_;
     return defaultValue;
 }
-const std::shared_ptr<std::string> &Videos::getUuid() const noexcept
+const std::shared_ptr<std::string> &Videos::getId() const noexcept
 {
-    return uuid_;
+    return id_;
 }
-void Videos::setUuid(const std::string &pUuid) noexcept
+void Videos::setId(const std::string &pId) noexcept
 {
-    uuid_ = std::make_shared<std::string>(pUuid);
+    id_ = std::make_shared<std::string>(pId);
     dirtyFlag_[0] = true;
 }
-void Videos::setUuid(std::string &&pUuid) noexcept
+void Videos::setId(std::string &&pId) noexcept
 {
-    uuid_ = std::make_shared<std::string>(std::move(pUuid));
+    id_ = std::make_shared<std::string>(std::move(pId));
     dirtyFlag_[0] = true;
 }
 const typename Videos::PrimaryKeyType & Videos::getPrimaryKey() const
 {
-    assert(uuid_);
-    return *uuid_;
+    assert(id_);
+    return *id_;
 }
 
 const int64_t &Videos::getValueOfChannel() const noexcept
@@ -465,7 +465,7 @@ void Videos::updateId(const uint64_t id)
 const std::vector<std::string> &Videos::insertColumns() noexcept
 {
     static const std::vector<std::string> inCols={
-        "uuid",
+        "id",
         "channel",
         "title",
         "description",
@@ -479,9 +479,9 @@ void Videos::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 {
     if(dirtyFlag_[0])
     {
-        if(getUuid())
+        if(getId())
         {
-            binder << getValueOfUuid();
+            binder << getValueOfId();
         }
         else
         {
@@ -579,9 +579,9 @@ void Videos::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 {
     if(dirtyFlag_[0])
     {
-        if(getUuid())
+        if(getId())
         {
-            binder << getValueOfUuid();
+            binder << getValueOfId();
         }
         else
         {
@@ -647,13 +647,13 @@ void Videos::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 Json::Value Videos::toJson() const
 {
     Json::Value ret;
-    if(getUuid())
+    if(getId())
     {
-        ret["uuid"]=getValueOfUuid();
+        ret["id"]=getValueOfId();
     }
     else
     {
-        ret["uuid"]=Json::Value();
+        ret["id"]=Json::Value();
     }
     if(getChannel())
     {
@@ -711,9 +711,9 @@ Json::Value Videos::toMasqueradedJson(
     {
         if(!pMasqueradingVector[0].empty())
         {
-            if(getUuid())
+            if(getId())
             {
-                ret[pMasqueradingVector[0]]=getValueOfUuid();
+                ret[pMasqueradingVector[0]]=getValueOfId();
             }
             else
             {
@@ -778,13 +778,13 @@ Json::Value Videos::toMasqueradedJson(
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
-    if(getUuid())
+    if(getId())
     {
-        ret["uuid"]=getValueOfUuid();
+        ret["id"]=getValueOfId();
     }
     else
     {
-        ret["uuid"]=Json::Value();
+        ret["id"]=Json::Value();
     }
     if(getChannel())
     {
@@ -831,14 +831,14 @@ Json::Value Videos::toMasqueradedJson(
 
 bool Videos::validateJsonForCreation(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("uuid"))
+    if(pJson.isMember("id"))
     {
-        if(!validJsonOfField(0, "uuid", pJson["uuid"], err, true))
+        if(!validJsonOfField(0, "id", pJson["id"], err, true))
             return false;
     }
     else
     {
-        err="The uuid column cannot be null";
+        err="The id column cannot be null";
         return false;
     }
     if(pJson.isMember("channel"))
@@ -971,9 +971,9 @@ bool Videos::validateMasqueradedJsonForCreation(const Json::Value &pJson,
 }
 bool Videos::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("uuid"))
+    if(pJson.isMember("id"))
     {
-        if(!validJsonOfField(0, "uuid", pJson["uuid"], err, false))
+        if(!validJsonOfField(0, "id", pJson["id"], err, false))
             return false;
     }
     else

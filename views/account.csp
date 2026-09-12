@@ -10,21 +10,23 @@
     </head>
     <body>
         <%view navbar %>
+        <%c++ if(1) { %>
         <div id="logged-in-container">
             <div id="logged-in-text">
                 <div id="logged-in-as-text">Logged in as:</div>
-                <div id="username">username123</div>
+                <div id="username">[[user_name]]([[user_id]])</div>
+                <a id="logout-link" href="/logout">logout</a>
             </div>
 
             <div id="change-details" class="account-container">
                 <div id="change-details-text">Change User Details:</div>
-                <form class="user-change">
+                <form class="user-change" method="post" action="/user/name">
                     <label for="user">username:</label>
                     <input id="user-input" name="new_name" type="text" />
                     <input id="new-name-submit" type="submit" value="change username" />
                 </form>
 
-                <form class="user-change">
+                <form class="user-change" method="post" action="/user/password">
                     <label for="user">password:</label>
                     <input id="pass-input" name="new_pass" type="text" />
                     <input id="new-pass-submit" type="submit" value="change password" />
@@ -49,21 +51,25 @@
                         <th>size</th>
                         <th>edit</th>
                     </tr>
+                    <%c++
+                        auto videos = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("videos");
+                        for(const auto& video : videos) {%>
                     <tr>
-                        <td>m2dj</td>
-                        <td>This is a very interesting video</td>
-                        <td>In this video this is a video about how it is interesting</td>
-                        <td>385.2MB</td>
-                        <td><a href="/">edit</td>
+                        <td>{%video.at("id")%}</td>
+                        <td>{%video.at("title")%}</td>
+                        <td>{%video.at("description")%}</td>
+                        <td>{%video.at("size")%}</td>
+                        <td><a href="/video/{%video.at("id")%}/edit">edit</td>
                     </tr>
+                    <%c++ }%>
                 </table>
             </div>
         </div>
-
+        <%c++ } else {%>
 
         <div id="logged-out-container">
             <div id="logged-out-text">Logged out</div>
-            <form id="login-form" class="account-container">
+            <form id="login-form" class="account-container" method="post" action="/login">
                 <div id="login-text">Login</div>
                 <div>
                     <label for="user">Username:</label><br>
@@ -78,5 +84,6 @@
                 <input id="login-submit" type="submit" value="Login" />
             </form>
         </div>
+        <%c++ } %>
     </body>
 </html>

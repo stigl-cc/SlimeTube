@@ -45,7 +45,7 @@ class Videos
   public:
     struct Cols
     {
-        static const std::string _uuid;
+        static const std::string _id;
         static const std::string _channel;
         static const std::string _title;
         static const std::string _description;
@@ -102,14 +102,14 @@ class Videos
                           std::string &err,
                           bool isForCreation);
 
-    /**  For column uuid  */
-    ///Get the value of the column uuid, returns the default value if the column is null
-    const std::string &getValueOfUuid() const noexcept;
+    /**  For column id  */
+    ///Get the value of the column id, returns the default value if the column is null
+    const std::string &getValueOfId() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getUuid() const noexcept;
-    ///Set the value of the column uuid
-    void setUuid(const std::string &pUuid) noexcept;
-    void setUuid(std::string &&pUuid) noexcept;
+    const std::shared_ptr<std::string> &getId() const noexcept;
+    ///Set the value of the column id
+    void setId(const std::string &pId) noexcept;
+    void setId(std::string &&pId) noexcept;
 
     /**  For column channel  */
     ///Get the value of the column channel, returns the default value if the column is null
@@ -182,7 +182,7 @@ class Videos
     void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
-    std::shared_ptr<std::string> uuid_;
+    std::shared_ptr<std::string> id_;
     std::shared_ptr<int64_t> channel_;
     std::shared_ptr<std::string> title_;
     std::shared_ptr<std::string> description_;
@@ -203,13 +203,13 @@ class Videos
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
-        static const std::string sql="select * from " + tableName + " where uuid = ?";
+        static const std::string sql="select * from " + tableName + " where id = ?";
         return sql;
     }
 
     static const std::string &sqlForDeletingByPrimaryKey()
     {
-        static const std::string sql="delete from " + tableName + " where uuid = ?";
+        static const std::string sql="delete from " + tableName + " where id = ?";
         return sql;
     }
     std::string sqlForInserting(bool &needSelection) const
@@ -219,7 +219,7 @@ class Videos
         needSelection = false;
         if(dirtyFlag_[0])
         {
-            sql += "uuid,";
+            sql += "id,";
             ++parametersCount;
         }
         if(dirtyFlag_[1])

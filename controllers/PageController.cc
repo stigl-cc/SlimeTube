@@ -1,11 +1,20 @@
-#include "PageController.h"
+#include <controllers/PageController.h>
 
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpViewData.h>
-#include <string>
+#include <drogon/orm/Mapper.h>
+#include <drogon/orm/Criteria.h>
+
+#include <models/Attributes.hh>
+#include <models/Session.hh>
+#include <models/Users.h>
+#include <models/Videos.h>
+
 #include <unordered_map>
+#include <string>
 
 using namespace drogon;
+using namespace drogon_model::SlimyTube;
 
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     std::vector<std::unordered_map<std::string, std::string>> previews;
@@ -54,8 +63,36 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 }
 
 void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    orm::DbClientPtr db = drogon::app().getDbClient();
+    drogon::orm::Mapper<Users> user_mapper(db);
+
+    uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
+    std::vector<std::unordered_map<std::string, std::string>> video_entries;
+
+    const Users user = user_mapper.findByPrimaryKey(userId);
+    const std::vector<Videos> videos = user.getVideos(db);
+
+    for(const Videos& video : videos) {
+        video_entries.emplace_back(std::unordered_map<std::string, std::string>{
+                { "id", video.getValueOfId() },
+                { "title", video.getValueOfTitle() },
+                { "description", video.getValueOfDescription() },
+                { "size", video.getValueOfDescription() },
+            });
+    }
+
+    video_entries.emplace_back(std::unordered_map<std::string, std::string>{
+            { "id", "asdj" },
+            { "title", "Very interesting video title" },
+            { "description", "Wat is this description thing anyway" },
+            { "size", "571.3MB" },
+        });
+
     HttpViewData data;
     data.insert("title", "SlimyTube");
+    data.insert("user_id", userId);
+    data.insert("user_name", user.getValueOfName());
+    data.insert("videos", videos);
 
     respond(HttpResponse::newHttpViewResponse("account.csp", data));
 }

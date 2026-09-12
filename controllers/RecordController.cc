@@ -98,7 +98,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
 
     // Delete all videos made by the account
     drogon::orm::Mapper<Videos> video_mapper(db);
-    std::vector<Videos> videos = user.getVideos(db);
+    const std::vector<Videos> videos = user.getVideos(db);
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
 
