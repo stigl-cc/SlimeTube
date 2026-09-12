@@ -46,14 +46,11 @@ input:focus {
 }
 
 input[type=text] {
-}
 
-input[type=submit] {
-    cursor: pointer;
 }
 
 input[type=submit]:hover {
-
+    cursor: pointer;
 }
 
 /* navbar section */

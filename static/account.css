@@ -1,6 +1,7 @@
 :root {
-    --big-text-size: 35px;
-    --small-text-size: 16px;
+    --text-size-big: 35px;
+    --text-size-medium: 24px;
+    --text-size-small: 16px;
 }
 
 input {
@@ -9,12 +10,24 @@ input {
 
 /* Logged In Section */
 #logged-in-container {
-    text-align: left;
+    text-align: center;
+    align-items: center;
+}
+
+.account-container {
+    outline-color: var(--vertical-separator-color);
+    outline-style: solid;
+    outline-width: 3px;
+    width: fit-content;
+    padding: 13px;
+    margin: auto;
 }
 
 #logged-in-text {
     display: inline;
     color: var(--success-color);
+    font-size: var(--text-size-small);
+    line-height: 2.0;
 }
 
 #logged-in-as-text {
@@ -24,20 +37,95 @@ input {
 #username {
     display: inline;
     color: var(--text-color);
-    font-size: var(--small-text-size);
-    line-height: 1.5;
+}
+
+#change-details-text {
+    margin-bottom: 10px;
 }
 
 .user-change {
-    margin: 3px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.user-change input[type=text] {
+    width: 35ch;
 }
 
 .user-change input[type=submit] {
     width: 20ch;
 }
 
-.user-change input[type=text] {
-    width: 35ch;
+#videos {
+    max-width: 100% !important;
+    width: fit-content !important;
+    margin-top: 15px;
+    text-align: center;
+}
+
+#videos-text {
+    margin-bottom: 10px;
+}
+
+#videos-table {
+    max-width: 90ch;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    outline-style: solid;
+    outline-width: 1px;
+}
+
+#videos-table th, td {
+    outline-style: solid;
+    outline-width: 1px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#upload-link {
+    float: right;
+}
+
+@media (max-width: 680px) {
+    #videos {
+        width: 100% !important;
+    }
+
+    #change-details {
+        width: 100% !important;
+    }
+
+    .user-change input[type=text],
+    .user-change input[type=submit] {
+        width: 100%;
+        margin-bottom: 3px;
+    }
+
+    #videos-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: auto;
+    }
+
+    #videos-table colgroup {
+        display: none;
+    }
+
+    #videos-table td, th, tr {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        white-space: normal;
+        overflow: visible;
+    }
+
+    #videos-table tr {
+        outline-style: solid;
+        outline-color: var(--text-color);
+        outline-width: 3px;
+    }
 }
 
 /* Logged Out Section */
@@ -47,21 +135,11 @@ input {
 
 #logged-out-text {
     color: var(--fail-color);
-    font-size: var(--big-text-size);
     line-height: 1.5;
 }
 
 #login-form {
-    font-size: var(--small-text-size);
-
-    margin: auto;
-    align-self: center;
-
-    outline-color: var(--vertical-separator-color);
-    outline-style: solid;
-    outline-width: 3px;
-    width: fit-content;
-    padding: 13px;
+    font-size: var(--text-size-small);
     margin-top: 15px;
 
     display: flex;

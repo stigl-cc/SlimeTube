@@ -16,22 +16,54 @@
                 <div id="username">username123</div>
             </div>
 
-            <form class="user-change">
-                <label for="user">username:</label>
-                <input id="user-input" name="new_name" type="text" />
-                <input id="new-name-submit" type="submit" value="change username" />
-            </form>
+            <div id="change-details" class="account-container">
+                <div id="change-details-text">Change User Details:</div>
+                <form class="user-change">
+                    <label for="user">username:</label>
+                    <input id="user-input" name="new_name" type="text" />
+                    <input id="new-name-submit" type="submit" value="change username" />
+                </form>
 
-            <form class="user-change">
-                <label for="user">password:</label>
-                <input id="pass-input" name="new_pass" type="text" />
-                <input id="new-pass-submit" type="submit" value="change password" />
-            </form>
+                <form class="user-change">
+                    <label for="user">password:</label>
+                    <input id="pass-input" name="new_pass" type="text" />
+                    <input id="new-pass-submit" type="submit" value="change password" />
+                </form>
+            </div>
+
+            <div id="videos" class="account-container">
+                <a id="upload-link" href="/upload">upload</a>
+                <div id="videos-text">Videos</div>
+                <table id="videos-table">
+                    <colgroup>
+                        <col width="8ch">
+                        <col width="30ch">
+                        <col width="30ch">
+                        <col width="10ch">
+                        <col width="5ch">
+                    </colgroup>
+                    <tr>
+                        <th>id</th>
+                        <th>title</th>
+                        <th>description</th>
+                        <th>size</th>
+                        <th>edit</th>
+                    </tr>
+                    <tr>
+                        <td>m2dj</td>
+                        <td>This is a very interesting video</td>
+                        <td>In this video this is a video about how it is interesting</td>
+                        <td>385.2MB</td>
+                        <td><a href="/">edit</td>
+                    </tr>
+                </table>
+            </div>
         </div>
+
 
         <div id="logged-out-container">
             <div id="logged-out-text">Logged out</div>
-            <form id="login-form">
+            <form id="login-form" class="account-container">
                 <div id="login-text">Login</div>
                 <div>
                     <label for="user">Username:</label><br>
