@@ -39,6 +39,11 @@ input {
     color: var(--text-color);
 }
 
+#logout-link {
+    color: var(--fail-color);
+    text-decoration: underline;
+}
+
 #change-details-text {
     margin-bottom: 10px;
 }
