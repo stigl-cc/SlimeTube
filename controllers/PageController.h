@@ -15,7 +15,7 @@ namespace SlimyTube {
         ADD_METHOD_TO(PageController::account, "/account", Get);
     METHOD_LIST_END
         void main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const;
-        void account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const;
         void watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& video_id) const;
+        void account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const;
     };
 }

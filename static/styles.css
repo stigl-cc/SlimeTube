@@ -5,6 +5,8 @@
 
     --vertical-separator-color: #2233ee;
     --link-color: #add8e6;
+    --success-color: #55aa22;
+    --fail-color: #ad3311;
 }
 
 * {
@@ -29,6 +31,30 @@ body {
     padding: 0px 10px 10px 10px;
 }
 
+input {
+    color: var(--text-color);
+    background-color: var(--highlighted-color);
+    border-style: none;
+    outline-style: none;
+    margin: 0;
+}
+
+input:focus {
+    outline-style: solid;
+    outline-width: 2px;
+    outline-color: var(--link-color);
+}
+
+input[type=text] {
+}
+
+input[type=submit] {
+    cursor: pointer;
+}
+
+input[type=submit]:hover {
+
+}
 
 /* navbar section */
 #navbar {
@@ -90,6 +116,7 @@ body {
 #footer-about-link {
     color: var(--link-color);
     text-decoration: none;
+    text-transform: lowercase;
 }
 
 /* video preview */

@@ -1,0 +1,82 @@
+:root {
+    --big-text-size: 35px;
+    --small-text-size: 16px;
+}
+
+input {
+    font-size: var(--small-text-size);
+}
+
+/* Logged In Section */
+#logged-in-container {
+    text-align: left;
+}
+
+#logged-in-text {
+    display: inline;
+    color: var(--success-color);
+}
+
+#logged-in-as-text {
+    display: inline;
+}
+
+#username {
+    display: inline;
+    color: var(--text-color);
+    font-size: var(--small-text-size);
+    line-height: 1.5;
+}
+
+.user-change {
+    margin: 3px;
+}
+
+.user-change input[type=submit] {
+    width: 20ch;
+}
+
+.user-change input[type=text] {
+    width: 35ch;
+}
+
+/* Logged Out Section */
+#logged-out-container {
+    text-align: center;
+}
+
+#logged-out-text {
+    color: var(--fail-color);
+    font-size: var(--big-text-size);
+    line-height: 1.5;
+}
+
+#login-form {
+    font-size: var(--small-text-size);
+
+    margin: auto;
+    align-self: center;
+
+    outline-color: var(--vertical-separator-color);
+    outline-style: solid;
+    outline-width: 3px;
+    width: fit-content;
+    padding: 13px;
+    margin-top: 15px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#login-text {
+    padding-bottom: 3px;
+    width: 100%;
+    border-color: var(--vertical-separator-color);
+    border-bottom-style: solid;
+}
+
+#login-submit {
+    margin-top: 8px;
+    width: 100%;
+}

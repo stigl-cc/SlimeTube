@@ -54,5 +54,8 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 }
 
 void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    HttpViewData data;
+    data.insert("title", "SlimyTube");
 
+    respond(HttpResponse::newHttpViewResponse("account.csp", data));
 }

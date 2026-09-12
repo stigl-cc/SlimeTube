@@ -4,17 +4,47 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>[[title]] - [[video_title]]</title>
+        <title>[[title]] - Account</title>
         <link rel="stylesheet" type="text/css" href="/styles.css">
-        <link rel="stylesheet" type="text/css" href="/watch.css">
+        <link rel="stylesheet" type="text/css" href="/account.css">
     </head>
     <body>
         <%view navbar %>
-        <div id="main-content">
+        <div id="logged-in-container">
+            <div id="logged-in-text">
+                <div id="logged-in-as-text">Logged in as:</div>
+                <div id="username">username123</div>
+            </div>
 
+            <form class="user-change">
+                <label for="user">username:</label>
+                <input id="user-input" name="new_name" type="text" />
+                <input id="new-name-submit" type="submit" value="change username" />
+            </form>
 
+            <form class="user-change">
+                <label for="user">password:</label>
+                <input id="pass-input" name="new_pass" type="text" />
+                <input id="new-pass-submit" type="submit" value="change password" />
+            </form>
         </div>
-        <%view footer %>
-        <script src="/watch.js"></script>
+
+        <div id="logged-out-container">
+            <div id="logged-out-text">Logged out</div>
+            <form id="login-form">
+                <div id="login-text">Login</div>
+                <div>
+                    <label for="user">Username:</label><br>
+                    <input id="user-input" name="name" type="text" />
+                </div>
+                <br>
+                <div>
+                    <label for="pass">Password:</label><br>
+                    <input id="pass-input" name="pass" type="text" /><br>
+                </div>
+
+                <input id="login-submit" type="submit" value="Login" />
+            </form>
+        </div>
     </body>
 </html>
