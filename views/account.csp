@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[title]] - [[video_title]]</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/watch.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div id="main-content">
+
+
+        </div>
+        <%view footer %>
+        <script src="/watch.js"></script>
+    </body>
+</html>

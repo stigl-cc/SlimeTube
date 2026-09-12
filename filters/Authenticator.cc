@@ -1,5 +1,6 @@
 #include <filters/Authenticator.h>
-#include <Session.hh>
+#include <models/Session.hh>
+#include <models/Attributes.hh>
 
 #include <drogon/HttpAppFramework.h>
 #include <drogon/HttpResponse.h>
@@ -29,9 +30,12 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
     orm::Mapper<Users> user_mapper(db);
 
     uint32_t userId;
+    Attributes::LoginMethod loginMethod;
+
     // user already logged in through session
     if(req->session()->find(Session::keyUserId.data())) {
         userId = req->session()->get<uint32_t>(Session::keyUserId.data());
+        loginMethod = Attributes::LoginMethod::Session;
     }
     // log in using name + password
     else {
@@ -75,8 +79,10 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
 
         // authentication successful
         userId = users[0].getValueOfId();
+        loginMethod = Attributes::LoginMethod::Password;
     }
 
-    req->attributes()->insert("userId", userId);
+    req->attributes()->insert(Attributes::keyUserId.data(), userId);
+    req->attributes()->insert(Attributes::keyLoginMethod.data(), loginMethod);
     nextCb([mcb = std::move(mcb)](const HttpResponsePtr &resp) { mcb(resp); });
 }

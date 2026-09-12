@@ -4,6 +4,7 @@
 #include <drogon/HttpTypes.h>
 #include <drogon/orm/Criteria.h>
 
+#include <models/Attributes.hh>
 #include <models/Session.hh>
 #include <models/Users.h>
 #include <models/Videos.h>
@@ -69,7 +70,22 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
 }
 
 void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>("userId"));
+    if(req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data()) == Attributes::LoginMethod::Session) {
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE));
+        return;
+    }
+
+    req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>(Attributes::keyUserId.data()));
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
+}
+
+void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    if(req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data()) != Attributes::LoginMethod::Session) {
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE));
+        return;
+    }
+
+    req->session()->clear();
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
 }
 
@@ -77,7 +93,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);
 
-    uint32_t userId = req->attributes()->get<uint32_t>("userId");
+    uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
     // Delete all videos made by the account
@@ -87,15 +103,27 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
 
     user_mapper.deleteByPrimaryKey(req->getAttributes()->get<uint32_t>(keyUserId.data()));
-    req->session()->erase(keyUserId.data());
+    req->session()->clear();
 
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
 }
 
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    orm::DbClientPtr db = drogon::app().getDbClient();
+    drogon::orm::Mapper<Users> user_mapper(db);
 
+    uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
+    orm::Criteria crit = orm::Criteria(Users::Cols::_id, userId);
+    user_mapper.updateBy({ "name" }, crit, req->getParameter("new_name"));
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
 }
 
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    orm::DbClientPtr db = drogon::app().getDbClient();
+    drogon::orm::Mapper<Users> user_mapper(db);
 
+    uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
+    orm::Criteria crit = orm::Criteria(Users::Cols::_id, userId);
+    user_mapper.updateBy({ "pass" }, crit, req->getParameter("new_pass"));
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
 }
