@@ -19,6 +19,7 @@
     ],
 
     "app": {
+        "server_header_field": "SlimyTube",
         "number_of_threads": 4,
 
         "run_as_daemon": false,
@@ -30,7 +31,12 @@
             "logfile_base_name": "",
             "log_size_limit": 1000000,
             "log_level": "DEBUG",
-            "display_local_time" : false
+            "display_local_time" : false,
         },
+    },
+
+    "custom_config": {
+        "title" : "SlimyTube",
+        "zero_range_limit" : 10485760,
     },
 }

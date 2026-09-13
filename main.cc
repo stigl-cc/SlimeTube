@@ -1,3 +1,4 @@
+#include "Settings.hh"
 #include <drogon/Cookie.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpViewData.h>
@@ -9,10 +10,16 @@ using
     drogon::HttpViewData,
     drogon::HttpResponse,
     drogon::Cookie,
-    drogon::app;
+    drogon::app,
+    SlimyTube::Settings;
 
 int main() {
+    Settings& settings = Settings::getInstance();
     app().loadConfigFile("config.json");
+
+    Json::Value custom_user_config = app().getCustomConfig();
+    settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
+    settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 1024 * 1024).as<uint64_t>();
 
     app().setSSLConfigCommands({
             { "Options", "Compression" }
@@ -40,7 +47,6 @@ int main() {
         .setJsonParserStackLimit(1000);
 
     app()
-        .setServerHeaderField("SlimyTube")
         .enableServerHeader(true)
         .enableDateHeader(true);
 
