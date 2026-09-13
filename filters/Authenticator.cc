@@ -102,7 +102,8 @@ void SlimyTube::LaxAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNe
     }
     // log in using name + password
     else {
-        const std::string& name = req->getParameter("name"), pass = req->getParameter("pass");
+        const std::string& name = req->getParameter("name"),
+            pass = req->getParameter("pass");
         int http_code = passwordCheck(userId, name, pass);
         if(http_code) { // authentication unsuccessful
             userId = 0;
@@ -112,6 +113,6 @@ void SlimyTube::LaxAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNe
     }
 
     req->attributes()->insert(Attributes::keyUserId.data(), userId);
-    nextCb([mcb = std::move(mcb)](const HttpResponsePtr &resp) { mcb(resp); });
     req->attributes()->insert(Attributes::keyLoginMethod.data(), loginMethod);
+    nextCb([mcb = std::move(mcb)](const HttpResponsePtr &resp) { mcb(resp); });
 }
