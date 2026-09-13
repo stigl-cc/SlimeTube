@@ -15,7 +15,7 @@ namespace SlimyTube {
         public:
     METHOD_LIST_BEGIN
         ADD_METHOD_TO(RecordController::userRegister, "/register", Post);
-        ADD_METHOD_TO(RecordController::userLogin, "/login", Post, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::userLogin, "/login", Post, "SlimyTube::LaxAuthenticator");
         ADD_METHOD_TO(RecordController::userLogout, "/logout", Post, "SlimyTube::StrictAuthenticator");
         ADD_METHOD_TO(RecordController::userDelete, "/user", Delete, "SlimyTube::StrictAuthenticator");
 

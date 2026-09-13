@@ -70,7 +70,15 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
 }
 
 void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    if(req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data()) != Attributes::LoginMethod::Session) {
+    Attributes::LoginMethod loginMethod = req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data());
+    if(loginMethod == Attributes::LoginMethod::LaxNone) {
+        HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+        res->addHeader("Location", "/account?m=401%20Wrong name or password");
+        respond(res);
+        return;
+    }
+
+    if(loginMethod != Attributes::LoginMethod::Session) {
         req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>(Attributes::keyUserId.data()));
     }
 
@@ -88,7 +96,7 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
     req->session()->clear();
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
-    res->addHeader("Location", "/account");
+    res->addHeader("Location", "/account?m=Logged%20out%20successfully");
     respond(res);
 }
 
