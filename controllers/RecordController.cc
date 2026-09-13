@@ -73,7 +73,7 @@ void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::func
     Attributes::LoginMethod loginMethod = req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data());
     if(loginMethod == Attributes::LoginMethod::LaxNone) {
         HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
-        res->addHeader("Location", "/account?m=401%20Wrong name or password");
+        res->addHeader("Location", "/account?m=Wrong%20name%20or%20password");
         respond(res);
         return;
     }
