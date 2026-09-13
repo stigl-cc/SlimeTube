@@ -170,3 +170,15 @@ input {
     margin-top: 8px;
     width: 100%;
 }
+
+#login-message {
+    display: block;
+    outline-color: var(--fail-color);
+    background-color: var(--fail-color-fill);
+    outline-width: 3px;
+    outline-style: solid;
+    width: fit-content;
+    margin: 0 auto;
+    margin-top: 15px;
+    padding: 3px;
+}

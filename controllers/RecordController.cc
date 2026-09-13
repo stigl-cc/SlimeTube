@@ -70,12 +70,9 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
 }
 
 void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    if(req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data()) == Attributes::LoginMethod::Session) {
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE));
-        return;
+    if(req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data()) != Attributes::LoginMethod::Session) {
+        req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>(Attributes::keyUserId.data()));
     }
-
-    req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>(Attributes::keyUserId.data()));
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
     res->addHeader("Location", "/account");

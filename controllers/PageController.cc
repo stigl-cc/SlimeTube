@@ -50,6 +50,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
             });
     }
 
+    //TODO: Add HttpViewData::htmlTranslate(""); to everything
     HttpViewData data;
     data.insert("title", "SlimyTube");
     data.insert("video_id", video_id);
@@ -71,6 +72,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     std::vector<std::unordered_map<std::string, std::string>> video_entries;
 
     if(loginMethod == LoginMethod::LaxNone) {
+        data.insert("message", req->getParameter("message"));
         respond(HttpResponse::newHttpViewResponse("login.csp", data));
         return;
     }

@@ -3,7 +3,7 @@
 
 namespace SlimyTube::Attributes {
     enum struct LoginMethod {
-        LaxNone,
+        LaxNone = 0,
         Session,
         Password,
     };
