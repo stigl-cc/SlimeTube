@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <drogon/HttpViewData.h>
 #include <string>
+
+using drogon::HttpViewData;
 
 namespace SlimyTube {
     class Settings {
@@ -12,6 +15,12 @@ namespace SlimyTube {
         static inline Settings& getInstance() {
             static Settings setting = {};
             return setting;
+        }
+
+        HttpViewData getData() {
+            HttpViewData data;
+            data.insert("title", title);
+            return data;
         }
 
         private:

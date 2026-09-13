@@ -1,3 +1,4 @@
+#include <Settings.hh>
 #include <controllers/PageController.h>
 
 #include <drogon/HttpResponse.h>
@@ -30,8 +31,7 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
             });
     }
 
-    HttpViewData data;
-    data.insert("title", "SlimyTube");
+    HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);
 
     respond(HttpResponse::newHttpViewResponse("main.csp", data));
@@ -51,8 +51,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     }
 
     //TODO: Add HttpViewData::htmlTranslate(""); to everything
-    HttpViewData data;
-    data.insert("title", "SlimyTube");
+    HttpViewData data = Settings::getInstance().getData();
     data.insert("video_id", video_id);
     data.insert("previews", previews);
 
@@ -65,8 +64,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 }
 
 void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    HttpViewData data;
-    data.insert("title", "SlimyTube");
+    HttpViewData data = Settings::getInstance().getData();
 
     LoginMethod loginMethod = req->attributes()->get<LoginMethod>(Attributes::keyLoginMethod.data());
     std::vector<std::unordered_map<std::string, std::string>> video_entries;
