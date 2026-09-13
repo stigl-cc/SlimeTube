@@ -13,7 +13,7 @@ namespace SlimyTube {
     class Authenticator {
         protected:
         virtual ~Authenticator() = default;
-        int password_check(uint32_t& userId, const std::string& name, const std::string& pass);
+        int passwordCheck(uint32_t& userId, const std::string& name, const std::string& pass);
     };
 
     class StrictAuthenticator : public HttpMiddleware<StrictAuthenticator>, public Authenticator {
