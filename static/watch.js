@@ -62,6 +62,15 @@ function on_keypress(event) {
             video_element.currentTime += 1.00;
             event.preventDefault();
         }
+
+        if(event.code === "KeyF") {
+            if (!document.fullscreenElement) {
+                video_element.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+            event.preventDefault();
+        }
     }
 }
 

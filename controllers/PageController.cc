@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <string>
 
+using SlimyTube::Attributes::LoginMethod;
 using namespace drogon;
 using namespace drogon_model::SlimyTube;
 
@@ -63,12 +64,21 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 }
 
 void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    HttpViewData data;
+    data.insert("title", "SlimyTube");
+
+    LoginMethod loginMethod = req->attributes()->get<LoginMethod>(Attributes::keyLoginMethod.data());
+    std::vector<std::unordered_map<std::string, std::string>> video_entries;
+
+    if(loginMethod == LoginMethod::LaxNone) {
+        respond(HttpResponse::newHttpViewResponse("login.csp", data));
+        return;
+    }
+
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);
 
     uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
-    std::vector<std::unordered_map<std::string, std::string>> video_entries;
-
     const Users user = user_mapper.findByPrimaryKey(userId);
     const std::vector<Videos> videos = user.getVideos(db);
 
@@ -80,7 +90,6 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
                 { "size", video.getValueOfDescription() },
             });
     }
-
     video_entries.emplace_back(std::unordered_map<std::string, std::string>{
             { "id", "asdj" },
             { "title", "Very interesting video title" },
@@ -88,11 +97,9 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
             { "size", "571.3MB" },
         });
 
-    HttpViewData data;
-    data.insert("title", "SlimyTube");
-    data.insert("user_id", userId);
+    data.insert("user_id", std::to_string(userId));
     data.insert("user_name", user.getValueOfName());
-    data.insert("videos", videos);
+    data.insert("videos", video_entries);
 
     respond(HttpResponse::newHttpViewResponse("account.csp", data));
 }

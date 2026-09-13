@@ -1,6 +1,4 @@
 #include <filters/Authenticator.h>
-#include <models/Session.hh>
-#include <models/Attributes.hh>
 
 #include <drogon/HttpAppFramework.h>
 #include <drogon/HttpResponse.h>
@@ -9,13 +7,14 @@
 #include <drogon/orm/DbClient.h>
 #include <drogon/orm/Mapper.h>
 
+#include <models/Session.hh>
+#include <models/Attributes.hh>
 #include <models/Users.h>
 #include <models/Videos.h>
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-
 
 using namespace drogon_model::SlimyTube;
 namespace orm = drogon::orm;
@@ -25,10 +24,45 @@ using
     drogon::HttpResponse,
     drogon::HttpResponsePtr;
 
-void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
+int SlimyTube::Authenticator::password_check(uint32_t& userId, const std::string& name, const std::string& pass) {
     orm::DbClientPtr db = drogon::app().getDbClient();
     orm::Mapper<Users> user_mapper(db);
 
+    if(name.empty() || pass.empty()) {
+        return 401;
+    }
+
+    std::vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_name, drogon::orm::CompareOperator::EQ, name));
+    if(users.empty()) {
+        return 401;
+    }
+
+    std::vector<char>
+        salt = users[0].getValueOfSalt(),
+        correct_hash = users[0].getValueOfHash();
+
+    uint8_t hash[32];
+
+    if(!PKCS5_PBKDF2_HMAC(
+            pass.data(), pass.size(),
+            reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
+            1024, EVP_sha256(),
+            sizeof(hash), hash)) {
+        LOG_WARN << "PBKDF2 Failed";
+        ERR_print_errors_fp(stderr);
+
+        return 500;
+    }
+
+    if(CRYPTO_memcmp(hash, correct_hash.data(), correct_hash.size())) {
+        return 401;
+    }
+
+    userId = users[0].getValueOfId();
+    return 0;
+}
+
+void SlimyTube::StrictAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
     uint32_t userId;
     Attributes::LoginMethod loginMethod;
 
@@ -39,47 +73,42 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
     }
     // log in using name + password
     else {
-        std::string
+        const std::string&
             name = req->getParameter("name"),
             pass = req->getParameter("pass");
-
-        if(name.empty() || pass.empty()) {
-            mcb(HttpResponse::newHttpResponse(HttpStatusCode::k401Unauthorized, ContentType::CT_NONE));
-            return;
-        }
-
-        std::vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_name, drogon::orm::CompareOperator::EQ, name));
-        if(users.empty()) {
-            mcb(HttpResponse::newHttpResponse(HttpStatusCode::k401Unauthorized, ContentType::CT_NONE));
-            return;
-        }
-
-        std::vector<char>
-            salt = users[0].getValueOfSalt(),
-            correct_hash = users[0].getValueOfHash();
-
-        uint8_t hash[32];
-
-        if(!PKCS5_PBKDF2_HMAC(
-                pass.data(), pass.size(),
-                reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
-                1024, EVP_sha256(),
-                sizeof(hash), hash)) {
-            LOG_WARN << "PBKDF2 Failed";
-            ERR_print_errors_fp(stderr);
-
-            mcb(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, ContentType::CT_NONE));
-            return;
-        }
-
-        if(CRYPTO_memcmp(hash, correct_hash.data(), correct_hash.size())) {
-            mcb(HttpResponse::newHttpResponse(HttpStatusCode::k401Unauthorized, ContentType::CT_NONE));
+        int http_code = password_check(userId, name, pass);
+        if(http_code) { // authentication failed
+            mcb(HttpResponse::newHttpResponse(static_cast<HttpStatusCode>(http_code), ContentType::CT_NONE));
             return;
         }
 
         // authentication successful
-        userId = users[0].getValueOfId();
         loginMethod = Attributes::LoginMethod::Password;
+    }
+
+    req->attributes()->insert(Attributes::keyUserId.data(), userId);
+    req->attributes()->insert(Attributes::keyLoginMethod.data(), loginMethod);
+    nextCb([mcb = std::move(mcb)](const HttpResponsePtr &resp) { mcb(resp); });
+}
+
+void SlimyTube::LaxAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
+    uint32_t userId;
+    Attributes::LoginMethod loginMethod;
+
+    // user already logged in through session
+    if(req->session()->find(Session::keyUserId.data())) {
+        userId = req->session()->get<uint32_t>(Session::keyUserId.data());
+        loginMethod = Attributes::LoginMethod::Session;
+    }
+    // log in using name + password
+    else {
+        const std::string& name = req->getParameter("name"), pass = req->getParameter("pass");
+        int http_code = password_check(userId, name, pass);
+        if(http_code) { // authentication unsuccessful
+            userId = 0;
+            loginMethod = Attributes::LoginMethod::LaxNone;
+        } else
+            loginMethod = Attributes::LoginMethod::Password; // authentication successful
     }
 
     req->attributes()->insert(Attributes::keyUserId.data(), userId);

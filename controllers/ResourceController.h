@@ -15,8 +15,8 @@ namespace SlimyTube {
         ADD_METHOD_TO(ResourceController::getThumbnail, "/rsc/thumbnail/{1}", Get);
         ADD_METHOD_TO(ResourceController::getVideo, "/rsc/video/{1}", Get);
 
-        ADD_METHOD_TO(ResourceController::uploadThumbnail, "/rsc/thumbnail/{1}/upload", Put, "SlimyTube::Authenticator");
-        ADD_METHOD_TO(ResourceController::uploadVideo, "/rsc/video/{1}/upload", Put, "SlimyTube::Authenticator");
+        ADD_METHOD_TO(ResourceController::uploadThumbnail, "/rsc/thumbnail/{1}/upload", Put, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(ResourceController::uploadVideo, "/rsc/video/{1}/upload", Put, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
         void getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
         void getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;

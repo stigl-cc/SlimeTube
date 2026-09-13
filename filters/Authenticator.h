@@ -10,8 +10,21 @@ using drogon::HttpMiddleware,
     drogon::MiddlewareNextCallback;
 
 namespace SlimyTube {
-    class Authenticator : public HttpMiddleware<Authenticator> {
+    class Authenticator {
+        protected:
+        virtual ~Authenticator() = default;
+        int password_check(uint32_t& userId, const std::string& name, const std::string& pass);
+    };
+
+    class StrictAuthenticator : public HttpMiddleware<StrictAuthenticator>, public Authenticator {
         public:
-        void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
+        ~StrictAuthenticator() override = default;
+        virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
+    };
+
+    class LaxAuthenticator : public HttpMiddleware<LaxAuthenticator>, public Authenticator {
+        public:
+        ~LaxAuthenticator() override = default;
+        virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
     };
 }

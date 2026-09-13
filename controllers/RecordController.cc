@@ -76,7 +76,10 @@ void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::func
     }
 
     req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>(Attributes::keyUserId.data()));
-    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
+
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+    res->addHeader("Location", "/account");
+    respond(res);
 }
 
 void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
@@ -86,7 +89,10 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
     }
 
     req->session()->clear();
-    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
+
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+    res->addHeader("Location", "/account");
+    respond(res);
 }
 
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
@@ -112,8 +118,9 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);
 
+    // TODO: Check if username is in conflict
     uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
-    orm::Criteria crit = orm::Criteria(Users::Cols::_id, userId);
+    orm::Criteria crit = orm::Criteria(Users::Cols::_id, orm::CompareOperator::EQ, userId);
     user_mapper.updateBy({ "name" }, crit, req->getParameter("new_name"));
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
 }
@@ -122,6 +129,7 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);
 
+    // TODO: Fix to change the hash instead
     uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
     orm::Criteria crit = orm::Criteria(Users::Cols::_id, userId);
     user_mapper.updateBy({ "pass" }, crit, req->getParameter("new_pass"));

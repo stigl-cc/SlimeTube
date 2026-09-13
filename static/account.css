@@ -39,9 +39,16 @@ input {
     color: var(--text-color);
 }
 
-#logout-link {
+#logout-form {
+    display: inline;
+}
+
+#logout-form input {
+    letter-spacing: 1px;
     color: var(--fail-color);
     text-decoration: underline;
+    border: none;
+    background: none;
 }
 
 #change-details-text {

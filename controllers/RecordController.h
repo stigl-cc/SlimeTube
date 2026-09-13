@@ -15,12 +15,12 @@ namespace SlimyTube {
         public:
     METHOD_LIST_BEGIN
         ADD_METHOD_TO(RecordController::userRegister, "/register", Post);
-        ADD_METHOD_TO(RecordController::userLogin, "/login", Post, "SlimyTube::Authenticator");
-        ADD_METHOD_TO(RecordController::userLogout, "/logout", Post, "SlimyTube::Authenticator");
-        ADD_METHOD_TO(RecordController::userDelete, "/user", Delete, "SlimyTube::Authenticator");
+        ADD_METHOD_TO(RecordController::userLogin, "/login", Post, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::userLogout, "/logout", Post, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::userDelete, "/user", Delete, "SlimyTube::StrictAuthenticator");
 
-        ADD_METHOD_TO(RecordController::userChangeName, "/user/name", Post);
-        ADD_METHOD_TO(RecordController::userChangePass, "/user/password", Post);
+        ADD_METHOD_TO(RecordController::userChangeName, "/user/name", Post, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::userChangePass, "/user/password", Post, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
 
         void userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;

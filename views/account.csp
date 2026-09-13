@@ -10,12 +10,13 @@
     </head>
     <body>
         <%view navbar %>
-        <%c++ if(1) { %>
         <div id="logged-in-container">
             <div id="logged-in-text">
                 <div id="logged-in-as-text">Logged in as:</div>
                 <div id="username">[[user_name]]([[user_id]])</div>
-                <a id="logout-link" href="/logout">logout</a>
+                <form method="post" action="/logout" id="logout-form">
+                    <input type="submit" value="logout">
+                </form>
             </div>
 
             <div id="change-details" class="account-container">
@@ -65,25 +66,5 @@
                 </table>
             </div>
         </div>
-        <%c++ } else {%>
-
-        <div id="logged-out-container">
-            <div id="logged-out-text">Logged out</div>
-            <form id="login-form" class="account-container" method="post" action="/login">
-                <div id="login-text">Login</div>
-                <div>
-                    <label for="user">Username:</label><br>
-                    <input id="user-input" name="name" type="text" />
-                </div>
-                <br>
-                <div>
-                    <label for="pass">Password:</label><br>
-                    <input id="pass-input" name="pass" type="text" /><br>
-                </div>
-
-                <input id="login-submit" type="submit" value="Login" />
-            </form>
-        </div>
-        <%c++ } %>
     </body>
 </html>
