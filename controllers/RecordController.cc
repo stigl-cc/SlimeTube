@@ -4,6 +4,8 @@
 #include <drogon/HttpTypes.h>
 #include <drogon/orm/Criteria.h>
 
+#include <drogon/orm/DbClient.h>
+#include <drogon/orm/Mapper.h>
 #include <models/Attributes.hh>
 #include <models/Session.hh>
 #include <models/Users.h>
@@ -20,6 +22,20 @@ using namespace drogon::orm;
 using SlimyTube::Session::keyUserId;
 using namespace drogon_model::SlimyTube;
 
+DbClientPtr getDbClient() {
+    static DbClientPtr db = drogon::app().getDbClient();
+    return db;
+}
+
+Mapper<Users> getUserMapper() {
+    static Mapper<Users> user_mapper(getDbClient());
+    return user_mapper;
+}
+
+Mapper<Videos> getVideosMapper() {
+    static Mapper<Videos> video_mapper(getDbClient());
+    return video_mapper;
+}
 
 void createSalt(const std::span<uint8_t, 16> salt) {
     if(!RAND_bytes(salt.data(), salt.size())) {
@@ -45,8 +61,7 @@ bool nameExists(const std::string& name, Mapper<Users>& mapper) {
 }
 
 void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    DbClientPtr db = drogon::app().getDbClient();
-    Mapper<Users> user_mapper(db);
+    Mapper<Users> user_mapper = getUserMapper();
 
     std::string
         name = req->getParameter("name"),
@@ -110,14 +125,14 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
 }
 
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    DbClientPtr db = drogon::app().getDbClient();
-    Mapper<Users> user_mapper(db);
+    Mapper<Users> user_mapper = getUserMapper();
 
     uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
     // Delete all videos made by the account
-    Mapper<Videos> video_mapper(db);
+    DbClientPtr db = getDbClient();
+    Mapper<Videos> video_mapper = getVideosMapper();
     const std::vector<Videos> videos = user.getVideos(db);
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
@@ -129,8 +144,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
 }
 
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    DbClientPtr db = drogon::app().getDbClient();
-    Mapper<Users> user_mapper(db);
+    Mapper<Users> user_mapper = getUserMapper();
     std::string new_name = req->getParameter("new_name");
 
     if(nameExists(new_name, user_mapper)) {
@@ -145,8 +159,7 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
 }
 
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    DbClientPtr db = drogon::app().getDbClient();
-    Mapper<Users> user_mapper(db);
+    Mapper<Users> user_mapper = getUserMapper();
     std::string new_pass = req->getParameter("new_pass");
 
     uint8_t hash[32], salt[16];

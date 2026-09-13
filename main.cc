@@ -22,6 +22,7 @@ int main() {
             "html",
             "js",
             "css",
+            "ico",
         });
 
     app().setStaticFileHeaders({
