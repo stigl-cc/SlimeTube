@@ -13,14 +13,40 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <stdexcept>
 
 using namespace drogon;
+using namespace drogon::orm;
 using SlimyTube::Session::keyUserId;
 using namespace drogon_model::SlimyTube;
 
+
+void createSalt(const std::span<uint8_t, 16> salt) {
+    if(!RAND_bytes(salt.data(), salt.size())) {
+        ERR_print_errors_fp(stderr);
+        throw std::runtime_error("RAND_bytes Failed");
+    }
+}
+
+void createHash(const std::string& pass, const std::span<const uint8_t, 16> salt, const std::span<uint8_t, 32>& hash) {
+    if(!PKCS5_PBKDF2_HMAC(
+            pass.data(), pass.size(),
+            salt.data(), salt.size(),
+            1024, EVP_sha256(),
+            hash.size(), hash.data())) {
+        ERR_print_errors_fp(stderr);
+        throw std::runtime_error("PBKDF2 Failed");
+    }
+}
+
+bool nameExists(const std::string& name, Mapper<Users>& mapper) {
+    // username already taken
+    return !mapper.findBy(Criteria(Users::Cols::_name, CompareOperator::EQ, name)).empty();
+}
+
 void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    orm::DbClientPtr db = drogon::app().getDbClient();
-    drogon::orm::Mapper<Users> user_mapper(db);
+    DbClientPtr db = drogon::app().getDbClient();
+    Mapper<Users> user_mapper(db);
 
     std::string
         name = req->getParameter("name"),
@@ -33,32 +59,15 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
     }
 
     // username already taken
-    if(!user_mapper.findBy(orm::Criteria(Users::Cols::_name, orm::CompareOperator::EQ, name)).empty()) {
+    if(nameExists(name, user_mapper)) {
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, ContentType::CT_NONE));
         return;
     }
 
     uint8_t hash[32], salt[16];
 
-    if(!RAND_bytes(salt, sizeof(salt))) {
-        LOG_WARN << "RAND_bytes Failed";
-        ERR_print_errors_fp(stderr);
-
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, ContentType::CT_NONE));
-        return;
-    }
-
-    if(!PKCS5_PBKDF2_HMAC(
-            pass.data(), pass.size(),
-            salt, sizeof(salt),
-            1024, EVP_sha256(),
-            sizeof(hash), hash)) {
-        LOG_WARN << "PBKDF2 Failed";
-        ERR_print_errors_fp(stderr);
-
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, ContentType::CT_NONE));
-        return;
-    }
+    createSalt(salt);
+    createHash(pass, salt, hash);
 
     Users user;
     user.setName(name);
@@ -101,14 +110,14 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
 }
 
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    orm::DbClientPtr db = drogon::app().getDbClient();
-    drogon::orm::Mapper<Users> user_mapper(db);
+    DbClientPtr db = drogon::app().getDbClient();
+    Mapper<Users> user_mapper(db);
 
     uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
     // Delete all videos made by the account
-    drogon::orm::Mapper<Videos> video_mapper(db);
+    Mapper<Videos> video_mapper(db);
     const std::vector<Videos> videos = user.getVideos(db);
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
@@ -120,23 +129,41 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
 }
 
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    orm::DbClientPtr db = drogon::app().getDbClient();
-    drogon::orm::Mapper<Users> user_mapper(db);
+    DbClientPtr db = drogon::app().getDbClient();
+    Mapper<Users> user_mapper(db);
+    std::string new_name = req->getParameter("new_name");
 
-    // TODO: Check if username is in conflict
+    if(nameExists(new_name, user_mapper)) {
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, ContentType::CT_NONE));
+        return;
+    }
+
     uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
-    orm::Criteria crit = orm::Criteria(Users::Cols::_id, orm::CompareOperator::EQ, userId);
-    user_mapper.updateBy({ "name" }, crit, req->getParameter("new_name"));
+    Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
+    user_mapper.updateBy({ "name" }, crit, new_name);
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
 }
 
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    orm::DbClientPtr db = drogon::app().getDbClient();
-    drogon::orm::Mapper<Users> user_mapper(db);
+    DbClientPtr db = drogon::app().getDbClient();
+    Mapper<Users> user_mapper(db);
+    std::string new_pass = req->getParameter("new_pass");
 
-    // TODO: Fix to change the hash instead
+    uint8_t hash[32], salt[16];
+
+    createSalt(salt);
+    createHash(new_pass, salt, hash);
+
     uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
-    orm::Criteria crit = orm::Criteria(Users::Cols::_id, userId);
-    user_mapper.updateBy({ "pass" }, crit, req->getParameter("new_pass"));
-    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
+    Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
+    Users user = user_mapper.findByPrimaryKey(userId);
+    user.setHash(std::string(reinterpret_cast<const char*>(hash), 32));
+    user.setSalt(std::string(reinterpret_cast<const char*>(salt), 16));
+    user_mapper.update(user);
+
+    req->session()->clear();
+
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+    res->addHeader("Location", "/account?m=Changed%20password%20successfully");
+    respond(res);
 }
