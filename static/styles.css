@@ -74,6 +74,23 @@ input[type=submit]:hover {
     justify-content: space-between;
 }
 
+#search-bar {
+    display: inline;
+    width: 30%;
+}
+
+#search-bar input[type=text] {
+    width: 80%;
+    font-size: 13px !important;
+    letter-spacing: 1px !important;
+}
+
+#search-bar input[type=submit] {
+    width: 10%;
+    font-size: 13px !important;
+    letter-spacing: 1px !important;
+}
+
 #navbar-account-link {
     color: var(--link-color);
     text-decoration: none;

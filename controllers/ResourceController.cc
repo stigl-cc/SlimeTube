@@ -10,14 +10,14 @@
 #include <system_error>
 
 using namespace drogon;
+namespace fs = std::filesystem;
 
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    HttpResponsePtr res = drogon::HttpResponse::newFileResponse("../videos/video-04.png");
-    respond(res);
+    respond(HttpResponse::newFileResponse(fs::path(Settings::getInstance().thumbnails_dir) / fs::path(id).filename()));
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    std::string path = "../videos/video-04.mp4";
+    std::string path = fs::path(Settings::getInstance().videos_dir) / fs::path(id).filename();
     std::string header = req->getHeader("Range");
     HttpResponsePtr res;
 
@@ -25,14 +25,17 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
     size_t file_length = std::filesystem::file_size(path, ec);
 
     if(ec) {
-        res = HttpResponse::newHttpResponse();
-        res->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        respond(res);
+        if(ec.value() == ENOENT)
+            respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+        else {
+            LOG_WARN << "Error when requesting video" << ec.message();
+            respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, CT_NONE));
+        }
         return;
     }
 
     if(header.empty()) {
-        res = HttpResponse::newFileResponse(path, "", drogon::CT_VIDEO_MP4, "video/mp4", req);
+        res = HttpResponse::newFileResponse(path, "", CT_VIDEO_MP4, "video/mp4", req);
         respond(res);
         return;
     }
@@ -41,25 +44,25 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
     FileRangeParseResult parse_result = parseRangeHeader(header, file_length, ranges);
 
     switch(parse_result) {
-        case drogon::InvalidRange:
+        case InvalidRange:
             res = HttpResponse::newHttpResponse();
-            res->setContentTypeCode(drogon::CT_NONE);
-            res->setStatusCode(drogon::k400BadRequest);
+            res->setContentTypeCode(CT_NONE);
+            res->setStatusCode(k400BadRequest);
             respond(res);
             return;
 
-        case drogon::NotSatisfiable:
+        case NotSatisfiable:
             res = HttpResponse::newHttpResponse();
-            res->setContentTypeCode(drogon::CT_NONE);
-            res->setStatusCode(drogon::k416RequestedRangeNotSatisfiable);
+            res->setContentTypeCode(CT_NONE);
+            res->setStatusCode(k416RequestedRangeNotSatisfiable);
             res->addHeader("Content-Range", std::format("bytes */{}", file_length));
             respond(res);
             return;
 
-        case drogon::SinglePart:
-        case drogon::MultiPart: {
+        case SinglePart:
+        case MultiPart: {
             ranges[0].end = std::min<size_t>(ranges[0].start + Settings::getInstance().zeroRangeLimit, ranges[0].end);
-            res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", drogon::CT_VIDEO_MP4, "video/mp4", req);
+            res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", CT_VIDEO_MP4, "video/mp4", req);
             if(res->getStatusCode() == HttpStatusCode::k200OK)
                 res->setStatusCode(HttpStatusCode::k206PartialContent);
             respond(res);

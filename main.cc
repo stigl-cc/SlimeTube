@@ -20,6 +20,8 @@ int main() {
     Json::Value custom_user_config = app().getCustomConfig();
     settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
     settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 1024 * 1024).as<uint64_t>();
+    settings.thumbnails_dir = custom_user_config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
+    settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
 
     app().setSSLConfigCommands({
             { "Options", "Compression" }
