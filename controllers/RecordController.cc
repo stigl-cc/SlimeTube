@@ -6,6 +6,7 @@
 
 #include <drogon/orm/DbClient.h>
 #include <drogon/orm/Mapper.h>
+#include <models/RecordManager.hh>
 #include <models/Attributes.hh>
 #include <models/Session.hh>
 #include <models/Users.h>
@@ -15,53 +16,14 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <stdexcept>
 
 using namespace drogon;
 using namespace drogon::orm;
 using SlimyTube::Session::keyUserId;
 using namespace drogon_model::SlimyTube;
 
-DbClientPtr getDbClient() {
-    static DbClientPtr db = drogon::app().getDbClient();
-    return db;
-}
-
-Mapper<Users> getUserMapper() {
-    static Mapper<Users> user_mapper(getDbClient());
-    return user_mapper;
-}
-
-Mapper<Videos> getVideosMapper() {
-    static Mapper<Videos> video_mapper(getDbClient());
-    return video_mapper;
-}
-
-void createSalt(const std::span<uint8_t, 16> salt) {
-    if(!RAND_bytes(salt.data(), salt.size())) {
-        ERR_print_errors_fp(stderr);
-        throw std::runtime_error("RAND_bytes Failed");
-    }
-}
-
-void createHash(const std::string& pass, const std::span<const uint8_t, 16> salt, const std::span<uint8_t, 32>& hash) {
-    if(!PKCS5_PBKDF2_HMAC(
-            pass.data(), pass.size(),
-            salt.data(), salt.size(),
-            1024, EVP_sha256(),
-            hash.size(), hash.data())) {
-        ERR_print_errors_fp(stderr);
-        throw std::runtime_error("PBKDF2 Failed");
-    }
-}
-
-bool nameExists(const std::string& name, Mapper<Users>& mapper) {
-    // username already taken
-    return !mapper.findBy(Criteria(Users::Cols::_name, CompareOperator::EQ, name)).empty();
-}
-
 void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    Mapper<Users> user_mapper = getUserMapper();
+    Mapper<Users> user_mapper = RecordManager::getUserMapper();
 
     std::string
         name = req->getParameter("name"),
@@ -74,15 +36,15 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
     }
 
     // username already taken
-    if(nameExists(name, user_mapper)) {
+    if(RecordManager::nameExists(name, user_mapper)) {
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, ContentType::CT_NONE));
         return;
     }
 
     uint8_t hash[32], salt[16];
 
-    createSalt(salt);
-    createHash(pass, salt, hash);
+    RecordManager::createSalt(salt);
+    RecordManager::createHash(pass, salt, hash);
 
     Users user;
     user.setName(name);
@@ -125,14 +87,14 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
 }
 
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    Mapper<Users> user_mapper = getUserMapper();
+    Mapper<Users> user_mapper = RecordManager::getUserMapper();
 
     uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
     // Delete all videos made by the account
-    DbClientPtr db = getDbClient();
-    Mapper<Videos> video_mapper = getVideosMapper();
+    DbClientPtr db = RecordManager::getDbClient();
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
     const std::vector<Videos> videos = user.getVideos(db);
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
@@ -144,10 +106,10 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
 }
 
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    Mapper<Users> user_mapper = getUserMapper();
+    Mapper<Users> user_mapper = RecordManager::getUserMapper();
     std::string new_name = req->getParameter("new_name");
 
-    if(nameExists(new_name, user_mapper)) {
+    if(RecordManager::nameExists(new_name, user_mapper)) {
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, ContentType::CT_NONE));
         return;
     }
@@ -159,13 +121,13 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
 }
 
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    Mapper<Users> user_mapper = getUserMapper();
+    Mapper<Users> user_mapper = RecordManager::getUserMapper();
     std::string new_pass = req->getParameter("new_pass");
 
     uint8_t hash[32], salt[16];
 
-    createSalt(salt);
-    createHash(new_pass, salt, hash);
+    RecordManager::createSalt(salt);
+    RecordManager::createHash(new_pass, salt, hash);
 
     uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
     Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);

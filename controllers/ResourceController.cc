@@ -1,9 +1,11 @@
 #include <controllers/ResourceController.h>
+#include <models/Settings.hh>
 
 #include <lib/drogon/lib/src/RangeParser.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
+
 #include <filesystem>
 #include <system_error>
 
@@ -56,8 +58,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
 
         case drogon::SinglePart:
         case drogon::MultiPart: {
-            // TODO: Impose a size limit for the 0- requests
-            // ranges[0].end = std::min(ranges[0].start + 1024 * 1024, ranges[0].end);
+            ranges[0].end = std::min<size_t>(ranges[0].start + Settings::getInstance().zeroRangeLimit, ranges[0].end);
             res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", drogon::CT_VIDEO_MP4, "video/mp4", req);
             if(res->getStatusCode() == HttpStatusCode::k200OK)
                 res->setStatusCode(HttpStatusCode::k206PartialContent);
