@@ -75,8 +75,10 @@ input[type=submit]:hover {
 }
 
 #search-bar {
-    display: inline;
-    width: 30%;
+    display: inline-flex;
+    flex-direction: row;
+    width: 40%;
+    gap: 3px;
 }
 
 #search-bar input[type=text] {
@@ -86,6 +88,7 @@ input[type=submit]:hover {
 }
 
 #search-bar input[type=submit] {
+    min-width: 10ch;
     width: 10%;
     font-size: 13px !important;
     letter-spacing: 1px !important;
