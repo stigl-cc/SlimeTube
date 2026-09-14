@@ -169,7 +169,7 @@ input[type=submit]:hover {
 }
 
 .preview-title {
-    line-height: 1;
+    line-height: 1.3;
     font-size: 18px;
     font-weight: bold;
 }

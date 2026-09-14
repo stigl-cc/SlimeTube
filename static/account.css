@@ -89,6 +89,8 @@ input {
 }
 
 #videos-table th, td {
+    text-align: left;
+    padding-left: 3px;
     outline-style: solid;
     outline-width: 1px;
     text-overflow: ellipsis;
