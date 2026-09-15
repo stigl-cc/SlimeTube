@@ -48,5 +48,9 @@ void SlimyTube::RecordManager::createHash(const std::string& pass, const std::sp
 
 bool SlimyTube::RecordManager::nameExists(const std::string& name, Mapper<Users>& mapper) {
     // username already taken
-    return !mapper.findBy(Criteria(Users::Cols::_name, CompareOperator::EQ, name)).empty();
+    return mapper.count(Criteria(Users::Cols::_name, CompareOperator::EQ, name)) == 1;
+}
+
+bool SlimyTube::RecordManager::videoExists(const std::string& id) {
+    return getVideosMapper().count(Criteria(Videos::Cols::_id, CompareOperator::EQ, id)) == 1;
 }

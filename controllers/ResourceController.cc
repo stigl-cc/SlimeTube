@@ -1,6 +1,6 @@
 #include <controllers/ResourceController.h>
-#include <models/Settings.hh>
 
+#include <drogon/MultiPart.h>
 #include <lib/drogon/lib/src/RangeParser.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
@@ -8,24 +8,36 @@
 
 #include <filesystem>
 #include <system_error>
+#include <format>
+
+#include <models/RecordManager.hh>
+#include <models/Settings.hh>
 
 using namespace drogon;
 namespace fs = std::filesystem;
 
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    respond(HttpResponse::newFileResponse(fs::path(Settings::getInstance().thumbnails_dir) / fs::path(id).filename()));
+    if(!RecordManager::videoExists(id)) {
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+        return;
+    }
+    respond(HttpResponse::newFileResponse(fs::path(Settings::getInstance().thumbnails_dir) / id));
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    std::string path = fs::path(Settings::getInstance().videos_dir) / fs::path(id).filename();
-    std::string header = req->getHeader("Range");
+    if(!RecordManager::videoExists(id)) {
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+        return;
+    }
+
+    fs::path path = fs::path(Settings::getInstance().videos_dir) / id;
     HttpResponsePtr res;
 
     std::error_code ec;
     size_t file_length = std::filesystem::file_size(path, ec);
 
     if(ec) {
-        if(ec.value() == ENOENT)
+        if(ec.value() == static_cast<int>(std::errc::no_such_file_or_directory))
             respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
         else {
             LOG_WARN << "Error when requesting video" << ec.message();
@@ -34,14 +46,16 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
         return;
     }
 
-    if(header.empty()) {
+    std::string range_header = req->getHeader("Range");
+    if(range_header.empty()) {
         res = HttpResponse::newFileResponse(path, "", CT_VIDEO_MP4, "video/mp4", req);
+        res->addHeader("Accept-Ranges", "bytes");
         respond(res);
         return;
     }
 
     std::vector<FileRange> ranges;
-    FileRangeParseResult parse_result = parseRangeHeader(header, file_length, ranges);
+    FileRangeParseResult parse_result = parseRangeHeader(range_header, file_length, ranges);
 
     switch(parse_result) {
         case InvalidRange:
