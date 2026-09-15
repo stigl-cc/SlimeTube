@@ -13,6 +13,7 @@ namespace SlimyTube {
         std::string
             thumbnails_dir,
             videos_dir;
+        size_t salt_len;
 
         static inline Settings& getInstance() {
             static Settings setting = {};

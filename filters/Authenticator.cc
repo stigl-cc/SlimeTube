@@ -1,4 +1,3 @@
-
 #include <filters/Authenticator.h>
 #include <drogon/HttpAppFramework.h>
 #include <drogon/HttpResponse.h>
@@ -16,6 +15,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <span>
 #include <stdexcept>
 #include <utility>
 
@@ -40,7 +40,7 @@ int SlimyTube::Authenticator::passwordCheck(uint32_t& userId, const std::string&
 
     uint8_t hash[32];
     try {
-        RecordManager::createHash(pass, std::span<const uint8_t, 16>(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()), hash);
+        RecordManager::createHash(pass, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()), hash);
     } catch(const std::runtime_error& e) {
         LOG_WARN << "Authenticator failed with " << e.what();
         return 500;

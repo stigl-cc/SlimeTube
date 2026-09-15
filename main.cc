@@ -22,6 +22,7 @@ int main() {
     settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 1024 * 1024).as<uint64_t>();
     settings.thumbnails_dir = custom_user_config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
     settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
+    settings.salt_len = custom_user_config.get("salt_len", 16).as<size_t>();
 
     app().setSSLConfigCommands({
             { "Options", "Compression" }

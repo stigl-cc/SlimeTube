@@ -1,3 +1,4 @@
+#include "Settings.hh"
 #include <controllers/RecordController.h>
 
 #include <drogon/HttpResponse.h>
@@ -41,15 +42,16 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         return;
     }
 
-    uint8_t hash[32], salt[16];
-
+    std::vector<uint8_t> salt(Settings::getInstance().salt_len);
     RecordManager::createSalt(salt);
+
+    uint8_t hash[32];
     RecordManager::createHash(pass, salt, hash);
 
     Users user;
     user.setName(name);
-    user.setSalt(std::string(reinterpret_cast<char*>(salt), sizeof(salt)));
     user.setHash(std::string(reinterpret_cast<char*>(hash), sizeof(hash)));
+    user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
 
     user_mapper.insert(user);
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k201Created, ContentType::CT_NONE));
@@ -124,16 +126,17 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
     std::string new_pass = req->getParameter("new_pass");
 
-    uint8_t hash[32], salt[16];
-
+    std::vector<uint8_t> salt(Settings::getInstance().salt_len);
     RecordManager::createSalt(salt);
+
+    uint8_t hash[32];
     RecordManager::createHash(new_pass, salt, hash);
 
     uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
     Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
     Users user = user_mapper.findByPrimaryKey(userId);
-    user.setHash(std::string(reinterpret_cast<const char*>(hash), 32));
-    user.setSalt(std::string(reinterpret_cast<const char*>(salt), 16));
+    user.setHash(std::string(reinterpret_cast<const char*>(hash), sizeof(hash)));
+    user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
     user_mapper.update(user);
 
     req->session()->clear();

@@ -28,14 +28,14 @@ Mapper<Videos> SlimyTube::RecordManager::getVideosMapper() {
     return video_mapper;
 }
 
-void SlimyTube::RecordManager::createSalt(const std::span<uint8_t, 16> salt) {
+void SlimyTube::RecordManager::createSalt(const std::span<uint8_t> salt) {
     if(!RAND_bytes(salt.data(), salt.size())) {
         ERR_print_errors_fp(stderr);
         throw std::runtime_error("RAND_bytes Failed");
     }
 }
 
-void SlimyTube::RecordManager::createHash(const std::string& pass, const std::span<const uint8_t, 16> salt, const std::span<uint8_t, 32>& hash) {
+void SlimyTube::RecordManager::createHash(const std::string& pass, const std::span<const uint8_t> salt, const std::span<uint8_t, 32>& hash) {
     if(!PKCS5_PBKDF2_HMAC(
             pass.data(), pass.size(),
             salt.data(), salt.size(),

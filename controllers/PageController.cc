@@ -1,4 +1,4 @@
-#include "controllers/RecordController.h"
+#include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
 #include <drogon/HttpResponse.h>
