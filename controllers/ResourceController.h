@@ -1,12 +1,14 @@
 #pragma once
 #include <drogon/HttpController.h>
 #include <drogon/HttpRequest.h>
+#include <drogon/RequestStream.h>
 
 using drogon::HttpMethod::Get,
     drogon::HttpMethod::Post,
     drogon::HttpMethod::Put,
     drogon::HttpRequestPtr,
-    drogon::HttpResponsePtr;
+    drogon::HttpResponsePtr,
+    drogon::HttpRequestPtr;
 
 namespace SlimyTube {
     class ResourceController : public drogon::HttpController<ResourceController> {
@@ -22,6 +24,6 @@ namespace SlimyTube {
         void getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
 
         void uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
-        void uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
+        void uploadVideo(const HttpRequestPtr& req, drogon::RequestStreamPtr &&streamCtx, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
     };
 }

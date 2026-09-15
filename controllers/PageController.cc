@@ -171,7 +171,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);
 
-    uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
+    Attributes::userId_t userId = req->attributes()->get<Attributes::userId_t>(Attributes::keyUserId.data());
     const Users user = user_mapper.findByPrimaryKey(userId);
     const std::vector<Videos> videos = user.getVideos(db);
 

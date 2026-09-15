@@ -1,5 +1,6 @@
 #include "Settings.hh"
 #include <drogon/Cookie.h>
+#include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpViewData.h>
 #include <drogon/drogon.h>
@@ -77,6 +78,11 @@ int main() {
     app()
         .setMaxConnectionNum(10'000)
         .setMaxConnectionNumPerIP(10);
+
+    app()
+        .registerPreRoutingAdvice([](const HttpRequestPtr& req) {
+            LOG_INFO << req->getPeerAddr().toIpPort() << ' ' << req->methodString() << ' ' << req->path();
+        });
 
     app().run();
     return 0;

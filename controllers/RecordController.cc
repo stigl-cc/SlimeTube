@@ -20,7 +20,8 @@
 
 using namespace drogon;
 using namespace drogon::orm;
-using SlimyTube::Session::keyUserId;
+using SlimyTube::Session::keyUserId,
+    SlimyTube::Attributes::userId_t;
 using namespace drogon_model::SlimyTube;
 
 void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
@@ -66,7 +67,7 @@ void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::func
     }
 
     if(loginMethod != Attributes::LoginMethod::Session) {
-        req->session()->insert(Session::keyUserId.data(), req->attributes()->get<uint32_t>(Attributes::keyUserId.data()));
+        req->session()->insert(Session::keyUserId.data(), req->attributes()->get<userId_t>(Attributes::keyUserId.data()));
     }
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
@@ -90,7 +91,7 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
 
-    uint32_t userId = req->attributes()->get<uint32_t>(Attributes::keyUserId.data());
+    userId_t userId = req->attributes()->get<userId_t>(Attributes::keyUserId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
     // Delete all videos made by the account
@@ -100,7 +101,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
 
-    user_mapper.deleteByPrimaryKey(req->getAttributes()->get<uint32_t>(keyUserId.data()));
+    user_mapper.deleteByPrimaryKey(req->attributes()->get<userId_t>(keyUserId.data()));
     req->session()->clear();
 
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
@@ -115,7 +116,7 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
         return;
     }
 
-    uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
+    userId_t userId = req->getAttributes()->get<userId_t>(Attributes::keyUserId.data());
     Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
     user_mapper.updateBy({ "name" }, crit, new_name);
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
@@ -130,7 +131,7 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     uint8_t hash[32];
     RecordManager::createHash(new_pass, salt, hash);
 
-    uint32_t userId = req->getAttributes()->get<uint32_t>(Attributes::keyUserId.data());
+    userId_t userId = req->getAttributes()->get<userId_t>(Attributes::keyUserId.data());
     Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
     Users user = user_mapper.findByPrimaryKey(userId);
     user.setHash(std::string(reinterpret_cast<const char*>(hash), sizeof(hash)));

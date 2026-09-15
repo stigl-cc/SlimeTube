@@ -20,12 +20,8 @@
 #include <utility>
 
 using namespace drogon_model::SlimyTube;
-namespace orm = drogon::orm;
-using
-    drogon::HttpStatusCode,
-    drogon::ContentType,
-    drogon::HttpResponse,
-    drogon::HttpResponsePtr;
+using namespace drogon;
+using namespace drogon::orm;
 
 int SlimyTube::Authenticator::passwordCheck(uint32_t& userId, const std::string& name, const std::string& pass) {
     if(name.empty() || pass.empty()) return 401;
