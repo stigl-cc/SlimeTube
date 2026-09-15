@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[query]] - [[title]]</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/search.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div>Search results for: [[query]]</div>
+        <div>
+            <%c++
+                auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
+                for(const auto& preview : previews) {%>
+            <a class="preview-link" href="/watch/{%preview.at("id")%}">
+                <div class="preview">
+                    <div class="preview-image-container">
+                        <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
+                        <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                    </div>
+                    <div class="preview-text preview-title">{%preview.at("title")%}</div>
+                    <div class="preview-text preview-channel">{%preview.at("channel")%}</div>
+                    <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
+                </div>
+            </a>
+            <%c++ }%>
+        </div>
+        <%view footer %>
+    </body>
+</html>

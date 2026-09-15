@@ -109,6 +109,7 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, s
         return;
     }
 
+    // TODO: Make sure its an image and convert all to jpeg
     fs::path path = fs::path(Settings::getInstance().thumbnails_dir) / fs::path(id);
     std::ofstream ofs(path, std::ios::out | std::ios::binary);
 
@@ -116,9 +117,10 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, s
     ofs.write(body.data(), body.size());
     ofs.close();
 
-    respond(HttpResponse::newHttpResponse(drogon::k202Accepted, CT_NONE));
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
 }
 
 void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, drogon::RequestStreamPtr &&streamCtx, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-
+    // TODO: Utilize RequestStream and upload & transcode the video propertly
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k501NotImplemented, CT_NONE));
 }
