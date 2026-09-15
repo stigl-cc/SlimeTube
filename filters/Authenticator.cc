@@ -8,6 +8,7 @@
 #include <drogon/orm/Mapper.h>
 
 #include <models/Session.hh>
+#include <models/RecordManager.hh>
 #include <models/Attributes.hh>
 #include <models/Users.h>
 #include <models/Videos.h>
@@ -25,8 +26,7 @@ using
     drogon::HttpResponsePtr;
 
 int SlimyTube::Authenticator::passwordCheck(uint32_t& userId, const std::string& name, const std::string& pass) {
-    orm::DbClientPtr db = drogon::app().getDbClient();
-    orm::Mapper<Users> user_mapper(db);
+    Mapper<Users> user_mapper = RecordManager::getUserMapper();
 
     if(name.empty() || pass.empty()) {
         return 401;
@@ -42,17 +42,7 @@ int SlimyTube::Authenticator::passwordCheck(uint32_t& userId, const std::string&
         correct_hash = users[0].getValueOfHash();
 
     uint8_t hash[32];
-
-    if(!PKCS5_PBKDF2_HMAC(
-            pass.data(), pass.size(),
-            reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
-            1024, EVP_sha256(),
-            sizeof(hash), hash)) {
-        LOG_WARN << "PBKDF2 Failed";
-        ERR_print_errors_fp(stderr);
-
-        return 500;
-    }
+    RecordManager::createHash(pass, std::span<const uint8_t, 16>(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()), hash);
 
     if(CRYPTO_memcmp(hash, correct_hash.data(), correct_hash.size())) {
         return 401;

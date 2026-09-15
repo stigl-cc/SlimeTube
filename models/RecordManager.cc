@@ -39,7 +39,7 @@ void SlimyTube::RecordManager::createHash(const std::string& pass, const std::sp
     if(!PKCS5_PBKDF2_HMAC(
             pass.data(), pass.size(),
             salt.data(), salt.size(),
-            1024, EVP_sha256(),
+            400'000, EVP_sha256(),
             hash.size(), hash.data())) {
         ERR_print_errors_fp(stderr);
         throw std::runtime_error("PBKDF2 Failed");
