@@ -26,8 +26,7 @@ using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
 using namespace std::chrono;
 
-std::string formatVideoAge(int64_t uploadTime) {
-    std::vector<std::pair<int64_t, char>> time_units = {
+static const std::vector<std::pair<int64_t, char>> timeUnits = {
         { 31'556'952, 'y' },
         {  2'628'000, 'M' },
         {    604'800, 'w' },
@@ -36,6 +35,7 @@ std::string formatVideoAge(int64_t uploadTime) {
         {         60, 'm' },
     };
 
+std::string formatVideoAge(int64_t uploadTime) {
     const int64_t
         current_time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count(),
         video_age = current_time - uploadTime;
@@ -46,7 +46,7 @@ std::string formatVideoAge(int64_t uploadTime) {
     std::pair<int64_t, char> used_unit = { 1, 's' };
 
     // find appropriate unit
-    for(const std::pair<int64_t, char>& time_unit : time_units) {
+    for(const std::pair<int64_t, char>& time_unit : timeUnits) {
         if(video_age >= time_unit.first) {
             used_unit = time_unit;
             break;
@@ -60,18 +60,31 @@ std::string formatVideoAge(int64_t uploadTime) {
 
     // add unit mark
     *result.ptr++ = used_unit.second;
-    return std::string(age_str, result.ptr - age_str);
+    return std::string(age_str, result.ptr);
 }
+
+static const std::vector<std::pair<int64_t, char>> viewCountUnits = {
+    { 1'000'000'000, 'B' },
+    {     1'000'000, 'M' },
+    {         1'000, 'k' },
+};
 
 std::string formatViewCount(int64_t viewCount) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(1);
-    if(viewCount >= 1'000'000)
-        ss << viewCount / 1'000'000.0f << 'M';
-    else if(viewCount >= 1'000)
-        ss << viewCount / 1'000.0f << 'k';
-    else
-        ss << viewCount;
+
+    std::pair<int64_t, char> used_unit = { 1, 0 };
+
+    // find appropriate unit
+    for(const std::pair<int64_t, char>& view_count_unit : viewCountUnits) {
+        if(viewCount >= view_count_unit.first) {
+            used_unit = view_count_unit;
+            break;
+        }
+    }
+
+    ss << viewCount / static_cast<float>(used_unit.first);
+    if(used_unit.second) ss << used_unit.second;
 
     return ss.str();
 }
@@ -129,7 +142,6 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
         user_id = std::to_string(channel.getValueOfId());
 
     std::vector<std::unordered_map<std::string, std::string>> previews = CreatePreviews(25);;
-    //TODO: Add HttpViewData::htmlTranslate(""); to everything
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);
@@ -151,7 +163,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     std::vector<std::unordered_map<std::string, std::string>> video_entries;
 
     if(loginMethod == LoginMethod::LaxNone) {
-        data.insert("message", req->getParameter("m"));
+        data.insert("message", HttpViewData::htmlTranslate(req->getParameter("m")));
         respond(HttpResponse::newHttpViewResponse("login.csp", data));
         return;
     }

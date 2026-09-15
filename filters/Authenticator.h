@@ -11,9 +11,10 @@ using drogon::HttpMiddleware,
 
 namespace SlimyTube {
     class Authenticator {
-        protected:
+        public:
         virtual ~Authenticator() = default;
         int passwordCheck(uint32_t& userId, const std::string& name, const std::string& pass);
+        void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb, bool strict);
     };
 
     class StrictAuthenticator : public HttpMiddleware<StrictAuthenticator>, public Authenticator {
