@@ -16,8 +16,8 @@ namespace SlimyTube {
         static Mapper<Users> getUserMapper();
         static Mapper<Videos> getVideosMapper();
 
-        static void createSalt(const std::span<uint8_t>);
-        static void createHash(const std::string& pass, const std::span<const uint8_t> salt, const std::span<uint8_t, 32>& hash);
+        static std::vector<uint8_t> createSalt();
+        static void createHash(const std::string& pass, std::span<const uint8_t> salt, std::span<uint8_t> hash);
         static bool nameExists(const std::string& name, Mapper<Users>& mapper);
 
         static bool videoExists(const std::string& id);

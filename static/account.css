@@ -60,7 +60,8 @@ input {
     margin-bottom: 3px;
 }
 
-.user-change input[type=text] {
+.user-change input[type=text],
+.user-change input[type=password],{
     width: 35ch;
 }
 

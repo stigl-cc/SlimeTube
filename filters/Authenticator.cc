@@ -40,7 +40,7 @@ int SlimyTube::Authenticator::passwordCheck(uint32_t& userId, const std::string&
 
     uint8_t hash[32];
     try {
-        RecordManager::createHash(pass, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()), hash);
+        RecordManager::createHash(pass, std::span(reinterpret_cast<const uint8_t*>(salt.data()), salt.size()), hash);
     } catch(const std::runtime_error& e) {
         LOG_WARN << "Authenticator failed with " << e.what();
         return 500;
@@ -61,8 +61,8 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
         userId = req->session()->get<uint32_t>(Session::keyUserId.data());
         loginMethod = Attributes::LoginMethod::Session;
     }
-    // log in using name + password
     else {
+    // log in using name + password
         const std::string&
             name = req->getParameter("name"),
             pass = req->getParameter("pass");

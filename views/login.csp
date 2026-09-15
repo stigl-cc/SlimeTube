@@ -21,7 +21,7 @@
                 <br>
                 <div>
                     <label for="pass">Password:</label><br>
-                    <input id="pass-input" name="pass" type="text" /><br>
+                    <input id="pass-input" name="pass" type="password" /><br>
                 </div>
 
                 <input id="login-submit" type="submit" value="Login" />

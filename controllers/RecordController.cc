@@ -42,8 +42,7 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         return;
     }
 
-    std::vector<uint8_t> salt(Settings::getInstance().salt_len);
-    RecordManager::createSalt(salt);
+    std::vector<uint8_t> salt = RecordManager::createSalt();
 
     uint8_t hash[32];
     RecordManager::createHash(pass, salt, hash);
@@ -126,8 +125,7 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
     std::string new_pass = req->getParameter("new_pass");
 
-    std::vector<uint8_t> salt(Settings::getInstance().salt_len);
-    RecordManager::createSalt(salt);
+    std::vector<uint8_t> salt = RecordManager::createSalt();
 
     uint8_t hash[32];
     RecordManager::createHash(new_pass, salt, hash);

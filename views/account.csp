@@ -29,7 +29,7 @@
 
                 <form class="user-change" method="post" action="/user/password">
                     <label for="user">password:</label>
-                    <input id="pass-input" name="new_pass" type="text" />
+                    <input id="pass-input" name="new_pass" type="password" />
                     <input id="new-pass-submit" type="submit" value="change password" />
                 </form>
             </div>
