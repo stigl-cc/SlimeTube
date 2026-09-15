@@ -141,7 +141,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
-    std::vector<std::unordered_map<std::string, std::string>> previews = CreatePreviews(25);;
+    std::vector<std::unordered_map<std::string, std::string>> previews = CreatePreviews(25);
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);
@@ -154,6 +154,15 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     data.insert("video_channel_id", user_id);
 
     respond(HttpResponse::newHttpViewResponse("watch.csp", data));
+}
+
+void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    std::vector<std::unordered_map<std::string, std::string>> previews = CreatePreviews(25);
+
+    HttpViewData data = Settings::getInstance().getData();
+    data.insert("previews", previews);
+
+    respond(HttpResponse::newHttpViewResponse("search.csp", data));
 }
 
 void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {

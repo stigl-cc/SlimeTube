@@ -120,5 +120,5 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, s
 }
 
 void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, drogon::RequestStreamPtr &&streamCtx, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    
+
 }
