@@ -122,9 +122,7 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, s
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
 }
 
-
-
-void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, drogon::RequestStreamPtr &&streamCtx, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
+void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
     std::optional<Videos> video = RecordManager::getVideoIfExists(id);
     if(!video.has_value()) { // video not found
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
@@ -136,28 +134,4 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, drogo
         return;
     }
 
-    if(!streamCtx) {
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
-        return;
-    }
-
-    RequestStreamReaderPtr reader = RequestStreamReader::newReader(
-        std::bind(&ResourceController::uploadVideoStreamData, *this, _1, _2),
-        std::bind(&ResourceController::uploadVideoStreamFinish, *this, _1));
-    streamCtx->setStreamReader(std::move(reader));
-}
-
-void SlimyTube::ResourceController::uploadVideoStreamData(const char* data, size_t size) const {
-    LOG_INFO << "Received a chunky chunk " << size << "bytes in size";
-}
-
-void SlimyTube::ResourceController::uploadVideoStreamFinish(std::exception_ptr e) const {
-    if (e) {
-        try {
-            std::rethrow_exception(std::move(e));
-        }
-        catch (const std::exception &e) {
-            LOG_ERROR << "stream error: " << e.what();
-        }
-    }
 }

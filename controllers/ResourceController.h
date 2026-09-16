@@ -29,6 +29,6 @@ namespace SlimyTube {
         void getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
 
         void uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
-        void uploadVideo(const HttpRequestPtr& req, drogon::RequestStreamPtr &&streamCtx, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
+        void uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
     };
 }
