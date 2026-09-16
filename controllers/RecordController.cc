@@ -89,14 +89,14 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
 }
 
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    DbClientPtr db = RecordManager::getDbClient();
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
 
     userId_t userId = req->attributes()->get<userId_t>(Attributes::keyUserId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
-    // Delete all videos made by the account
-    DbClientPtr db = RecordManager::getDbClient();
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
+    // Delete all videos made by the account    
     const std::vector<Videos> videos = user.getVideos(db);
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
@@ -110,6 +110,11 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
     std::string new_name = req->getParameter("new_name");
+
+    if(new_name.empty()) {
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE));
+        return;
+    }
 
     if(RecordManager::nameExists(new_name, user_mapper)) {
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, ContentType::CT_NONE));
@@ -125,6 +130,9 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
     std::string new_pass = req->getParameter("new_pass");
+
+    if(new_pass.empty())
+        return(void) respond(HttpResponse::newHttpResponse(drogon::k400BadRequest, drogon::CT_NONE));
 
     std::vector<uint8_t> salt = RecordManager::createSalt();
 

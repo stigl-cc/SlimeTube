@@ -1,12 +1,7 @@
-#include "Attributes.hh"
-#include "controllers/RecordController.h"
 #include <controllers/ResourceController.h>
 
-#include <drogon/MultiPart.h>
-#include <drogon/RequestStream.h>
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Exception.h>
-#include <functional>
 #include <lib/drogon/lib/src/RangeParser.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
@@ -15,9 +10,11 @@
 #include <format>
 #include <fstream>
 #include <filesystem>
+#include <functional>
 #include <string_view>
 #include <system_error>
 
+#include <models/Attributes.hh>
 #include <models/RecordManager.hh>
 #include <models/Settings.hh>
 
@@ -97,7 +94,6 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
     }
 }
 
-
 void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
     std::optional<Videos> video = RecordManager::getVideoIfExists(id);
 
@@ -133,5 +129,9 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, std::
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
         return;
     }
+    
+    fs::path path = fs::path(Settings::getInstance().videos_dir) / fs::path(id);
 
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, CT_NONE));
+    return;
 }
