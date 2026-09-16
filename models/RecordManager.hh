@@ -21,5 +21,6 @@ namespace SlimyTube {
         static bool nameExists(const std::string& name, Mapper<Users>& mapper);
 
         static bool videoExists(const std::string& id);
+        static std::optional<Videos> getVideoIfExists(const std::string& id);
     };
 };

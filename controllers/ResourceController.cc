@@ -1,4 +1,5 @@
 #include "Attributes.hh"
+#include "controllers/RecordController.h"
 #include <controllers/ResourceController.h>
 
 #include <drogon/MultiPart.h>
@@ -95,16 +96,14 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
 
 
 void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
-    Videos video;
-    try {
-        video = video_mapper.findOne(Criteria(Videos::Cols::_id, CompareOperator::EQ, id));
-    } catch(UnexpectedRows e) { // video id doesn't exist
+    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
+
+    if(!video.has_value()) { // video not found
         respond(HttpResponse::newHttpResponse(drogon::k404NotFound, CT_NONE));
         return;
     }
 
-    if(video.getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) { // video doesn't belong to the user
+    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) { // video doesn't belong to the user
         respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
         return;
     }
@@ -121,6 +120,16 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, s
 }
 
 void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, drogon::RequestStreamPtr &&streamCtx, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
+    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
+    if(!video.has_value()) { // video not found
+        respond(HttpResponse::newHttpResponse(drogon::k404NotFound, CT_NONE));
+        return;
+    }
+    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) { // video doesn't belong to the user
+        respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
+        return;
+    }
+
     // TODO: Utilize RequestStream and upload & transcode the video propertly
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k501NotImplemented, CT_NONE));
 }

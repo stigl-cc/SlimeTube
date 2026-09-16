@@ -3,6 +3,7 @@
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpViewData.h>
+#include <drogon/RateLimiter.h>
 #include <drogon/drogon.h>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
