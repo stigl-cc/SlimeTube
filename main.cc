@@ -82,7 +82,11 @@ int main() {
 
     app()
         .registerPreRoutingAdvice([](const HttpRequestPtr& req) {
-            LOG_INFO << req->getPeerAddr().toIpPort() << ' ' << req->methodString() << ' ' << req->path();
+            LOG_INFO
+                << req->getHeader("User-Agent") << ' '
+                << req->getPeerAddr().toIpPort() << ' '
+                << req->methodString() << ' '
+                << req->path();
         });
 
     app().run();

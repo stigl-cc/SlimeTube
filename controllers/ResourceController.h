@@ -8,10 +8,15 @@ using drogon::HttpMethod::Get,
     drogon::HttpMethod::Put,
     drogon::HttpRequestPtr,
     drogon::HttpResponsePtr,
-    drogon::HttpRequestPtr;
+    drogon::HttpRequestPtr,
+    drogon::RequestStreamPtr,
+    drogon::MultipartHeader;
 
 namespace SlimyTube {
     class ResourceController : public drogon::HttpController<ResourceController> {
+        private:
+        void uploadVideoStreamData(const char*, size_t) const;
+        void uploadVideoStreamFinish(std::exception_ptr) const;
         public:
     METHOD_LIST_BEGIN
         ADD_METHOD_TO(ResourceController::getThumbnail, "/rsc/thumbnail/{1}", Get);

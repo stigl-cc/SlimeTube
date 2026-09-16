@@ -3,8 +3,10 @@
 #include <controllers/ResourceController.h>
 
 #include <drogon/MultiPart.h>
+#include <drogon/RequestStream.h>
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Exception.h>
+#include <functional>
 #include <lib/drogon/lib/src/RangeParser.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
@@ -20,6 +22,7 @@
 #include <models/Settings.hh>
 
 using namespace SlimyTube::Attributes;
+using namespace std::placeholders;
 
 using namespace drogon;
 using namespace drogon::orm;
@@ -119,17 +122,42 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, s
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
 }
 
+
+
 void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, drogon::RequestStreamPtr &&streamCtx, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
     std::optional<Videos> video = RecordManager::getVideoIfExists(id);
     if(!video.has_value()) { // video not found
-        respond(HttpResponse::newHttpResponse(drogon::k404NotFound, CT_NONE));
-        return;
-    }
-    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) { // video doesn't belong to the user
-        respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
         return;
     }
 
-    // TODO: Utilize RequestStream and upload & transcode the video propertly
-    respond(HttpResponse::newHttpResponse(HttpStatusCode::k501NotImplemented, CT_NONE));
+    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) { // video doesn't belong to the user
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
+        return;
+    }
+
+    if(!streamCtx) {
+        respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+        return;
+    }
+
+    RequestStreamReaderPtr reader = RequestStreamReader::newReader(
+        std::bind(&ResourceController::uploadVideoStreamData, *this, _1, _2),
+        std::bind(&ResourceController::uploadVideoStreamFinish, *this, _1));
+    streamCtx->setStreamReader(std::move(reader));
+}
+
+void SlimyTube::ResourceController::uploadVideoStreamData(const char* data, size_t size) const {
+    LOG_INFO << "Received a chunky chunk " << size << "bytes in size";
+}
+
+void SlimyTube::ResourceController::uploadVideoStreamFinish(std::exception_ptr e) const {
+    if (e) {
+        try {
+            std::rethrow_exception(std::move(e));
+        }
+        catch (const std::exception &e) {
+            LOG_ERROR << "stream error: " << e.what();
+        }
+    }
 }
