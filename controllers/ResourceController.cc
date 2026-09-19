@@ -26,6 +26,13 @@ using namespace std::placeholders;
 using namespace drogon;
 using namespace drogon::orm;
 namespace fs = std::filesystem;
+using
+
+    std::vector,
+    std::optional,
+    std::shared_mutex,
+    std::unique_lock,
+    std::shared_lock;
 
 shared_mutex& SlimyTube::ResourceController::getMutexForVideo(const string& key) {
     shared_lock lk(mutexVideoMutexes);
@@ -75,7 +82,7 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
         return(void) respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
 
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
-    unique_lock lk(getMutexForThumbnail(path));
+    unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
     // TODO: Make sure its an image and convert all to jpeg
 
@@ -152,10 +159,11 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
     if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) // video doesn't belong to the user
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
 
-    // lock the video file - we are writing to it
-    unique_lock lk(getMutexForVideo(path));
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
+    unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
+
+    const std::string& offsetParam = req->getParameter("X-Offset");
 
     return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, CT_NONE));
 }

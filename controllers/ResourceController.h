@@ -15,19 +15,15 @@ using drogon::HttpMethod::Get,
     drogon::RequestStreamPtr,
     drogon::MultipartHeader;
 
-using
-    std::vector,
-    std::optional,
-    std::function,
-    std::string,
-    std::shared_mutex,
-    std::unique_ptr,
-    std::unique_lock,
-    std::shared_lock,
-    std::unordered_map;
-
 namespace SlimyTube {
+    using
+        std::shared_mutex,
+        std::string,
+        std::unique_ptr,
+        std::unordered_map,
+        std::function;
     class ResourceController : public drogon::HttpController<ResourceController> {
+        // TODO: Handle mutex overflow
         shared_mutex mutexVideoMutexes;
         unordered_map<string, unique_ptr<shared_mutex>> mutexVideos;
 

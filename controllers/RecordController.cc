@@ -1,4 +1,3 @@
-#include "Settings.hh"
 #include <controllers/RecordController.h>
 
 #include <drogon/HttpResponse.h>
@@ -27,7 +26,7 @@ using namespace drogon_model::SlimyTube;
 void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
 
-    std::string
+    const std::string&
         name = req->getParameter("name"),
         pass = req->getParameter("pass");
 
@@ -96,7 +95,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
     userId_t userId = req->attributes()->get<userId_t>(Attributes::keyUserId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
-    // Delete all videos made by the account    
+    // Delete all videos made by the account
     const std::vector<Videos> videos = user.getVideos(db);
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
@@ -109,7 +108,8 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
 
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
-    std::string new_name = req->getParameter("new_name");
+    const std::string&
+        new_name = req->getParameter("new_name");
 
     if(new_name.empty()) {
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE));
@@ -129,7 +129,8 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
 
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
-    std::string new_pass = req->getParameter("new_pass");
+    const std::string&
+        new_pass = req->getParameter("new_pass");
 
     if(new_pass.empty())
         return(void) respond(HttpResponse::newHttpResponse(drogon::k400BadRequest, drogon::CT_NONE));
