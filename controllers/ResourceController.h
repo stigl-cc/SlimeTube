@@ -15,10 +15,27 @@ using drogon::HttpMethod::Get,
     drogon::RequestStreamPtr,
     drogon::MultipartHeader;
 
+using
+    std::vector,
+    std::optional,
+    std::function,
+    std::string,
+    std::shared_mutex,
+    std::unique_ptr,
+    std::unique_lock,
+    std::shared_lock,
+    std::unordered_map;
+
 namespace SlimyTube {
     class ResourceController : public drogon::HttpController<ResourceController> {
-        std::shared_mutex videoMutexesMutex;
-        std::unordered_map<std::string, std::unique_ptr<std::shared_mutex>> videoMutexes;
+        shared_mutex mutexVideoMutexes;
+        unordered_map<string, unique_ptr<shared_mutex>> mutexVideos;
+
+        shared_mutex mutexThumbnailMutexes;
+        unordered_map<string, unique_ptr<shared_mutex>> mutexThumbnails;
+
+        shared_mutex& getMutexForThumbnail(const string& key);
+        shared_mutex& getMutexForVideo(const string& key);
         public:
     METHOD_LIST_BEGIN
         // errors: 404
@@ -38,10 +55,10 @@ namespace SlimyTube {
         // success: 202
         ADD_METHOD_TO(ResourceController::uploadVideo, "/rsc/video/{1}", Put, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
-        void getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
-        void getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
+        void getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
+        void getVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
 
-        void uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
-        void uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id) const;
+        void uploadThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
+        void uploadVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
     };
 }
