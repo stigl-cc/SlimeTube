@@ -26,16 +26,7 @@ using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
 using namespace std::chrono;
 
-static const std::vector<std::pair<int64_t, char>> timeUnits = {
-        { 31'556'952, 'y' },
-        {  2'628'000, 'M' },
-        {    604'800, 'w' },
-        {     86'400, 'd' },
-        {      3'600, 'h' },
-        {         60, 'm' },
-    };
-
-std::string formatVideoAge(int64_t uploadTime) {
+std::string SlimyTube::PageController::formatVideoAge(int64_t uploadTime) const {
     const int64_t
         current_time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count(),
         video_age = current_time - uploadTime;
@@ -63,13 +54,7 @@ std::string formatVideoAge(int64_t uploadTime) {
     return std::string(age_str, result.ptr);
 }
 
-static const std::vector<std::pair<int64_t, char>> viewCountUnits = {
-    { 1'000'000'000, 'B' },
-    {     1'000'000, 'M' },
-    {         1'000, 'k' },
-};
-
-std::string formatViewCount(int64_t viewCount) {
+std::string SlimyTube::PageController::formatViewCount(int64_t viewCount) const {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(1);
 
@@ -89,7 +74,7 @@ std::string formatViewCount(int64_t viewCount) {
     return ss.str();
 }
 
-std::vector<std::unordered_map<std::string, std::string>> CreatePreviews(size_t amount) {
+std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageController::createPreviews(size_t amount) const {
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
     Mapper<Videos> video_mapper = SlimyTube::RecordManager::getVideosMapper();
     std::vector<Videos> videos = video_mapper.limit(amount).findAll();
@@ -112,7 +97,7 @@ std::vector<std::unordered_map<std::string, std::string>> CreatePreviews(size_t 
 }
 
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    std::vector<std::unordered_map<std::string, std::string>> previews = CreatePreviews(25);
+    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(25);
 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);
@@ -122,26 +107,23 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
 
 void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
 
-    Criteria crit = Criteria(Videos::Cols::_id, CompareOperator::EQ, video_id);
-    std::vector<Videos> videos = video_mapper.findBy(crit);
-    if(videos.empty()) {
+    std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
+    if(video.has_value()) {
         respond(HttpResponse::newHttpViewResponse("error404.csp", data));
         return;
     }
 
-    const Videos& video = videos[0];
-    const Users& channel = video.getUser(RecordManager::getDbClient());
+    const Users& channel = video.value().getUser(RecordManager::getDbClient());
     const std::string
-        viewCountStr = formatViewCount(video.getValueOfViews()),
-        ageStr = formatVideoAge(video.getValueOfCreationTime()),
-        title = HttpViewData::htmlTranslate(video.getValueOfTitle()),
-        desc = HttpViewData::htmlTranslate(video.getValueOfDescription()),
+        viewCountStr = formatViewCount(video.value().getValueOfViews()),
+        ageStr = formatVideoAge(video.value().getValueOfCreationTime()),
+        title = HttpViewData::htmlTranslate(video.value().getValueOfTitle()),
+        desc = HttpViewData::htmlTranslate(video.value().getValueOfDescription()),
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
-    std::vector<std::unordered_map<std::string, std::string>> previews = CreatePreviews(25);
+    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(25);
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);
@@ -157,7 +139,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 }
 
 void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    std::vector<std::unordered_map<std::string, std::string>> previews = CreatePreviews(25);
+    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(25);
 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);

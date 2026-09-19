@@ -11,6 +11,8 @@
 #include <fstream>
 #include <filesystem>
 #include <functional>
+#include <memory>
+#include <shared_mutex>
 #include <string_view>
 #include <system_error>
 
@@ -20,24 +22,34 @@
 
 using namespace SlimyTube::Attributes;
 using namespace std::placeholders;
+using
+    std::shared_lock,
+    std::shared_mutex;
 
 using namespace drogon;
 using namespace drogon::orm;
 namespace fs = std::filesystem;
 
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    if(!RecordManager::videoExists(id)) {
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
-        return;
+    if(!RecordManager::videoExists(id))
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+
+    std::optional<std::shared_lock<std::shared_mutex>> lk;
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
+
+    {
+        std::shared_lock l(videoMutexesMutex);
+        auto it = videoMutexes.find(path);
+        if(it != videoMutexes.end())
+            lk.emplace(std::shared_lock(*it->second));
     }
-    respond(HttpResponse::newFileResponse(fs::path(Settings::getInstance().thumbnails_dir) / fs::path(id)));
+
+    return(void) respond(HttpResponse::newFileResponse(path, "", CT_IMAGE_JPG, "", req));
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
-    if(!RecordManager::videoExists(id)) {
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
-        return;
-    }
+    if(!RecordManager::videoExists(id))
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
 
     fs::path path = fs::path(Settings::getInstance().videos_dir) / fs::path(id);
     HttpResponsePtr res;
@@ -47,20 +59,16 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
 
     if(ec) {
         if(ec.value() == static_cast<int>(std::errc::no_such_file_or_directory))
-            respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
-        else {
-            LOG_WARN << "Error when requesting video" << ec.message();
-            respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, CT_NONE));
-        }
-        return;
+            return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+        LOG_WARN << "Error when requesting video" << ec.message();
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, CT_NONE));
     }
 
     std::string range_header = req->getHeader("Range");
     if(range_header.empty()) {
         res = HttpResponse::newFileResponse(path, "", CT_VIDEO_MP4, "video/mp4", req);
         res->addHeader("Accept-Ranges", "bytes");
-        respond(res);
-        return;
+        return(void) respond(res);
     }
 
     std::vector<FileRange> ranges;
@@ -71,16 +79,14 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
             res = HttpResponse::newHttpResponse();
             res->setContentTypeCode(CT_NONE);
             res->setStatusCode(k400BadRequest);
-            respond(res);
-            return;
+            return(void) respond(res);
 
         case NotSatisfiable:
             res = HttpResponse::newHttpResponse();
             res->setContentTypeCode(CT_NONE);
             res->setStatusCode(k416RequestedRangeNotSatisfiable);
             res->addHeader("Content-Range", std::format("bytes */{}", file_length));
-            respond(res);
-            return;
+            return(void) respond(res);
 
         case SinglePart:
         case MultiPart: {
@@ -88,8 +94,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
             res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", CT_VIDEO_MP4, "video/mp4", req);
             if(res->getStatusCode() == HttpStatusCode::k200OK)
                 res->setStatusCode(HttpStatusCode::k206PartialContent);
-            respond(res);
-            return;
+            return(void) respond(res);
         }
     }
 }
@@ -97,15 +102,12 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, std::fun
 void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
     std::optional<Videos> video = RecordManager::getVideoIfExists(id);
 
-    if(!video.has_value()) { // video not found
-        respond(HttpResponse::newHttpResponse(drogon::k404NotFound, CT_NONE));
-        return;
-    }
+    if(!video.has_value()) // video not found
+        return(void) respond(HttpResponse::newHttpResponse(drogon::k404NotFound, CT_NONE));
 
-    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) { // video doesn't belong to the user
-        respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
-        return;
-    }
+    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) // video doesn't belong to the user
+        return(void) respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
+
 
     // TODO: Make sure its an image and convert all to jpeg
     fs::path path = fs::path(Settings::getInstance().thumbnails_dir) / fs::path(id);
@@ -120,18 +122,21 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, s
 
 void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, std::string id) const {
     std::optional<Videos> video = RecordManager::getVideoIfExists(id);
-    if(!video.has_value()) { // video not found
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
-        return;
+    if(!video.has_value()) // video not found
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) // video doesn't belong to the user
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
+
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
+
+    std::optional<std::unique_lock<std::shared_mutex>> lk;
+
+    {
+        std::shared_lock l(videoMutexesMutex);
+        auto it = videoMutexes.find(path);
+        if(it != videoMutexes.end())
+            lk.emplace(*it->second);
     }
 
-    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) { // video doesn't belong to the user
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
-        return;
-    }
-    
-    fs::path path = fs::path(Settings::getInstance().videos_dir) / fs::path(id);
-
-    respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, CT_NONE));
-    return;
+    return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, CT_NONE));
 }

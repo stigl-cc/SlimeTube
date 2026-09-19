@@ -17,9 +17,9 @@ namespace SlimyTube {
         // headers: name, pass
         // errors: 400(name/pass headers missing) 409(name exists) 500(ssl failed)
         // success: 201
-        ADD_METHOD_TO(RecordController::userRegister, "/register", Post);
+        ADD_METHOD_TO(RecordController::userRegister, "/register", Post, "SlimyTube::RateLimiter");
 
-        // errors: 303(wrong password)
+        // errors: 429 303(wrong password)
         // success: 303(reset /account)
         ADD_METHOD_TO(RecordController::userLogin, "/login", Post, "SlimyTube::LaxAuthenticator", "SlimyTube::RateLimiter");
 

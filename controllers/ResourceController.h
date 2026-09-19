@@ -2,6 +2,9 @@
 #include <drogon/HttpController.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/RequestStream.h>
+#include <memory>
+#include <shared_mutex>
+#include <unordered_map>
 
 using drogon::HttpMethod::Get,
     drogon::HttpMethod::Post,
@@ -14,6 +17,8 @@ using drogon::HttpMethod::Get,
 
 namespace SlimyTube {
     class ResourceController : public drogon::HttpController<ResourceController> {
+        std::shared_mutex videoMutexesMutex;
+        std::unordered_map<std::string, std::unique_ptr<std::shared_mutex>> videoMutexes;
         public:
     METHOD_LIST_BEGIN
         // errors: 404
