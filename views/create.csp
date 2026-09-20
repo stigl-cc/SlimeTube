@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[title]] - Account</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/upload.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <form>
+            <div>Create new video</div>
+            <label for="title-entry">Title</label><br>
+            <input id="title-entry" type="text" /><br>
+
+            <label for="description-entry">Description</label><br>
+            <input id="description-entry" type="text" /><br>
+
+            <input id="video-submit" type="submit" value="Create Video" />
+        </form>
+        <%view footer %>
+    </body>
+</html>

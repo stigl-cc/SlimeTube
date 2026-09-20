@@ -182,3 +182,13 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
 
     respond(HttpResponse::newHttpViewResponse("account.csp", data));
 }
+
+void SlimyTube::PageController::create(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    HttpViewData data = Settings::getInstance().getData();
+    respond(HttpResponse::newHttpViewResponse("create.csp", data));
+}
+
+void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+    HttpViewData data = Settings::getInstance().getData();
+    respond(HttpResponse::newHttpViewResponse("upload.csp", data));
+}

@@ -46,12 +46,8 @@ input:focus {
     outline-color: var(--link-color);
 }
 
-input[type=text] {
-
-}
-
 input[type=submit]:hover {
-    cursor: pointer;
+    cursor: pointer !important;
 }
 
 /* navbar section */
@@ -81,13 +77,13 @@ input[type=submit]:hover {
     gap: 3px;
 }
 
-#search-bar input[type=text] {
+#search-bar-query {
     width: 80%;
     font-size: 13px !important;
     letter-spacing: 1px !important;
 }
 
-#search-bar input[type=submit] {
+#search-bar-submit {
     min-width: 10ch;
     width: 10%;
     font-size: 13px !important;

@@ -4,10 +4,6 @@
     --text-size-small: 16px;
 }
 
-input {
-    font-size: var(--small-text-size);
-}
-
 /* Logged In Section */
 #logged-in-container {
     text-align: center;
@@ -43,7 +39,8 @@ input {
     display: inline;
 }
 
-#logout-form input {
+#logout-form-logout {
+    font-size: var(--small-text-size);
     letter-spacing: 1px;
     color: var(--fail-color);
     text-decoration: underline;
@@ -60,13 +57,14 @@ input {
     margin-bottom: 3px;
 }
 
-.user-change input[type=text],
-.user-change input[type=password],{
+.user-change-input {
     width: 35ch;
+    font-size: var(--small-text-size);
 }
 
-.user-change input[type=submit] {
+.user-change-submit {
     width: 20ch;
+    font-size: var(--small-text-size);
 }
 
 #videos {
@@ -115,9 +113,8 @@ input {
         width: 100% !important;
     }
 
-    .user-change input[type=text],
-    .user-change input[type=submit],
-    .user-change input[type=password] {
+    .user-change-input,
+    .user-change-submit {
         width: 100%;
         margin-bottom: 3px;
     }
@@ -173,7 +170,12 @@ input {
     border-bottom-style: solid;
 }
 
+.login-text-input {
+    font-size: var(--small-text-size);
+}
+
 #login-submit {
+    font-size: var(--small-text-size);
     margin-top: 8px;
     width: 100%;
 }

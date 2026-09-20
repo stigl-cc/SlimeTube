@@ -16,12 +16,12 @@
                 <div id="login-text">Login</div>
                 <div>
                     <label for="user">Username:</label><br>
-                    <input id="user-input" name="name" type="text" />
+                    <input class="login-text-input" id="user-input" name="name" type="text" />
                 </div>
                 <br>
                 <div>
                     <label for="pass">Password:</label><br>
-                    <input id="pass-input" name="pass" type="password" /><br>
+                    <input class="login-text-input" id="pass-input" name="pass" type="password" /><br>
                 </div>
 
                 <input id="login-submit" type="submit" value="Login" />

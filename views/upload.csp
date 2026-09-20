@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[title]] - Account</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/account.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <form>
+            <label for="thumbnail-upload">Thumbnail(max 5MB)</label><br>
+            <input id="thumbnail-upload" type="file" accept="image/*" capture="environment" /><br>
+
+            <label for="video-upload">Video(max 2GB)</label><br>
+            <input id="video-upload" type="file" accept="video/*" capture="environment" /><br>
+            <progress value="0" max="100" id="upload-progress"></progress>
+        </form>
+        <%view footer %>
+        <script src="/upload.js"></script>
+    </body>
+</html>

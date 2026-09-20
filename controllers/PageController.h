@@ -22,7 +22,6 @@ namespace SlimyTube {
             {         60, 'm' },
         }};
 
-
         static constexpr std::array<std::pair<int64_t, char>, 3> viewCountUnits = {{
             { 1'000'000'000, 'B' },
             {     1'000'000, 'M' },
@@ -49,10 +48,15 @@ namespace SlimyTube {
         // errors:
         // success: 200(login.csp - logged out) 200(account.csp - logged in)
         ADD_METHOD_TO(PageController::account, "/account", Get, "SlimyTube::LaxAuthenticator");
+
+        ADD_METHOD_TO(PageController::create, "/create", Get, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(PageController::upload, "/upload/{1}", Get, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
-        void main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const;
-        void watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& video_id) const;
-        void search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const;
-        void account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback) const;
+        void main(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+        void watch(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
+        void search(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+        void account(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+        void create(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+        void upload(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
     };
 }
