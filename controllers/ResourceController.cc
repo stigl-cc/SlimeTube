@@ -11,7 +11,6 @@
 #include <fstream>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <shared_mutex>
 #include <string_view>
 #include <system_error>
@@ -27,37 +26,22 @@ using namespace drogon;
 using namespace drogon::orm;
 namespace fs = std::filesystem;
 using
-
     std::vector,
     std::optional,
     std::shared_mutex,
     std::unique_lock,
-    std::shared_lock;
+    std::shared_lock,
+    std::string,
+    std::function;
 
 shared_mutex& SlimyTube::ResourceController::getMutexForVideo(const string& key) {
-    shared_lock lk(mutexVideoMutexes);
-    unordered_map<string, unique_ptr<shared_mutex>>::iterator it = mutexVideos.find(key);
-    if(it == mutexVideos.end()) {
-        lk.unlock(); // prevent deadlock
-        unique_lock u_lk(mutexVideoMutexes);
-        it = mutexVideos.emplace().first;
-
-        lk.lock();
-    }
-    return *it->second.get();
+    size_t key_hash = std::hash<std::string>{} (key);
+    return videoMutexes[key_hash % videoMutexes.size()];
 }
 
 shared_mutex& SlimyTube::ResourceController::getMutexForThumbnail(const string& key) {
-    shared_lock lk(mutexThumbnailMutexes);
-    unordered_map<string, unique_ptr<shared_mutex>>::iterator it = mutexThumbnails.find(key);
-    if(it == mutexThumbnails.end()) {
-        lk.unlock(); // prevent deadlock
-        unique_lock u_lk(mutexThumbnailMutexes);
-        it = mutexThumbnails.emplace().first;
-
-        lk.lock();
-    }
-    return *it->second.get();
+    size_t key_hash = std::hash<std::string>{} (key);
+    return thumbnailMutexes[key_hash % thumbnailMutexes.size()];
 }
 
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {

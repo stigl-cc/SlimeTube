@@ -2,36 +2,23 @@
 #include <drogon/HttpController.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/RequestStream.h>
-#include <memory>
 #include <shared_mutex>
-#include <unordered_map>
-
-using drogon::HttpMethod::Get,
-    drogon::HttpMethod::Post,
-    drogon::HttpMethod::Put,
-    drogon::HttpRequestPtr,
-    drogon::HttpResponsePtr,
-    drogon::HttpRequestPtr,
-    drogon::RequestStreamPtr,
-    drogon::MultipartHeader;
 
 namespace SlimyTube {
-    using
-        std::shared_mutex,
-        std::string,
-        std::unique_ptr,
-        std::unordered_map,
-        std::function;
+    using drogon::HttpMethod::Get,
+        drogon::HttpMethod::Post,
+        drogon::HttpMethod::Put,
+        drogon::HttpRequestPtr,
+        drogon::HttpResponsePtr;
+
     class ResourceController : public drogon::HttpController<ResourceController> {
+        static constexpr size_t mutexCount = 128;
         // TODO: Handle mutex overflow
-        shared_mutex mutexVideoMutexes;
-        unordered_map<string, unique_ptr<shared_mutex>> mutexVideos;
+        std::array<std::shared_mutex, mutexCount> videoMutexes;
+        std::array<std::shared_mutex, mutexCount> thumbnailMutexes;
 
-        shared_mutex mutexThumbnailMutexes;
-        unordered_map<string, unique_ptr<shared_mutex>> mutexThumbnails;
-
-        shared_mutex& getMutexForThumbnail(const string& key);
-        shared_mutex& getMutexForVideo(const string& key);
+        std::shared_mutex& getMutexForThumbnail(const std::string& key);
+        std::shared_mutex& getMutexForVideo(const std::string& key);
         public:
     METHOD_LIST_BEGIN
         // errors: 404
@@ -51,10 +38,10 @@ namespace SlimyTube {
         // success: 202
         ADD_METHOD_TO(ResourceController::uploadVideo, "/rsc/video/{1}", Put, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
-        void getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
-        void getVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
+        void getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
+        void getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
 
-        void uploadThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
-        void uploadVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&callback, string id);
+        void uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
+        void uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
     };
 }

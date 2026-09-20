@@ -6,11 +6,11 @@
 #include <utility>
 #include <cstdint>
 
-using drogon::HttpRequestPtr,
-    drogon::HttpResponsePtr,
-    drogon::HttpMethod::Get;
-
 namespace SlimyTube {
+    using drogon::HttpRequestPtr,
+        drogon::HttpResponsePtr,
+        drogon::HttpMethod::Get;
+
     class PageController : public drogon::HttpController<PageController> {
         private:
         static constexpr std::array<std::pair<int64_t, char>, 6> timeUnits {{

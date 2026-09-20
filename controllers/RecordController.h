@@ -4,13 +4,13 @@
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 
-using drogon::HttpMethod::Get,
-    drogon::HttpMethod::Post,
-    drogon::HttpMethod::Delete,
-    drogon::HttpRequestPtr,
-    drogon::HttpResponsePtr;
-
 namespace SlimyTube {
+    using drogon::HttpMethod::Get,
+        drogon::HttpMethod::Post,
+        drogon::HttpMethod::Delete,
+        drogon::HttpRequestPtr,
+        drogon::HttpResponsePtr;
+
     class RecordController : public drogon::HttpController<RecordController> {
         public:
     METHOD_LIST_BEGIN
