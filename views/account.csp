@@ -20,7 +20,7 @@
             </div>
 
             <div id="change-details" class="account-container">
-                <div id="change-details-text">Change User Details:</div>
+                <div id="change-details-text">Change User Details</div>
                 <form class="user-change" method="post" action="/user/name">
                     <label for="user">username:</label>
                     <input id="user-input" name="new_name" type="text" />
@@ -74,7 +74,7 @@
         </div>
         <progress value="0" max="100" id="upload-progress">10%</progress>
             <form>
-                <input id="video-upload" type="file">
+                <input id="video-upload" type="file" accept="video/*" capture="environment">
             </form>
         <script src="/upload.js"></script>
     </body>
