@@ -1,3 +1,4 @@
+#include <charconv>
 #include <controllers/ResourceController.h>
 
 #include <drogon/orm/Criteria.h>
@@ -114,14 +115,14 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
             res = HttpResponse::newHttpResponse();
             res->setContentTypeCode(CT_NONE);
             res->setStatusCode(k400BadRequest);
-            return(void) respond(res);
+            return(void) respond(std::move(res));
 
         case NotSatisfiable:
             res = HttpResponse::newHttpResponse();
             res->setContentTypeCode(CT_NONE);
             res->setStatusCode(k416RequestedRangeNotSatisfiable);
             res->addHeader("Content-Range", std::format("bytes */{}", file_length));
-            return(void) respond(res);
+            return(void) respond(std::move(res));
 
         case SinglePart:
         case MultiPart: {
@@ -129,7 +130,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
             res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", CT_VIDEO_MP4, "video/mp4", req);
             if(res->getStatusCode() == HttpStatusCode::k200OK)
                 res->setStatusCode(HttpStatusCode::k206PartialContent);
-            return(void) respond(res);
+            return(void) respond(std::move(res));
         }
     }
 }
@@ -144,10 +145,39 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) // video doesn't belong to the user
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
+    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
-    const std::string& offsetParam = req->getParameter("X-Offset");
+    const std::string& offset_param = req->getParameter("X-Offset");
+    size_t offset_header = 0;
+    std::from_chars_result offset_param_conv =
+        std::from_chars<uint64_t>(offset_param.c_str(), offset_param.c_str() + offset_param.size(), offset_header);
+    if(offset_param_conv.ec != std::errc()) // X-Offset is not a (valid) number
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
-    return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, CT_NONE));
+    std::error_code ec;
+    size_t current_file_size = fs::file_size(path, ec);
+    if(ec) {
+        if(ec.value() == static_cast<int>(std::errc::no_such_file_or_directory))
+            current_file_size = 0;
+        else {
+            LOG_WARN << ec.message();
+            return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, CT_NONE));
+        }
+    }
+
+    if(current_file_size < offset_header) // X-Offset larger than current file size
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k424FailedDependency, CT_NONE));
+
+    const std::string_view& body = req->getBody();
+    size_t body_skipped = current_file_size - offset_header;
+
+    if(body_skipped >= body.size()) // body already written
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
+
+    std::ofstream ofs(path, std::ios::binary | std::ios::out | std::ios::ate);
+    ofs.write(body.data() + body_skipped, body.size() - body_skipped);
+    ofs.close();
+
+    return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
 }

@@ -23,6 +23,7 @@ int main() {
     settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
     settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 1024 * 1024).as<uint64_t>();
     settings.thumbnails_dir = custom_user_config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
+
     settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
     settings.salt_len = custom_user_config.get("salt_len", 16).as<size_t>();
 
@@ -43,7 +44,7 @@ int main() {
 
     HttpViewData data;
     data.insert("title", "SlimyTube");
-    const HttpResponsePtr res404 = HttpResponse::newHttpViewResponse("error404", data);
+    const drogon::HttpResponsePtr res404 = HttpResponse::newHttpViewResponse("error404", data);
     app().setCustom404Page(res404, true);
 
     app()
@@ -81,7 +82,7 @@ int main() {
         .setMaxConnectionNumPerIP(10);
 
     app()
-        .registerPreRoutingAdvice([](const HttpRequestPtr& req) {
+        .registerPreRoutingAdvice([](const drogon::HttpRequestPtr& req) {
             LOG_INFO
                 << req->getHeader("User-Agent") << ' '
                 << req->getPeerAddr().toIpPort() << ' '
