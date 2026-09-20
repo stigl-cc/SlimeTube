@@ -37,6 +37,9 @@
             <div id="videos" class="account-container">
                 <a id="upload-link" href="/upload">upload</a>
                 <div id="videos-text">Videos</div>
+                <%c++
+                    auto videos = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("videos");
+                    if(!videos.empty()) { %>
                 <table id="videos-table">
                     <colgroup>
                         <col width="8ch">
@@ -53,7 +56,6 @@
                         <th>edit</th>
                     </tr>
                     <%c++
-                        auto videos = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("videos");
                         for(const auto& video : videos) {%>
                     <tr>
                         <td>{%video.at("id")%}</td>
@@ -62,9 +64,18 @@
                         <td>{%video.at("size")%}</td>
                         <td><a href="/video/{%video.at("id")%}/edit">edit</td>
                     </tr>
-                    <%c++ }%>
+                    <%c++ }
+                    } else {
+                    %>
+                    <div>User has no videos.</div>
+                    <%c++ } %>
                 </table>
             </div>
         </div>
+        <progress value="0" max="100" id="upload-progress">10%</progress>
+            <form>
+                <input id="video-upload" type="file">
+            </form>
+        <script src="/upload.js"></script>
     </body>
 </html>

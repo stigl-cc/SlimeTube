@@ -148,7 +148,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
-    const std::string& offset_param = req->getParameter("X-Offset");
+    const std::string& offset_param = req->getHeader("X-Offset");
     size_t offset_header = 0;
     std::from_chars_result offset_param_conv =
         std::from_chars<uint64_t>(offset_param.c_str(), offset_param.c_str() + offset_param.size(), offset_header);
@@ -166,18 +166,25 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
         }
     }
 
-    if(current_file_size < offset_header) // X-Offset larger than current file size
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k424FailedDependency, CT_NONE));
-
+    if(current_file_size < offset_header) { // X-Offset larger than current file size
+        HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k424FailedDependency, drogon::CT_NONE);
+        res->addHeader("X-Position", std::to_string(current_file_size));
+        return(void) respond(std::move(res));
+    }
     const std::string_view& body = req->getBody();
     size_t body_skipped = current_file_size - offset_header;
 
-    if(body_skipped >= body.size()) // body already written
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
+    if(body_skipped >= body.size()) { // body already written (X-Offset too small)
+        HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, drogon::CT_NONE);
+        res->addHeader("X-Position", std::to_string(current_file_size));
+        return(void) respond(std::move(res));
+    }
 
-    std::ofstream ofs(path, std::ios::binary | std::ios::out | std::ios::ate);
+    std::ofstream ofs(path, std::ios::binary | std::ios::out | std::ios::ate | std::ios::app);
     ofs.write(body.data() + body_skipped, body.size() - body_skipped);
     ofs.close();
 
-    return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, drogon::CT_NONE);
+    res->addHeader("X-Position", std::to_string(current_file_size + (body.size() - body_skipped)));
+    respond(std::move(res));
 }

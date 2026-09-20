@@ -70,7 +70,9 @@ input {
 }
 
 #videos {
+    position: relative;
     max-width: 100% !important;
+    min-width: 20% !important;
     width: fit-content !important;
     margin-top: 15px;
     text-align: center;
@@ -100,7 +102,8 @@ input {
 }
 
 #upload-link {
-    float: right;
+    position: absolute;
+    right: 10px;
 }
 
 @media (max-width: 680px) {
@@ -113,7 +116,8 @@ input {
     }
 
     .user-change input[type=text],
-    .user-change input[type=submit] {
+    .user-change input[type=submit],
+    .user-change input[type=password] {
         width: 100%;
         margin-bottom: 3px;
     }
