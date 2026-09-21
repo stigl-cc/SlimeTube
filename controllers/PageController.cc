@@ -105,7 +105,7 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
     HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);
 
-    respond(HttpResponse::newHttpViewResponse("main.csp", data));
+    respond(HttpResponse::newHttpViewResponse("main.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
@@ -138,7 +138,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     data.insert("video_channel_name", user_name);
     data.insert("video_channel_id", user_id);
 
-    respond(HttpResponse::newHttpViewResponse("watch.csp", data));
+    respond(HttpResponse::newHttpViewResponse("watch.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
@@ -148,7 +148,7 @@ void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<
     data.insert("previews", previews);
 
     // TODO
-    respond(HttpResponse::newHttpViewResponse("search.csp", data));
+    respond(HttpResponse::newHttpViewResponse("search.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
@@ -159,7 +159,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
 
     if(loginMethod == LoginMethod::LaxNone) {
         data.insert("message", HttpViewData::htmlTranslate(req->getParameter("m")));
-        respond(HttpResponse::newHttpViewResponse("login.csp", data));
+        respond(HttpResponse::newHttpViewResponse("login.csp", std::move(data)));
         return;
     }
 
@@ -183,23 +183,22 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     data.insert("user_name", user.getValueOfName());
     data.insert("videos", video_entries);
 
-    respond(HttpResponse::newHttpViewResponse("account.csp", data));
+    respond(HttpResponse::newHttpViewResponse("account.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::create(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     HttpViewData data = Settings::getInstance().getData();
-    respond(HttpResponse::newHttpViewResponse("create.csp", data));
+    respond(HttpResponse::newHttpViewResponse("create.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
-    respond(HttpResponse::newHttpViewResponse("upload.csp", data));
+    respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, int err, const std::string& back) const {
     HttpViewData data = Settings::getInstance().getData();
-    data.insert("error-code", err);
-    data.insert("error-text", drogon::statusCodeToString(err));
+    data.insert("error-text", std::format("{} {}", err, drogon::statusCodeToString(err)));
     data.insert("back", back);
-    respond(HttpResponse::newHttpViewResponse("error.csp", data));
+    respond(HttpResponse::newHttpViewResponse("error.csp", std::move(data)));
 }
