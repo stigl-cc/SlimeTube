@@ -4,6 +4,8 @@
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 
+#include <string_view>
+
 namespace SlimyTube {
     using drogon::HttpMethod::Get,
         drogon::HttpMethod::Post,
@@ -42,6 +44,11 @@ namespace SlimyTube {
         // errors: 401 400(new_pass empty/missing) 500(ssl failed)
         // success: 303(reset /account)
         ADD_METHOD_TO(RecordController::userChangePass, "/user/password", Post, "SlimyTube::StrictAuthenticator");
+
+        // headers: Cookie(for session login method)
+        // errors: 400(!title || !desc) 401
+        // success: 303(go to /upload)
+        ADD_METHOD_TO(RecordController::videoCreate, "/video", Post, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
 
         void userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
@@ -50,5 +57,7 @@ namespace SlimyTube {
         void userLogout(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
+
+        void videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
     };
 }

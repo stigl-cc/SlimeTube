@@ -1,15 +1,18 @@
 #pragma once
-#include <array>
 #include <drogon/HttpController.h>
 #include <drogon/HttpSimpleController.h>
+#include <drogon/HttpTypes.h>
+
 #include <unordered_map>
 #include <utility>
 #include <cstdint>
+#include <array>
 
 namespace SlimyTube {
     using drogon::HttpRequestPtr,
         drogon::HttpResponsePtr,
-        drogon::HttpMethod::Get;
+        drogon::HttpMethod::Get,
+        drogon::HttpMethod::Post;
 
     class PageController : public drogon::HttpController<PageController> {
         private:
@@ -50,14 +53,18 @@ namespace SlimyTube {
         ADD_METHOD_TO(PageController::account, "/account", Get, "SlimyTube::LaxAuthenticator");
 
         ADD_METHOD_TO(PageController::create, "/create", Get, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(PageController::create, "/create", Post, "SlimyTube::StrictAuthenticator");
+
         ADD_METHOD_TO(PageController::upload, "/upload/{1}", Get, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
         void main(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
         void watch(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
         void search(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
         void account(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+
         void create(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+
         void upload(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
-        void error(std::function<void (const HttpResponsePtr &)>&&, int err, const std::string& back) const;
+        static void error(std::function<void (const HttpResponsePtr &)>&&, drogon::HttpStatusCode err, const std::string& back);
     };
 }

@@ -2,6 +2,7 @@
 #include <controllers/PageController.h>
 
 #include <drogon/HttpResponse.h>
+#include <drogon/HttpTypes.h>
 #include <drogon/HttpViewData.h>
 #include <drogon/orm/Mapper.h>
 #include <drogon/orm/Criteria.h>
@@ -112,10 +113,8 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     HttpViewData data = Settings::getInstance().getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
-    if(!video.has_value()) {
-        error(std::move(respond), 404, "/");
-        return;
-    }
+    if(!video.has_value())
+        return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
 
     const Users& channel = video.value().getUser(RecordManager::getDbClient());
     const std::string
@@ -142,6 +141,8 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 }
 
 void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    return(void) error(std::move(respond), HttpStatusCode::k501NotImplemented, "/");
+
     std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(25);
 
     HttpViewData data = Settings::getInstance().getData();
@@ -196,9 +197,9 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
-void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, int err, const std::string& back) const {
+void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, HttpStatusCode err, const std::string& back) {
     HttpViewData data = Settings::getInstance().getData();
-    data.insert("error-text", std::format("{} {}", err, drogon::statusCodeToString(err)));
+    data.insert("error-text", std::format("{} {}", static_cast<int>(err), drogon::statusCodeToString(err)));
     data.insert("back", back);
     respond(HttpResponse::newHttpViewResponse("error.csp", std::move(data)));
 }

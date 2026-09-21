@@ -14,3 +14,22 @@ namespace SlimyTube::Attributes {
         keyUserId = "userId",
         keyLoginMethod = "loginMethod";
 };
+
+namespace SlimyTube::Query {
+    static constexpr std::string_view
+        password = "pass",
+        username = "user";
+
+    static constexpr std::string_view
+        newPassword = "new_pass",
+        newUsername = "new_user";
+
+    static constexpr std::string_view
+        videoTitle = "title",
+        videoDescription = "desc";
+};
+
+namespace SlimyTube::Headers {
+    static constexpr std::string_view
+        location = "Location";
+};

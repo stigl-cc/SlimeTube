@@ -12,6 +12,7 @@
 }
 
 #create-form {
+    margin-top: 15px;
     outline-color: var(--vertical-separator-color);
     outline-style: solid;
     outline-width: 3px;
@@ -24,21 +25,16 @@
     text-align: left;
 }
 
+#title-entry {
+    font-size: var(--text-size-small);
+}
+
 #description-entry {
+    font-size: var(--text-size-small);
+
     width: 100%;
     min-height: 3em;
     min-width: 100%;
-    color: var(--text-color);
-    background-color: var(--highlighted-color);
-    border-style: none;
-    outline-style: none;
-    margin: 0;
-}
-
-#description-entry:focus {
-    outline-style: solid;
-    outline-width: 2px;
-    outline-color: var(--link-color);
 }
 
 #create-form * {

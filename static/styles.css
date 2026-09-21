@@ -41,7 +41,8 @@ body {
     min-height: 100svh;
 }
 
-input {
+input,
+textarea {
     color: var(--text-color);
     background-color: var(--highlighted-color);
     border-style: none;
@@ -49,7 +50,7 @@ input {
     margin: 0;
 }
 
-input:focus {
+input:focus, textarea:focus {
     outline-style: solid;
     outline-width: 2px;
     outline-color: var(--link-color);
@@ -57,6 +58,11 @@ input:focus {
 
 input[type=submit]:hover {
     cursor: pointer !important;
+}
+
+.form-required {
+    color: var(--fail-color);
+    display: inline !important;
 }
 
 /* error */

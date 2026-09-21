@@ -11,9 +11,11 @@
     <body>
         <%view navbar %>
         <div id="create-container">
-            <form method="post" action="/create" id="create-form">
+            <form method="post" action="/video" id="create-form">
                 <div id="create-text">Create new video</div>
-                <label for="title-entry">Title</label>
+                <label for="title-entry">
+                    Title<div class="form-required">*</div>
+                </label>
                 <input id="title-entry" name="title" type="text" />
 
                 <label for="description-entry">Description</label>

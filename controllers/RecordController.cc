@@ -1,3 +1,4 @@
+#include "controllers/PageController.h"
 #include <controllers/RecordController.h>
 
 #include <drogon/HttpResponse.h>
@@ -27,8 +28,8 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
 
     const std::string&
-        name = req->getParameter("name"),
-        pass = req->getParameter("pass");
+        name = req->getParameter(Query::username.data()),
+        pass = req->getParameter(Query::password.data());
 
     // details not provided
     if(name.empty() || pass.empty()) {
@@ -60,7 +61,7 @@ void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::func
     Attributes::LoginMethod loginMethod = req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data());
     if(loginMethod == Attributes::LoginMethod::LaxNone) {
         HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
-        res->addHeader("Location", "/account?m=Wrong%20name%20or%20password");
+        res->addHeader(Headers::location.data(), "/account?m=Wrong%20name%20or%20password");
         respond(res);
         return;
     }
@@ -70,7 +71,7 @@ void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::func
     }
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
-    res->addHeader("Location", "/account");
+    res->addHeader(Headers::location.data(), "/account");
     respond(res);
 }
 
@@ -83,7 +84,7 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
     req->session()->clear();
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
-    res->addHeader("Location", "/account?m=Logged%20out%20successfully");
+    res->addHeader(Headers::location.data(), "/account?m=Logged%20out%20successfully");
     respond(res);
 }
 
@@ -109,7 +110,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
     const std::string&
-        new_name = req->getParameter("new_name");
+        new_name = req->getParameter(Query::newUsername.data());
 
     if(new_name.empty()) {
         respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE));
@@ -123,14 +124,14 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
 
     userId_t userId = req->getAttributes()->get<userId_t>(Attributes::keyUserId.data());
     Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
-    user_mapper.updateBy({ "name" }, crit, new_name);
+    user_mapper.updateBy({ Users::Cols::_name }, crit, new_name);
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
 }
 
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
     const std::string&
-        new_pass = req->getParameter("new_pass");
+        new_pass = req->getParameter(Query::newPassword.data());
 
     if(new_pass.empty())
         return(void) respond(HttpResponse::newHttpResponse(drogon::k400BadRequest, drogon::CT_NONE));
@@ -150,6 +151,16 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     req->session()->clear();
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
-    res->addHeader("Location", "/account?m=Changed%20password%20successfully");
+    res->addHeader(Headers::location.data(), "/account?m=Changed%20password%20successfully");
     respond(res);
+}
+
+void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    const std::string&
+        title = req->getParameter(Query::videoTitle.data()),
+        desc = req->getParameter(Query::videoDescription.data());
+
+    if(title.empty()) {
+        return(void) PageController::error(std::move(respond), HttpStatusCode::k400BadRequest, "/account");
+    }
 }
