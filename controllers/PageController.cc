@@ -109,7 +109,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     HttpViewData data = Settings::getInstance().getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
-    if(video.has_value()) {
+    if(!video.has_value()) {
         respond(HttpResponse::newHttpViewResponse("error404.csp", data));
         return;
     }

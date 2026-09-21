@@ -1,11 +1,7 @@
-:root {
-    --text-size-big: 35px;
-    --text-size-medium: 24px;
-    --text-size-small: 16px;
-}
-
 /* Logged In Section */
 #logged-in-container {
+    flex: 1;
+
     text-align: center;
     align-items: center;
 }
@@ -146,6 +142,8 @@
 
 /* Logged Out Section */
 #logged-out-container {
+    flex: 1;
+
     text-align: center;
 }
 

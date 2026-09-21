@@ -32,5 +32,6 @@
             <div id="login-message">{%message%}</div>
             <%c++ }%>
         </div>
+        <%view footer %>
     </body>
 </html>

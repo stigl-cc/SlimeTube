@@ -72,5 +72,6 @@
                 </table>
             </div>
         </div>
+        <%view footer %>
     </body>
 </html>

@@ -1,4 +1,8 @@
 :root {
+    --text-size-big: 35px;
+    --text-size-medium: 24px;
+    --text-size-small: 16px;
+
     --text-color: #eeeeee;
     --background-color: #222232;
     --highlighted-color: #333342;
@@ -30,6 +34,11 @@ body {
     background-color: var(--background-color);
     color: var(--text-color);
     padding: 0px 10px 10px 10px;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100svh;
 }
 
 input {

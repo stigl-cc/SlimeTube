@@ -6,7 +6,7 @@
 
         <title>[[title]] - Account</title>
         <link rel="stylesheet" type="text/css" href="/styles.css">
-        <link rel="stylesheet" type="text/css" href="/account.css">
+        <link rel="stylesheet" type="text/css" href="/upload.css">
     </head>
     <body>
         <%view navbar %>
