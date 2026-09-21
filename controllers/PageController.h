@@ -58,5 +58,6 @@ namespace SlimyTube {
         void account(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
         void create(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
         void upload(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
+        void error(std::function<void (const HttpResponsePtr &)>&&, int err, const std::string& back) const;
     };
 }

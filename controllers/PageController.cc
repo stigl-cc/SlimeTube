@@ -5,6 +5,8 @@
 #include <drogon/HttpViewData.h>
 #include <drogon/orm/Mapper.h>
 #include <drogon/orm/Criteria.h>
+#include <drogon/utils/Utilities.h>
+#include <lib/drogon/lib/src/HttpUtils.h>
 
 #include <models/RecordManager.hh>
 #include <models/Attributes.hh>
@@ -19,6 +21,7 @@
 #include <string>
 #include <sstream>
 #include <chrono>
+#include <utility>
 
 using SlimyTube::Attributes::LoginMethod;
 using namespace drogon;
@@ -110,7 +113,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
     if(!video.has_value()) {
-        respond(HttpResponse::newHttpViewResponse("error404.csp", data));
+        error(std::move(respond), 404, "/");
         return;
     }
 
@@ -191,4 +194,12 @@ void SlimyTube::PageController::create(const HttpRequestPtr& req, std::function<
 void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
     respond(HttpResponse::newHttpViewResponse("upload.csp", data));
+}
+
+void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, int err, const std::string& back) const {
+    HttpViewData data = Settings::getInstance().getData();
+    data.insert("error-code", err);
+    data.insert("error-text", drogon::statusCodeToString(err));
+    data.insert("back", back);
+    respond(HttpResponse::newHttpViewResponse("error.csp", data));
 }

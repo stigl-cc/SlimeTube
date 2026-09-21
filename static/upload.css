@@ -1,0 +1,52 @@
+#create-container {
+    flex: 1;
+
+    text-align: center;
+}
+
+#create-text {
+    padding-bottom: 3px;
+    width: 100%;
+    border-color: var(--vertical-separator-color);
+    border-bottom-style: solid;
+}
+
+#create-form {
+    outline-color: var(--vertical-separator-color);
+    outline-style: solid;
+    outline-width: 3px;
+    padding: 13px;
+
+    display: inline-block;
+    width: fit-content;
+    min-width: 20%;
+    max-width: 100%;
+    text-align: left;
+}
+
+#description-entry {
+    width: 100%;
+    min-height: 3em;
+    min-width: 100%;
+    color: var(--text-color);
+    background-color: var(--highlighted-color);
+    border-style: none;
+    outline-style: none;
+    margin: 0;
+}
+
+#description-entry:focus {
+    outline-style: solid;
+    outline-width: 2px;
+    outline-color: var(--link-color);
+}
+
+#create-form * {
+    display: block;
+    width: 100%;
+}
+
+#video-submit {
+    margin-top: 10px;
+    font-size: var(--small-text-size);
+}

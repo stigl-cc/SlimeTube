@@ -11,13 +11,13 @@
     <body>
         <%view navbar %>
         <div id="create-container">
-            <form id="create-form">
+            <form method="post" action="/create" id="create-form">
                 <div id="create-text">Create new video</div>
                 <label for="title-entry">Title</label>
-                <input id="title-entry" type="text" />
+                <input id="title-entry" name="title" type="text" />
 
                 <label for="description-entry">Description</label>
-                <textarea id="description-entry" rows="5"></textarea>
+                <textarea id="description-entry" name="desc" rows="5"></textarea>
 
                 <input id="video-submit" type="submit" value="Create Video" />
             </form>

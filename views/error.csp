@@ -4,12 +4,15 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>[[title]] - 404 Not Found</title>
+        <title>[[title]] - [[error-code]] [[error-text]]</title>
         <link rel="stylesheet" type="text/css" href="/styles.css">
     </head>
     <body>
         <%view navbar %>
-        <h1>404 Page Not Found</h1>
-        <a id="error-goback" href="/">go back</a>
+        <div id="error-content">
+            <h1>[[error-code]] [[error-text]]</h1>
+            <a id="error-goback" href="[[back]]">go back</a>
+        </div>
+        <%view footer %>
     </body>
 </html>
