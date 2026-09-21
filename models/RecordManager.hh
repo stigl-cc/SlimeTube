@@ -22,5 +22,7 @@ namespace SlimyTube {
 
         static bool videoExists(const std::string& id);
         static std::optional<Videos> getVideoIfExists(const std::string& id);
+
+        static std::string generateVideoId(size_t size = 6);
     };
 };

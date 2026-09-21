@@ -160,7 +160,13 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
         title = req->getParameter(Query::videoTitle.data()),
         desc = req->getParameter(Query::videoDescription.data());
 
-    if(title.empty()) {
+    if(title.empty())
         return(void) PageController::error(std::move(respond), HttpStatusCode::k400BadRequest, "/account");
-    }
+
+    std::string videoId;
+    uint32_t videoIdAttempts = 0;
+    do {
+        videoId = RecordManager::generateVideoId();
+    } while(videoIdAttempts < 5);
+    Videos video;
 }

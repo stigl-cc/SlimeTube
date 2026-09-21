@@ -7,11 +7,13 @@
 #include <drogon/orm/Criteria.h>
 
 #include <drogon/orm/Exception.h>
+#include <mutex>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <optional>
+#include <random>
 #include <stdexcept>
 
 using namespace drogon::orm;
@@ -67,4 +69,20 @@ std::optional<Videos> SlimyTube::RecordManager::getVideoIfExists(const std::stri
     } catch(UnexpectedRows e) {
         return std::nullopt;
     }
+}
+
+constexpr std::string_view videoIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+std::string SlimyTube::RecordManager::generateVideoId(size_t size) {
+    static std::mutex randomMutex = {};
+    static std::random_device dev = {};
+    static std::mt19937 rng = std::mt19937(dev());
+    static std::uniform_int_distribution<std::mt19937::result_type> distribution(0, videoIdCharacters.size());
+
+    std::lock_guard lk(randomMutex);
+
+    std::string videoId;
+    videoId.reserve(size);
+    for(int i =0; i < size; i++)
+        videoId.push_back(distribution(rng));
+    return std::move(videoId);
 }
