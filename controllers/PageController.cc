@@ -200,8 +200,8 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     if(!video.has_value())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
 
+    data.insert("video_id", HttpViewData::htmlTranslate(video.value().getValueOfId()));
     data.insert("video_title", HttpViewData::htmlTranslate(video.value().getValueOfTitle()));
-    data.insert("video_desc", HttpViewData::htmlTranslate(video.value().getValueOfDescription()));
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 

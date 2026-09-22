@@ -13,13 +13,17 @@
         <div class="create-upload-container">
             <form method="post" action="/video" class="create-upload-form" id="create-form">
                 <div class="create-upload-text">Create new video</div>
-                <label for="title-entry">
-                    title<div class="form-required">*</div>
-                </label>
-                <input id="title-entry" name="title" type="text" />
+                <div class="labeled-entry">
+                    <label for="title-entry">
+                        title<div class="form-required">*</div>
+                    </label>
+                    <input id="title-entry" name="title" type="text" />
+                </div>
 
-                <label for="description-entry">description</label>
-                <textarea id="description-entry" name="desc" rows="5"></textarea>
+                <div class="labeled-entry">
+                    <label for="description-entry">description</label>
+                    <textarea id="description-entry" name="desc" rows="5"></textarea>
+                </div>
 
                 <input id="video-submit" type="submit" value="Create Video" />
             </form>

@@ -15,13 +15,13 @@
                 <div class="create-upload-text">Upload assets for video</div>
 
                 <div class="labeled-entry">
-                    <label for="title-entry">title</label><br>
-                    <input id="title-entry" type="text" value="[[video_title]]" disabled><br>
+                    <label for="id-entry">id</label><br>
+                    <input id="id-entry" class="upload-disabled-entry" type="text" value="[[video_id]]" disabled><br>
                 </div>
 
                 <div class="labeled-entry">
-                    <label for="description-entry">description</label><br>
-                    <textarea id="description-entry" rows="5" disabled>[[video_desc]]</textarea><br>
+                    <label for="title-entry">title</label><br>
+                    <input id="title-entry" class="upload-disabled-entry" type="text" value="[[video_title]]" disabled><br>
                 </div>
 
                 <div class="labeled-entry">
@@ -37,6 +37,8 @@
                     <label for="upload-progress">video upload progress</label>
                     <progress value="0" max="100" id="upload-progress"></progress>
                 </div>
+
+                <input id="upload-submit" type="submit" value="upload">
             </form>
         </div>
         <%view footer %>
