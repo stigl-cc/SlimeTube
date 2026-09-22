@@ -63,7 +63,7 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
     optional<Videos> video = RecordManager::getVideoIfExists(id);
     if(!video.has_value()) // video not found
         return(void) respond(HttpResponse::newHttpResponse(drogon::k404NotFound, CT_NONE));
-    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) // video doesn't belong to the user
+    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(userId.data())) // video doesn't belong to the user
         return(void) respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
 
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
@@ -142,7 +142,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     optional<Videos> video = RecordManager::getVideoIfExists(id);
     if(!video.has_value()) // video not found
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
-    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(keyUserId.data())) // video doesn't belong to the user
+    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(userId.data())) // video doesn't belong to the user
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
 
     const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);

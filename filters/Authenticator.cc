@@ -6,7 +6,6 @@
 #include <drogon/orm/DbClient.h>
 #include <drogon/orm/Mapper.h>
 
-#include <models/Session.hh>
 #include <models/RecordManager.hh>
 #include <models/Attributes.hh>
 #include <models/Users.h>
@@ -53,8 +52,8 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
     Attributes::LoginMethod loginMethod;
 
     // user already logged in through session
-    if(req->session()->find(Session::keyUserId.data())) {
-        userId = req->session()->get<uint32_t>(Session::keyUserId.data());
+    if(req->session()->find(Session::userId.data())) {
+        userId = req->session()->get<uint32_t>(Session::userId.data());
         loginMethod = Attributes::LoginMethod::Session;
     }
     else {
@@ -77,7 +76,7 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
     // pass through attributes
     req->attributes()->insert(Attributes::keyLoginMethod.data(), loginMethod);
     if(loginMethod != Attributes::LoginMethod::LaxNone)
-        req->attributes()->insert(Attributes::keyUserId.data(), userId);
+        req->attributes()->insert(Attributes::userId.data(), userId);
 
     nextCb([mcb = std::move(mcb)](const HttpResponsePtr &resp) { mcb(resp); });
 }

@@ -9,7 +9,6 @@
 #include <drogon/orm/Mapper.h>
 #include <models/RecordManager.hh>
 #include <models/Attributes.hh>
-#include <models/Session.hh>
 #include <models/Users.h>
 #include <models/Videos.h>
 
@@ -21,8 +20,7 @@
 
 using namespace drogon;
 using namespace drogon::orm;
-using SlimyTube::Session::keyUserId,
-    SlimyTube::Attributes::userId_t;
+using SlimyTube::Attributes::userId_t;
 using namespace drogon_model::SlimyTube;
 
 void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
@@ -68,7 +66,7 @@ void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::func
     }
 
     if(loginMethod != Attributes::LoginMethod::Session) {
-        req->session()->insert(Session::keyUserId.data(), req->attributes()->get<userId_t>(Attributes::keyUserId.data()));
+        req->session()->insert(Session::userId.data(), req->attributes()->get<userId_t>(Attributes::userId.data()));
     }
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
@@ -94,7 +92,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
     Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
 
-    userId_t userId = req->attributes()->get<userId_t>(Attributes::keyUserId.data());
+    userId_t userId = req->attributes()->get<userId_t>(Attributes::userId.data());
     Users user = user_mapper.findByPrimaryKey(userId);
 
     // Delete all videos made by the account
@@ -102,7 +100,7 @@ void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::fun
     for(const Videos& video : videos)
         video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
 
-    user_mapper.deleteByPrimaryKey(req->attributes()->get<userId_t>(keyUserId.data()));
+    user_mapper.deleteByPrimaryKey(req->attributes()->get<userId_t>(Attributes::userId.data()));
     req->session()->clear();
 
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
@@ -123,7 +121,7 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
         return;
     }
 
-    userId_t userId = req->getAttributes()->get<userId_t>(Attributes::keyUserId.data());
+    userId_t userId = req->getAttributes()->get<userId_t>(Attributes::userId.data());
     Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
     user_mapper.updateBy({ Users::Cols::_name }, crit, new_name);
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k200OK, ContentType::CT_NONE));
@@ -142,7 +140,7 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     uint8_t hash[32];
     RecordManager::createHash(new_pass, salt, hash);
 
-    userId_t userId = req->getAttributes()->get<userId_t>(Attributes::keyUserId.data());
+    userId_t userId = req->getAttributes()->get<userId_t>(Attributes::userId.data());
     Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
     Users user = user_mapper.findByPrimaryKey(userId);
     user.setHash(std::string(reinterpret_cast<const char*>(hash), sizeof(hash)));
@@ -167,7 +165,7 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
 
     const uint64_t
         time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count(),
-        channel = req->attributes()->get<userId_t>(Attributes::keyUserId.data());
+        channel = req->attributes()->get<userId_t>(Attributes::userId.data());
     
     std::string id;
     do {

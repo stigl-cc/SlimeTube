@@ -82,15 +82,6 @@ int main() {
         .setMaxConnectionNum(10'000)
         .setMaxConnectionNumPerIP(10);
 
-    app()
-        .registerPreRoutingAdvice([](const drogon::HttpRequestPtr& req) {
-            LOG_INFO
-                << req->getHeader("User-Agent") << ' '
-                << req->getPeerAddr().toIpPort() << ' '
-                << req->methodString() << ' '
-                << req->path();
-        });
-
     app().run();
     return 0;
 }

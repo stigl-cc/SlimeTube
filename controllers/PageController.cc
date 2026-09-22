@@ -12,7 +12,6 @@
 #include <models/RecordManager.hh>
 #include <models/Attributes.hh>
 #include <models/Settings.hh>
-#include <models/Session.hh>
 #include <models/Users.h>
 #include <models/Videos.h>
 
@@ -23,6 +22,7 @@
 #include <sstream>
 #include <chrono>
 #include <utility>
+#include <iomanip>
 
 using SlimyTube::Attributes::LoginMethod;
 using namespace drogon;
@@ -71,6 +71,9 @@ std::string SlimyTube::PageController::formatViewCount(int64_t viewCount) const 
             break;
         }
     }
+
+    if(used_unit.first == 1)
+        ss << std::setprecision(0);
 
     ss << viewCount / static_cast<float>(used_unit.first);
     if(used_unit.second) ss << used_unit.second;
@@ -168,7 +171,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     orm::DbClientPtr db = drogon::app().getDbClient();
     drogon::orm::Mapper<Users> user_mapper(db);
 
-    Attributes::userId_t userId = req->attributes()->get<Attributes::userId_t>(Attributes::keyUserId.data());
+    Attributes::userId_t userId = req->attributes()->get<Attributes::userId_t>(Attributes::userId.data());
     const Users user = user_mapper.findByPrimaryKey(userId);
     const std::vector<Videos> videos = user.getVideos(db);
 

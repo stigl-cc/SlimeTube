@@ -35,6 +35,25 @@
         },
     },
 
+    "plugins": [
+        {
+            "name": "drogon::plugin::AccessLogger",
+            "dependencies": [],
+            "config": {
+                "use_spdlog": false,
+                "log_path": "",
+                "log_format": "$request_date $remote_addr $method $url\t$status\t[$request_len/$response_len] $processing_time - '$http_User-Agent'",
+                "log_file": "access.log",
+                "log_size_limit": 0,
+                "use_local_time": false,
+                "show_microseconds": false,
+                "log_index": 0,
+                "custom_time_format": "%Y/%m/%d %H:%M:%S",
+                "use_real_ip": true,
+            },
+        },
+    ],
+
     "custom_config": {
         "title" : "SlimyTube",
         "zero_range_limit" : 10485760,
