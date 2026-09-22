@@ -11,6 +11,15 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-build
+          key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', '**/*.cc', '**/*.hh', '**/*.h', '**/*.csp', '!lib/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-build-
+
       - name: Install deps
         run: sudo apt install -y drogon libsqlite3-dev libjsoncpp-dev libbrotli-dev libssl-dev libzstd-dev uuid-dev
 
@@ -23,5 +32,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-build
-          path: bin/**
+          name: linux-x86_64-build
+          path: build/slimytube
