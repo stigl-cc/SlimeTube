@@ -7,20 +7,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: 'recursive'
 
       - name: Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: build
-          key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', '**/*.cc', '**/*.hh', '**/*.h', '**/*.csp', '!lib/**') }}
+          key: ${{ runner.os }}-cmake-build-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.hpp', , '**/*.cc', '**/*.hh', '**/*.c',  '**/*.h', '**/*.csp', '!lib/**') }}
           restore-keys: |
             ${{ runner.os }}-cmake-build-
 
-      - name: Install deps
-        run: sudo apt install -y drogon libsqlite3-dev libjsoncpp-dev libbrotli-dev libssl-dev libzstd-dev uuid-dev
+      - name: Cache deps
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: drogon libsqlite3-dev libjsoncpp-dev libbrotli-dev libssl-dev libzstd-dev uuid-dev
+          version: 1.0
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
