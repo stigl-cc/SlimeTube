@@ -9,7 +9,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: 'recursively'
+          submodules: 'recursive'
 
       - name: Install deps
         run: sudo apt install -y drogon
