@@ -17,7 +17,7 @@ using
 
 int main() {
     Settings& settings = Settings::getInstance();
-    app().loadConfigFile("config.json");
+    app().loadConfigFile("data/config.json");
 
     Json::Value custom_user_config = app().getCustomConfig();
     settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
@@ -42,9 +42,10 @@ int main() {
             { "Access-Control-Allow-Origin", "*" },
         });
 
-    HttpViewData data;
-    data.insert("title", "SlimyTube");
-    const drogon::HttpResponsePtr res404 = HttpResponse::newHttpViewResponse("error404", data);
+    HttpViewData data = Settings::getInstance().getData();
+    data.insert("error-text", "404 Not Found");
+    data.insert("back", "/");
+    const drogon::HttpResponsePtr res404 = HttpResponse::newHttpViewResponse("error", std::move(data));
     app().setCustom404Page(res404, true);
 
     app()

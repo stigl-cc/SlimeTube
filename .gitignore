@@ -1,5 +1,7 @@
 build/
 
 # Runtime directories
-data/
+data/*
 data/certs/
+
+!data/config.json
