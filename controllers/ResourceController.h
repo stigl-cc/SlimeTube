@@ -13,7 +13,7 @@ namespace SlimyTube {
 
     class ResourceController : public drogon::HttpController<ResourceController> {
         static constexpr size_t mutexCount = 128;
-        // TODO: Handle mutex overflow
+
         std::array<std::shared_mutex, mutexCount> videoMutexes;
         std::array<std::shared_mutex, mutexCount> thumbnailMutexes;
 

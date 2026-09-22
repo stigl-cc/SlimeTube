@@ -7,6 +7,7 @@
 #include <drogon/drogon.h>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
+#include <drogon/utils/coroutine.h>
 
 using
     drogon::HttpViewData,
@@ -27,9 +28,21 @@ int main() {
     settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
     settings.salt_len = custom_user_config.get("salt_len", 16).as<size_t>();
 
+    HttpViewData
+        data = Settings::getInstance().getData();
+    data.insert("error-text", "404 Not Found");
+    data.insert("back", "/");
+
+    const drogon::HttpResponsePtr
+        res404 = HttpResponse::newHttpViewResponse("error", std::move(data));
+
     app().setSSLConfigCommands({
             { "Options", "Compression" }
         });
+
+    app().getLoop()->runEvery(3'600, [](){
+        // TODO: Remove unuploaded videos older than 24h here
+    });
 
     app().setFileTypes({
             "html",
@@ -42,11 +55,11 @@ int main() {
             { "Access-Control-Allow-Origin", "*" },
         });
 
-    HttpViewData data = Settings::getInstance().getData();
-    data.insert("error-text", "404 Not Found");
-    data.insert("back", "/");
-    const drogon::HttpResponsePtr res404 = HttpResponse::newHttpViewResponse("error", std::move(data));
-    app().setCustom404Page(res404, true);
+
+    app().setCustom404Page(std::move(res404), true);
+
+    app()
+        .setServerHeaderField(settings.title);
 
     app()
         .setFloatPrecisionInJson(0, "significant")
@@ -55,9 +68,8 @@ int main() {
 
     app()
         .enableServerHeader(true)
-        .enableDateHeader(true);
-
-    app().enableReusePort(true);
+        .enableDateHeader(true)
+        .enableReusePort(true);
 
     app()
         .setUploadPath("../data/uploads")

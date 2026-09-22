@@ -4,8 +4,6 @@
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 
-#include <string_view>
-
 namespace SlimyTube {
     using drogon::HttpMethod::Get,
         drogon::HttpMethod::Post,
