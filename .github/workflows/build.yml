@@ -11,13 +11,12 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Cache
-        uses: actions/cache@v6
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          path: build
-          key: ${{ runner.os }}-cmake-build-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.hpp', '**/*.cc', '**/*.hh', '**/*.c',  '**/*.h', '**/*.csp', '!lib/**') }}
-          restore-keys: |
-            ${{ runner.os }}-cmake-build-
+          key: ${{ runner.os }}-release
+          verbose: 2
+          create-symlink: true
 
       - name: Cache deps
         uses: awalsh128/cache-apt-pkgs-action@v1
@@ -26,7 +25,7 @@ jobs:
           version: 1.0
 
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Compile
         run: cmake --build build --config Release -j12
