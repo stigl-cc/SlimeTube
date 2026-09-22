@@ -1,5 +1,5 @@
-#include "controllers/PageController.h"
 #include <controllers/RecordController.h>
+#include <controllers/PageController.h>
 
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
@@ -13,6 +13,7 @@
 #include <models/Users.h>
 #include <models/Videos.h>
 
+#include <chrono>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
@@ -155,6 +156,7 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     respond(res);
 }
 
+using namespace std::chrono;
 void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     const std::string&
         title = req->getParameter(Query::videoTitle.data()),
@@ -163,10 +165,27 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
     if(title.empty())
         return(void) PageController::error(std::move(respond), HttpStatusCode::k400BadRequest, "/account");
 
-    std::string videoId;
-    uint32_t videoIdAttempts = 0;
+    const uint64_t
+        time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count(),
+        channel = req->attributes()->get<userId_t>(Attributes::keyUserId.data());
+    
+    std::string id;
     do {
-        videoId = RecordManager::generateVideoId();
-    } while(videoIdAttempts < 5);
+        id = RecordManager::generateVideoId();
+    } while(RecordManager::videoExists(id));
+
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
+
     Videos video;
+    video.setId(id);
+    video.setTitle(title);
+    video.setDescription(desc);
+    video.setChannel(channel);
+    video.setCreationTime(time);
+    video.setViews(0);
+    video_mapper.insert(video);
+
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+    res->addHeader(Headers::location.data(), "/upload/" + id);
+    respond(res);
 }

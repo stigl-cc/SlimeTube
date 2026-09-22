@@ -71,7 +71,7 @@ std::optional<Videos> SlimyTube::RecordManager::getVideoIfExists(const std::stri
     }
 }
 
-constexpr std::string_view videoIdCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+constexpr std::string_view videoIdCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
 std::string SlimyTube::RecordManager::generateVideoId(size_t size) {
     static std::mutex randomMutex = {};
     static std::random_device dev = {};

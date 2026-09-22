@@ -78,6 +78,7 @@ std::string SlimyTube::PageController::formatViewCount(int64_t viewCount) const 
     return ss.str();
 }
 
+// TODO: Add some sort of smarter algorithm
 std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageController::createPreviews(size_t amount) const {
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
     Mapper<Videos> video_mapper = SlimyTube::RecordManager::getVideosMapper();
@@ -194,6 +195,13 @@ void SlimyTube::PageController::create(const HttpRequestPtr& req, std::function<
 
 void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
+
+    std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
+    if(!video.has_value())
+        return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
+
+    data.insert("video_title", HttpViewData::htmlTranslate(video.value().getValueOfTitle()));
+    data.insert("video_desc", HttpViewData::htmlTranslate(video.value().getValueOfDescription()));
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 

@@ -6,6 +6,7 @@
     --text-color: #eeeeee;
     --background-color: #222232;
     --highlighted-color: #333342;
+    --semi-highlighted-color: #2a2a42;
 
     --vertical-separator-color: #2233ee;
     --link-color: #add8e6;
@@ -48,6 +49,10 @@ textarea {
     border-style: none;
     outline-style: none;
     margin: 0;
+}
+
+input:disabled, textarea:disabled {
+    background-color: var(--semi-highlighted-color);
 }
 
 input:focus, textarea:focus {

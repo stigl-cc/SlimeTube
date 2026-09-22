@@ -10,14 +10,35 @@
     </head>
     <body>
         <%view navbar %>
-        <form>
-            <label for="thumbnail-upload">Thumbnail(max 5MB)</label><br>
-            <input id="thumbnail-upload" type="file" accept="image/*" capture="environment" /><br>
+        <div class="create-upload-container">
+            <form class="create-upload-form">
+                <div class="create-upload-text">Upload assets for video</div>
 
-            <label for="video-upload">Video(max 2GB)</label><br>
-            <input id="video-upload" type="file" accept="video/*" capture="environment" /><br>
-            <progress value="0" max="100" id="upload-progress"></progress>
-        </form>
+                <div class="labeled-entry">
+                    <label for="title-entry">title</label><br>
+                    <input id="title-entry" type="text" value="[[video_title]]" disabled><br>
+                </div>
+
+                <div class="labeled-entry">
+                    <label for="description-entry">description</label><br>
+                    <textarea id="description-entry" rows="5" disabled>[[video_desc]]</textarea><br>
+                </div>
+
+                <div class="labeled-entry">
+                    <label for="thumbnail-upload">thumbnail(max 5mib)</label><br>
+                    <input id="thumbnail-upload" type="file" accept="image/*" capture="environment" /><br>
+                </div>
+
+                <div class="labeled-entry">
+                    <label for="video-upload">video(max 2gib)</label><br>
+                    <input id="video-upload" type="file" accept="video/*" capture="environment" /><br>
+                </div>
+                <div class="labeled-entry">
+                    <label for="upload-progress">video upload progress</label>
+                    <progress value="0" max="100" id="upload-progress"></progress>
+                </div>
+            </form>
+        </div>
         <%view footer %>
         <script src="/upload.js"></script>
     </body>
