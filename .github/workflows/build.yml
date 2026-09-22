@@ -11,18 +11,18 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: Cache deps
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: drogon libsqlite3-dev libjsoncpp-dev libbrotli-dev libssl-dev libzstd-dev uuid-dev ccache
+          version: 1.0
+
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ runner.os }}-release
           verbose: 2
           create-symlink: true
-
-      - name: Cache deps
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: drogon libsqlite3-dev libjsoncpp-dev libbrotli-dev libssl-dev libzstd-dev uuid-dev
-          version: 1.0
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
