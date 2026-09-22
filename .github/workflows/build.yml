@@ -15,7 +15,6 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build
-          key: ${{ runner.os }}-cmake-build
           key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', '**/*.cc', '**/*.hh', '**/*.h', '**/*.csp', '!lib/**') }}
           restore-keys: |
             ${{ runner.os }}-cmake-build-
