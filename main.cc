@@ -1,14 +1,19 @@
-#include "Settings.hh"
+#include <models/Settings.hh>
+#include <controllers/PageController.h>
+#include <controllers/ResourceController.h>
+
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpViewData.h>
 #include <drogon/RateLimiter.h>
 #include <drogon/drogon.h>
-#include <controllers/PageController.h>
-#include <controllers/ResourceController.h>
 #include <drogon/utils/coroutine.h>
 
+#include <filesystem>
+#include <system_error>
+
+namespace fs = std::filesystem;
 using
     drogon::HttpViewData,
     drogon::HttpResponse,
@@ -16,20 +21,41 @@ using
     drogon::app,
     SlimyTube::Settings;
 
+bool ensureDirectory(fs::path p) {
+    std::error_code ec;
+    std::filesystem::file_status status = fs::status(p, ec);
+
+    if (!fs::exists(p)) {
+        fs::create_directory(p, ec);
+        if(ec != std::errc())
+            LOG_ERROR << "Failed to create directory " << fs::canonical(p) << ": " << ec.message();
+    } else if (!fs::is_directory(status)) {
+        LOG_ERROR << fs::canonical(p) << ": path exists but is not a directory.";
+        return false;
+    }
+    return true;
+}
+
 int main() {
     Settings& settings = Settings::getInstance();
     app().loadConfigFile("data/config.json");
 
     Json::Value custom_user_config = app().getCustomConfig();
     settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
-    settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 1024 * 1024).as<uint64_t>();
-    settings.thumbnails_dir = custom_user_config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
 
-    settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
+    settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 1024 * 1024).as<uint64_t>();
     settings.salt_len = custom_user_config.get("salt_len", 16).as<size_t>();
 
-    HttpViewData
-        data = Settings::getInstance().getData();
+    settings.thumbnails_dir = custom_user_config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
+    settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
+
+    if(!ensureDirectory(settings.thumbnails_dir))
+        return 1;
+
+    if(!ensureDirectory(settings.videos_dir))
+        return 1;
+
+    HttpViewData data = Settings::getInstance().getData();
     data.insert("error-text", "404 Not Found");
     data.insert("back", "/");
 
