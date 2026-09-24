@@ -12,7 +12,8 @@ namespace SlimyTube {
         size_t zeroRangeLimit;
         std::string
             thumbnails_dir,
-            videos_dir;
+            videos_dir,
+            blobs_dir;
         size_t salt_len;
 
         static inline Settings& getInstance() {

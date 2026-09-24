@@ -57,7 +57,8 @@
         "title" : "SlimyTube",
         "zero_range_limit" : 10485760,
         "videos_dir" : "./data/videos",
-        "thumbnails" : "./data/thumbnails",
+        "thumbnails_dir" : "./data/thumbnails",
+        "blobs_dir" : "./data/blobs",
         "salt_length": 16,
     },
 }

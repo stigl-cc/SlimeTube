@@ -43,16 +43,19 @@ int main() {
     Json::Value custom_user_config = app().getCustomConfig();
     settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
 
-    settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 1024 * 1024).as<uint64_t>();
+    settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 10 * 1024 * 1024).as<uint64_t>();
     settings.salt_len = custom_user_config.get("salt_len", 16).as<size_t>();
 
     settings.thumbnails_dir = custom_user_config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
-    settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
-
     if(!ensureDirectory(settings.thumbnails_dir))
         return 1;
 
+    settings.videos_dir = custom_user_config.get("videos_dir", "data/videos").as<std::string>();
     if(!ensureDirectory(settings.videos_dir))
+        return 1;
+
+    settings.blobs_dir = custom_user_config.get("blobs_dir", "data/blobs").as<std::string>();
+    if(!ensureDirectory(settings.blobs_dir))
         return 1;
 
     HttpViewData data = Settings::getInstance().getData();

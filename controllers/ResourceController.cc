@@ -164,7 +164,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
     // TODO: Change to the uploads temporary folder for the blobs
-    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
+    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().blobs_dir)) / fs::path(id);
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
     std::error_code ec;
@@ -207,5 +207,4 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
         return;
 
     // TODO: Add to the queue for ffmpeg glob -> mp4 processing
-
 }
