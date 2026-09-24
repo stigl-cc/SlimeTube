@@ -68,11 +68,10 @@ std::optional<drogon::HttpStatusCode> SlimyTube::ResourceController::videoIdWrit
     return std::nullopt;
 }
 
-
 void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    std::optional<HttpStatusCode> videoValidCode = videoIdExists(id);
-    if(videoValidCode.has_value())
-        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
+    std::optional<HttpStatusCode> video_id_check_error = videoIdExists(id);
+    if(video_id_check_error.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
     shared_lock lk(getMutexForThumbnail(path));
@@ -80,9 +79,9 @@ void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, func
 }
 
 void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    std::optional<HttpStatusCode> videoValidCode = videoIdWritableAndExists(id, req);
-    if(videoValidCode.has_value())
-        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
+    std::optional<HttpStatusCode> video_id_check_error = videoIdWritableAndExists(id, req);
+    if(video_id_check_error.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
     const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
@@ -98,9 +97,9 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    std::optional<HttpStatusCode> videoValidCode = videoIdExists(id);
-    if(videoValidCode.has_value())
-        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
+    std::optional<HttpStatusCode> video_id_check_error = videoIdExists(id);
+    if(video_id_check_error.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
 
@@ -153,9 +152,9 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 }
 
 void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    std::optional<HttpStatusCode> videoValidCode = videoIdWritableAndExists(id, req);
-    if(videoValidCode.has_value())
-        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
+    std::optional<HttpStatusCode> video_id_check_error = videoIdWritableAndExists(id, req);
+    if(video_id_check_error.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
     const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
