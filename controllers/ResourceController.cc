@@ -100,7 +100,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, CT_NONE));
     }
 
-    string range_header = req->getHeader("Range");
+    string range_header = req->getHeader(Headers::range.data());
     if(range_header.empty()) {
         res = HttpResponse::newFileResponse(path, "", CT_VIDEO_MP4, "video/mp4", req);
         res->addHeader("Accept-Ranges", "bytes");
@@ -148,7 +148,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
-    const std::string& offset_param = req->getHeader("X-Offset");
+    const std::string& offset_param = req->getHeader(Headers::offset.data());
     size_t offset_header = 0;
     std::from_chars_result offset_param_conv =
         std::from_chars<uint64_t>(offset_param.c_str(), offset_param.c_str() + offset_param.size(), offset_header);
@@ -168,7 +168,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
 
     if(current_file_size < offset_header) { // X-Offset larger than current file size
         HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k424FailedDependency, drogon::CT_NONE);
-        res->addHeader("X-Position", std::to_string(current_file_size));
+        res->addHeader(Headers::position.data(), std::to_string(current_file_size));
         return(void) respond(std::move(res));
     }
     const std::string_view& body = req->getBody();
@@ -176,7 +176,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
 
     if(body_skipped >= body.size()) { // body already written (X-Offset too small)
         HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, drogon::CT_NONE);
-        res->addHeader("X-Position", std::to_string(current_file_size));
+        res->addHeader(Headers::position.data(), std::to_string(current_file_size));
         return(void) respond(std::move(res));
     }
 
@@ -185,6 +185,6 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     ofs.close();
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, drogon::CT_NONE);
-    res->addHeader("X-Position", std::to_string(current_file_size + (body.size() - body_skipped)));
+    res->addHeader(Headers::position.data(), std::to_string(current_file_size + (body.size() - body_skipped)));
     respond(std::move(res));
 }

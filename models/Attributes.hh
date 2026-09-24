@@ -36,5 +36,11 @@ namespace SlimyTube::Query {
 
 namespace SlimyTube::Headers {
     static constexpr std::string_view
-        location = "Location";
+        location = "Location",
+        range = "Range";
+
+    static constexpr std::string_view
+        position = "X-Position",
+        last = "X-Last",
+        offset = "X-Offset";
 };
