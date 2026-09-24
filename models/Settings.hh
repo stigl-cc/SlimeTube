@@ -20,7 +20,7 @@ namespace SlimyTube {
             return setting;
         }
 
-        HttpViewData getData() {
+        inline HttpViewData getData() {
             HttpViewData data;
             data.insert("title", title);
             return data;

@@ -22,8 +22,8 @@ namespace SlimyTube::Session {
 
 namespace SlimyTube::Query {
     static constexpr std::string_view
-        password = "pass",
-        username = "user";
+        username = "name",
+        password = "pass";
 
     static constexpr std::string_view
         newPassword = "new_pass",
