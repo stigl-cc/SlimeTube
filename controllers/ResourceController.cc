@@ -101,6 +101,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
+    // TODO: Check quality parameter to determine the suffix of the path
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
 
     shared_lock lk(getMutexForVideo(path));
@@ -108,7 +109,6 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 
     std::error_code ec;
     size_t file_length = fs::file_size(path, ec);
-
     if(ec) {
         if(ec.value() == static_cast<int>(std::errc::no_such_file_or_directory))
             return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
@@ -116,6 +116,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k500InternalServerError, CT_NONE));
     }
 
+    // Parse the Range header
     string range_header = req->getHeader(Headers::range.data());
     if(range_header.empty()) {
         res = HttpResponse::newFileResponse(path, "", CT_VIDEO_MP4, "video/mp4", req);
@@ -125,7 +126,6 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 
     vector<FileRange> ranges;
     FileRangeParseResult parse_result = parseRangeHeader(range_header, file_length, ranges);
-
     switch(parse_result) {
         case InvalidRange:
             res = HttpResponse::newHttpResponse();
@@ -156,15 +156,16 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
-    unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
-
     const std::string& offset_param = req->getHeader(Headers::offset.data());
     size_t offset_header = 0;
     std::from_chars_result offset_param_conv =
         std::from_chars<uint64_t>(offset_param.c_str(), offset_param.c_str() + offset_param.size(), offset_header);
     if(offset_param_conv.ec != std::errc()) // X-Offset is not a (valid) number
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+
+    // TODO: Change to the uploads temporary folder for the blobs
+    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
+    unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
     std::error_code ec;
     size_t current_file_size = fs::file_size(path, ec);
@@ -197,7 +198,14 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     ofs.write(body.data() + body_skipped, body.size() - body_skipped);
     ofs.close();
 
+    lk.unlock();
+
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, drogon::CT_NONE);
     res->addHeader(Headers::position.data(), std::to_string(current_file_size + (body.size() - body_skipped)));
     respond(std::move(res));
+    if(!is_last_param)
+        return;
+
+    // TODO: Add to the queue for ffmpeg glob -> mp4 processing
+
 }
