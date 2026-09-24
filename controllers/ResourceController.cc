@@ -156,6 +156,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
+    // Parse the X-Offset header
     const std::string& offset_param = req->getHeader(Headers::offset.data());
     size_t offset_header = 0;
     std::from_chars_result offset_param_conv =
