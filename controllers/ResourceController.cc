@@ -12,6 +12,7 @@
 #include <fstream>
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <shared_mutex>
 #include <string_view>
 #include <system_error>
@@ -45,11 +46,33 @@ shared_mutex& SlimyTube::ResourceController::getMutexForThumbnail(const string& 
     return thumbnailMutexes[key_hash % thumbnailMutexes.size()];
 }
 
-void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
+std::optional<drogon::HttpStatusCode> SlimyTube::ResourceController::videoIdExists(const std::string& id) const {
     if(id.empty())
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
-    if(!RecordManager::videoExists(id))
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+        return k400BadRequest;
+    if(!SlimyTube::RecordManager::videoExists(id))
+        return k404NotFound;
+    return std::nullopt;
+}
+
+std::optional<drogon::HttpStatusCode> SlimyTube::ResourceController::videoIdWritableAndExists(const std::string& id, const HttpRequestPtr& req) const {
+    if(id.empty())
+        return k400BadRequest;
+
+    optional<Videos> video = SlimyTube::RecordManager::getVideoIfExists(id);
+    if(!video.has_value()) // video not found
+        return k404NotFound;
+
+    userId_t userId = req->attributes()->get<userId_t>(SlimyTube::Attributes::userId.data());
+    if(video.value().getValueOfChannel() != userId) // video doesn't belong to the user
+        return k403Forbidden;
+    return std::nullopt;
+}
+
+
+void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
+    std::optional<HttpStatusCode> videoValidCode = videoIdExists(id);
+    if(videoValidCode.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
 
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
     shared_lock lk(getMutexForThumbnail(path));
@@ -57,16 +80,11 @@ void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, func
 }
 
 void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    if(id.empty())
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+    std::optional<HttpStatusCode> videoValidCode = videoIdWritableAndExists(id, req);
+    if(videoValidCode.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
 
-    optional<Videos> video = RecordManager::getVideoIfExists(id);
-    if(!video.has_value()) // video not found
-        return(void) respond(HttpResponse::newHttpResponse(drogon::k404NotFound, CT_NONE));
-    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(userId.data())) // video doesn't belong to the user
-        return(void) respond(HttpResponse::newHttpResponse(drogon::k403Forbidden, CT_NONE));
-
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
+    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
     // TODO: Make sure its an image and convert all to jpeg
@@ -80,10 +98,9 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    if(id.empty())
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
-    if(!RecordManager::videoExists(id))
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+    std::optional<HttpStatusCode> videoValidCode = videoIdExists(id);
+    if(videoValidCode.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
 
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
 
@@ -136,14 +153,9 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 }
 
 void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    if(id.empty())
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
-
-    optional<Videos> video = RecordManager::getVideoIfExists(id);
-    if(!video.has_value()) // video not found
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
-    if(video.value().getValueOfChannel() != req->attributes()->get<userId_t>(userId.data())) // video doesn't belong to the user
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, CT_NONE));
+    std::optional<HttpStatusCode> videoValidCode = videoIdWritableAndExists(id, req);
+    if(videoValidCode.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(videoValidCode.value(), CT_NONE));
 
     const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
@@ -174,7 +186,9 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     const std::string_view& body = req->getBody();
     size_t body_skipped = current_file_size - offset_header;
 
-    if(body_skipped >= body.size()) { // body already written (X-Offset too small)
+    bool is_last_param = req->getHeader(Headers::offset.data()) == "true";
+
+    if(body_skipped >= body.size() && !is_last_param) { // body already written (X-Offset too small)
         HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, drogon::CT_NONE);
         res->addHeader(Headers::position.data(), std::to_string(current_file_size));
         return(void) respond(std::move(res));

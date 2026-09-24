@@ -19,6 +19,9 @@ namespace SlimyTube {
 
         std::shared_mutex& getMutexForThumbnail(const std::string& key);
         std::shared_mutex& getMutexForVideo(const std::string& key);
+
+        std::optional<drogon::HttpStatusCode> videoIdExists(const std::string& id) const;
+        std::optional<drogon::HttpStatusCode> videoIdWritableAndExists(const std::string& id, const HttpRequestPtr& req) const;
         public:
     METHOD_LIST_BEGIN
         // errors: 404
