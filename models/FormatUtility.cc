@@ -1,13 +1,11 @@
 #include <models/FormatUtility.h>
-#include <chrono>
 #include <iomanip>
 #include <charconv>
 #include <stdexcept>
 
-using namespace std::chrono;
 std::string SlimyTube::FormatUtil::FormatVideoAge(int64_t uploadTime) {
     const int64_t
-        current_time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count(),
+        current_time = TimeUtil::GetUnixSecond(),
         video_age = current_time - uploadTime;
 
     constexpr size_t age_str_size = 5; // maximum of 9999years... propably enough

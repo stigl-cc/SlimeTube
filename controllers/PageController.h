@@ -12,7 +12,7 @@ namespace SlimyTube {
         drogon::HttpMethod::Post;
 
     class PageController : public drogon::HttpController<PageController> {
-        private:        
+        private:
         std::vector<std::unordered_map<std::string, std::string>> createPreviews(size_t count) const;
         public:
     METHOD_LIST_BEGIN

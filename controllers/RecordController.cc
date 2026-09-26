@@ -11,8 +11,8 @@
 #include <models/Attributes.hh>
 #include <models/Users.h>
 #include <models/Videos.h>
+#include <models/TimeUtility.h>
 
-#include <chrono>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
@@ -154,7 +154,6 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     respond(res);
 }
 
-using namespace std::chrono;
 void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     const std::string&
         title = req->getParameter(Query::videoTitle.data()),
@@ -164,7 +163,6 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
         return(void) PageController::error(std::move(respond), HttpStatusCode::k400BadRequest, "/account");
 
     const uint64_t
-        time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count(),
         channel = req->attributes()->get<userId_t>(Attributes::userId.data());
     
     std::string id;
@@ -179,7 +177,7 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
     video.setTitle(title);
     video.setDescription(desc);
     video.setChannel(channel);
-    video.setCreationTime(time);
+    video.setCreationTime(TimeUtil::GetUnixSecond());
     video.setViews(0);
     video_mapper.insert(video);
 

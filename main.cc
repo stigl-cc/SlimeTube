@@ -1,10 +1,11 @@
 #include <RecordManager.hh>
-#include <chrono>
 #include <drogon/orm/Criteria.h>
-#include <models/Settings.hh>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
+
+#include <models/Settings.hh>
 #include <models/Videos.h>
+#include <models/TimeUtility.h>
 
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>
@@ -45,13 +46,12 @@ bool ensureDirectory(fs::path p) {
 
 using namespace std::chrono;
 void cleanupVideos() {
-    const uint64_t
-        time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count() - 86'400;
+    const uint64_t min_time = TimeUtil::GetUnixSecond() - TimeConstants::day;;
 
     Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
     std::vector<Videos> videos_to_delete = video_mapper.findBy(
         Criteria(Videos::Cols::_state, CompareOperator::EQ, static_cast<int32_t>(VideoState::Upload)) &&
-        Criteria(Videos::Cols::_creation_time, CompareOperator::LT, time)
+        Criteria(Videos::Cols::_creation_time, CompareOperator::LT, min_time)
     );
 
     for(const Videos& video_to_delete : videos_to_delete)

@@ -1,20 +1,12 @@
 #pragma once
+#include <models/TimeUtility.h>
+
 #include <utility>
 #include <cstdint>
 #include <array>
 #include <string>
 
 namespace SlimyTube {
-    namespace TimeConstants {
-        constexpr uint64_t
-            minute =        60,
-            hour =       3'600,
-            day =       86'400,
-            week =     604'800,
-            month =  2'628'000,
-            year =  31'556'952;
-    };
-
     namespace NumberScaleConstants {
         constexpr uint64_t
             hundred = 1.00e2,
