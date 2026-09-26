@@ -60,5 +60,9 @@
         "thumbnails_dir" : "./data/thumbnails",
         "blobs_dir" : "./data/blobs",
         "salt_length": 16,
+        "limits" : {
+            "get_video_range_size" : 10485760,
+            "upload_video_blob_size": 2147483648,
+        },
     },
 }

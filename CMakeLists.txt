@@ -36,13 +36,12 @@ find_package(OpenSSL)
 # Set up ffmpeg (for video encoding)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
-    libavdevice
-    libavfilter
-    libavformat
-    libavcodec
-    libswresample
-    libswscale
-    libavutil
+  libavfilter
+  libavformat
+  libavcodec
+  libswresample
+  libswscale
+  libavutil
 )
 
 # Setup the main project
