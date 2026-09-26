@@ -58,6 +58,12 @@ bool SlimyTube::RecordManager::nameExists(const std::string& name, Mapper<Users>
     return mapper.count(Criteria(Users::Cols::_name, CompareOperator::EQ, name)) == 1;
 }
 
+void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
+    // TODO: FINISH
+    LOG_ERROR << "Feature not implemented! deleteVideo";
+    getVideosMapper().deleteByPrimaryKey(video.getPrimaryKey());
+}
+
 bool SlimyTube::RecordManager::videoExists(const std::string& id) {
     return getVideosMapper().count(Criteria(Videos::Cols::_id, CompareOperator::EQ, id)) == 1;
 }

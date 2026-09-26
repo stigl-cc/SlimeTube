@@ -1,6 +1,10 @@
+#include <RecordManager.hh>
+#include <chrono>
+#include <drogon/orm/Criteria.h>
 #include <models/Settings.hh>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
+#include <models/Videos.h>
 
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>
@@ -14,6 +18,9 @@
 #include <system_error>
 
 namespace fs = std::filesystem;
+using namespace SlimyTube;
+using namespace drogon::orm;
+using namespace drogon_model::SlimyTube;
 using
     drogon::HttpViewData,
     drogon::HttpResponse,
@@ -34,6 +41,21 @@ bool ensureDirectory(fs::path p) {
         return false;
     }
     return true;
+}
+
+using namespace std::chrono;
+void cleanupVideos() {
+    const uint64_t
+        time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count() - 86'400;
+
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
+    std::vector<Videos> videos_to_delete = video_mapper.findBy(
+        Criteria(Videos::Cols::_state, CompareOperator::EQ, static_cast<int32_t>(VideoState::Upload)) &&
+        Criteria(Videos::Cols::_creation_time, CompareOperator::LT, time)
+    );
+
+    for(const Videos& video_to_delete : videos_to_delete)
+        RecordManager::deleteVideo(video_to_delete);
 }
 
 int main() {
@@ -69,9 +91,7 @@ int main() {
             { "Options", "Compression" }
         });
 
-    app().getLoop()->runEvery(3'600, [](){
-        // TODO: Remove unuploaded videos older than 24h here
-    });
+    app().getLoop()->runEvery(3'600, cleanupVideos );
 
     app().setFileTypes({
             "html",

@@ -3,8 +3,6 @@
 #include <drogon/HttpViewData.h>
 #include <string>
 
-using drogon::HttpViewData;
-
 namespace SlimyTube {
     class Settings {
         public:
@@ -21,8 +19,8 @@ namespace SlimyTube {
             return setting;
         }
 
-        inline HttpViewData getData() {
-            HttpViewData data;
+        inline drogon::HttpViewData getData() {
+            drogon::HttpViewData data;
             data.insert("title", title);
             return data;
         }

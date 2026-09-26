@@ -51,6 +51,9 @@ class Videos
         static const std::string _description;
         static const std::string _views;
         static const std::string _creation_time;
+        static const std::string _resolutions;
+        static const std::string _state;
+        static const std::string _size;
     };
 
     static const int primaryKeyNumber;
@@ -155,8 +158,35 @@ class Videos
     ///Set the value of the column creation_time
     void setCreationTime(const int64_t &pCreationTime) noexcept;
 
+    /**  For column resolutions  */
+    ///Get the value of the column resolutions, returns the default value if the column is null
+    const std::string &getValueOfResolutions() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getResolutions() const noexcept;
+    ///Set the value of the column resolutions
+    void setResolutions(const std::string &pResolutions) noexcept;
+    void setResolutions(std::string &&pResolutions) noexcept;
+    void setResolutionsToNull() noexcept;
 
-    static size_t getColumnNumber() noexcept {  return 6;  }
+    /**  For column state  */
+    ///Get the value of the column state, returns the default value if the column is null
+    const int64_t &getValueOfState() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<int64_t> &getState() const noexcept;
+    ///Set the value of the column state
+    void setState(const int64_t &pState) noexcept;
+
+    /**  For column size  */
+    ///Get the value of the column size, returns the default value if the column is null
+    const int64_t &getValueOfSize() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<int64_t> &getSize() const noexcept;
+    ///Set the value of the column size
+    void setSize(const int64_t &pSize) noexcept;
+    void setSizeToNull() noexcept;
+
+
+    static size_t getColumnNumber() noexcept {  return 9;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -188,6 +218,9 @@ class Videos
     std::shared_ptr<std::string> description_;
     std::shared_ptr<int64_t> views_;
     std::shared_ptr<int64_t> creationTime_;
+    std::shared_ptr<std::string> resolutions_;
+    std::shared_ptr<int64_t> state_;
+    std::shared_ptr<int64_t> size_;
     struct MetaData
     {
         const std::string colName_;
@@ -199,7 +232,7 @@ class Videos
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[6]={ false };
+    bool dirtyFlag_[9]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -247,6 +280,21 @@ class Videos
             sql += "creation_time,";
             ++parametersCount;
         }
+        if(dirtyFlag_[6])
+        {
+            sql += "resolutions,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[7])
+        {
+            sql += "state,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[8])
+        {
+            sql += "size,";
+            ++parametersCount;
+        }
         if(parametersCount > 0)
         {
             sql[sql.length()-1]=')';
@@ -281,6 +329,21 @@ class Videos
 
         }
         if(dirtyFlag_[5])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[6])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[7])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[8])
         {
             sql.append("?,");
 

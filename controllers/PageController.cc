@@ -1,6 +1,8 @@
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
+#include <models/FormatUtility.h>
+
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 #include <drogon/HttpViewData.h>
@@ -15,82 +17,25 @@
 #include <models/Users.h>
 #include <models/Videos.h>
 
-#include <stdexcept>
 #include <unordered_map>
-#include <charconv>
 #include <string>
-#include <sstream>
-#include <chrono>
 #include <utility>
-#include <iomanip>
 
 using SlimyTube::Attributes::LoginMethod;
 using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
-using namespace std::chrono;
-
-std::string SlimyTube::PageController::formatVideoAge(int64_t uploadTime) const {
-    const int64_t
-        current_time = time_point_cast<std::chrono::seconds>(system_clock::now()).time_since_epoch().count(),
-        video_age = current_time - uploadTime;
-
-    constexpr size_t age_str_size = 5; // maximum of 9999years... propably enough
-    char age_str[age_str_size] = {};
-
-    std::pair<int64_t, char> used_unit = { 1, 's' };
-
-    // find appropriate unit
-    for(const std::pair<int64_t, char>& time_unit : timeUnits) {
-        if(video_age >= time_unit.first) {
-            used_unit = time_unit;
-            break;
-        }
-    }
-
-    // convert to string
-    std::to_chars_result result = std::to_chars(age_str, age_str + age_str_size - 1, static_cast<int64_t>(video_age / used_unit.first));
-    if(result.ec != std::errc())
-        throw std::runtime_error("Failed to convert video age: " +  std::make_error_code(result.ec).message());
-
-    // add unit mark
-    *result.ptr++ = used_unit.second;
-    return std::string(age_str, result.ptr);
-}
-
-std::string SlimyTube::PageController::formatViewCount(int64_t viewCount) const {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(1);
-
-    std::pair<int64_t, char> used_unit = { 1, 0 };
-
-    // find appropriate unit
-    for(const std::pair<int64_t, char>& view_count_unit : viewCountUnits) {
-        if(viewCount >= view_count_unit.first) {
-            used_unit = view_count_unit;
-            break;
-        }
-    }
-
-    if(used_unit.first == 1)
-        ss << std::setprecision(0);
-
-    ss << viewCount / static_cast<float>(used_unit.first);
-    if(used_unit.second) ss << used_unit.second;
-
-    return ss.str();
-}
 
 // TODO: Add some sort of smarter algorithm
 std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageController::createPreviews(size_t amount) const {
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
     Mapper<Videos> video_mapper = SlimyTube::RecordManager::getVideosMapper();
-    std::vector<Videos> videos = video_mapper.limit(amount).findAll();
+    std::vector<Videos> videos = video_mapper.limit(amount).findBy(orm::Criteria(Videos::Cols::_state, CompareOperator::EQ, static_cast<int32_t>(VideoState::Ready)));
 
     std::vector<std::unordered_map<std::string, std::string>> previews;
     for(const Videos& video : videos) {
-        std::string viewCountStr = formatViewCount(video.getValueOfViews());
-        std::string ageStr = formatVideoAge(video.getValueOfCreationTime());
+        std::string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
+        std::string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
 
         previews.emplace_back(std::unordered_map<std::string, std::string> {
                 {"id", video.getValueOfId()},
@@ -122,8 +67,8 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 
     const Users& channel = video.value().getUser(RecordManager::getDbClient());
     const std::string
-        viewCountStr = formatViewCount(video.value().getValueOfViews()),
-        ageStr = formatVideoAge(video.value().getValueOfCreationTime()),
+        viewCountStr = FormatUtil::FormatViewCount(video.value().getValueOfViews()),
+        ageStr = FormatUtil::FormatVideoAge(video.value().getValueOfCreationTime()),
         title = HttpViewData::htmlTranslate(video.value().getValueOfTitle()),
         desc = HttpViewData::htmlTranslate(video.value().getValueOfDescription()),
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),

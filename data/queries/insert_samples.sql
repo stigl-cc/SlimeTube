@@ -6,18 +6,20 @@ INSERT INTO users (name, hash, salt) VALUES (
 );
 
 /* Insert a couple videos from the user */
-INSERT INTO videos (id, channel, title, views, creation_time) VALUES (
+INSERT INTO videos (id, channel, title, views, creation_time, state) VALUES (
     'abc123',
     (SELECT id FROM users WHERE name = 'username'),
     'Video Title',
     7600000,
-    unixepoch('2024-01-12 06:25:12')
+    unixepoch('2024-01-12 06:25:12'),
+    0
 );
 
-INSERT INTO videos (id, channel, title, views, creation_time) VALUES (
+INSERT INTO videos (id, channel, title, views, creation_time, state) VALUES (
     'abcdef',
     (SELECT id FROM users WHERE name = 'username'),
     'Second Video',
     928,
-    unixepoch('2026-09-24 03:00:00')
+    unixepoch('2026-09-24 03:00:00'),
+    0
 );

@@ -10,6 +10,12 @@ using drogon::orm::DbClientPtr,
     drogon::orm::Mapper;
 
 namespace SlimyTube {
+    enum class VideoState {
+        Upload = 0, // blob present
+        Encode = 0, // blob undefined, processing/queued for processing
+        Ready = 0
+    };
+
     class RecordManager {
         public:
         static DbClientPtr getDbClient();
@@ -19,6 +25,8 @@ namespace SlimyTube {
         static std::vector<uint8_t> createSalt();
         static void createHash(const std::string& pass, std::span<const uint8_t> salt, std::span<uint8_t> hash);
         static bool nameExists(const std::string& name, Mapper<Users>& mapper);
+
+        static void deleteVideo(const Videos& id);
 
         static bool videoExists(const std::string& id);
         static std::optional<Videos> getVideoIfExists(const std::string& id);

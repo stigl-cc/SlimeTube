@@ -4,9 +4,6 @@
 #include <drogon/HttpTypes.h>
 
 #include <unordered_map>
-#include <utility>
-#include <cstdint>
-#include <array>
 
 namespace SlimyTube {
     using drogon::HttpRequestPtr,
@@ -15,24 +12,7 @@ namespace SlimyTube {
         drogon::HttpMethod::Post;
 
     class PageController : public drogon::HttpController<PageController> {
-        private:
-        static constexpr std::array<std::pair<int64_t, char>, 6> timeUnits {{
-            { 31'556'952, 'y' },
-            {  2'628'000, 'M' },
-            {    604'800, 'w' },
-            {     86'400, 'd' },
-            {      3'600, 'h' },
-            {         60, 'm' },
-        }};
-
-        static constexpr std::array<std::pair<int64_t, char>, 3> viewCountUnits = {{
-            { 1'000'000'000, 'B' },
-            {     1'000'000, 'M' },
-            {         1'000, 'k' },
-        }};
-
-        std::string formatVideoAge(int64_t uploadTime) const;
-        std::string formatViewCount(int64_t viewCount) const;
+        private:        
         std::vector<std::unordered_map<std::string, std::string>> createPreviews(size_t count) const;
         public:
     METHOD_LIST_BEGIN
