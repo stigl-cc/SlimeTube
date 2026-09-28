@@ -1,26 +1,31 @@
 #pragma once
 #include <memory>
+#include <optional>
 #include <libavutil/frame.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <stdexcept>
 
 namespace SlimyTube {
     class VideoDecoder {
+        public:
+        class error : public std::runtime_error {
+            public:
+            error(const char* const message) throw();
+        };
         private:
-        struct FormatContextDeleter { void operator()(AVFormatContext*); };
+        struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
         typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
 
-        struct CodecDeleter { void operator()(const AVCodec*); };
-        typedef std::unique_ptr<const AVCodec, CodecDeleter> codec_ptr_t;
+        typedef std::unique_ptr<const AVCodec> codec_ptr_t;
 
-        struct CodecContextDeleter { void operator()(AVCodecContext*); };
+        struct CodecContextDeleter { void operator()(AVCodecContext*) const; };
         typedef std::unique_ptr<AVCodecContext, CodecContextDeleter> codec_cxt_ptr_t;
 
-        struct PacketDeleter {void operator()(AVPacket*); };
+        struct PacketDeleter {void operator()(AVPacket*) const; };
         typedef std::unique_ptr<AVPacket, PacketDeleter> packet_ptr_t;
 
-        struct FrameDeleter {void operator()(AVFrame*); };
-        typedef std::unique_ptr<AVFrame, FrameDeleter> frame_ptr_t;
+        typedef std::shared_ptr<AVFrame> frame_ptr_t;
 
         private:
         int
@@ -41,14 +46,12 @@ namespace SlimyTube {
         frame_ptr_t mFrame;
 
         void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
-
         void readBlob(const std::string& path);
-
         void selectStreams();
-        void decode();
 
         public:
-        VideoDecoder();
+        VideoDecoder(const std::string& path);
+        std::optional<std::weak_ptr<AVFrame>> getFrame();
     };
 
     class VideoEncoder {
