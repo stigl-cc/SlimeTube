@@ -1,32 +1,44 @@
 #pragma once
 #include <memory>
+#include <libavutil/frame.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
 namespace SlimyTube {
     class VideoDecoder {
         private:
-        struct FormatContextDeleter {  void operator()(AVFormatContext*); };
+        struct FormatContextDeleter { void operator()(AVFormatContext*); };
+        typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
 
         struct CodecDeleter { void operator()(const AVCodec*); };
-        struct CodecContextDeleter { void operator()(AVCodecContext*); };
-
         typedef std::unique_ptr<const AVCodec, CodecDeleter> codec_ptr_t;
+
+        struct CodecContextDeleter { void operator()(AVCodecContext*); };
         typedef std::unique_ptr<AVCodecContext, CodecContextDeleter> codec_cxt_ptr_t;
 
-        std::unique_ptr<AVFormatContext, FormatContextDeleter> inputFormatContext = nullptr;
+        struct PacketDeleter {void operator()(AVPacket*); };
+        typedef std::unique_ptr<AVPacket, PacketDeleter> packet_ptr_t;
 
+        struct FrameDeleter {void operator()(AVFrame*); };
+        typedef std::unique_ptr<AVFrame, FrameDeleter> frame_ptr_t;
+
+        private:
         int
-            audioStreamIndex = -1,
-            videoStreamIndex = -1;
+            mAudioStreamIndex = -1,
+            mVideoStreamIndex = -1;
+
+        format_cxt_ptr_t mFormatContext = nullptr;
 
         codec_ptr_t
-            audioCodec,
-            videoCodec;
+            mAudioCodec,
+            mVideoCodec;
 
         codec_cxt_ptr_t
-            audioCodecContext,
-            videoCodecContext;
+            mAudioCodecContext,
+            mVideoCodecContext;
+
+        packet_ptr_t mPacket;
+        frame_ptr_t mFrame;
 
         void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
 
