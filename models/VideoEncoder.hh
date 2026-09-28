@@ -4,22 +4,45 @@
 #include <libavformat/avformat.h>
 
 namespace SlimyTube {
-    class VideoEncoder {
+    class VideoDecoder {
         private:
-        struct InputFormatContextDeleter {  void operator()(AVFormatContext*); };
-        struct OutputFormatContextDeleter { void operator()(AVFormatContext*); };
+        struct FormatContextDeleter {  void operator()(AVFormatContext*); };
 
-        struct CodecDeleter { void operator()(AVCodec*); };
+        struct CodecDeleter { void operator()(const AVCodec*); };
         struct CodecContextDeleter { void operator()(AVCodecContext*); };
 
-        std::unique_ptr<AVFormatContext, InputFormatContextDeleter> inputFormatContext;
-        std::unique_ptr<AVFormatContext, OutputFormatContextDeleter> outputFormatContext;
+        typedef std::unique_ptr<const AVCodec, CodecDeleter> codec_ptr_t;
+        typedef std::unique_ptr<AVCodecContext, CodecContextDeleter> codec_cxt_ptr_t;
+
+        std::unique_ptr<AVFormatContext, FormatContextDeleter> inputFormatContext = nullptr;
+
+        int
+            audioStreamIndex = -1,
+            videoStreamIndex = -1;
+
+        codec_ptr_t
+            audioCodec,
+            videoCodec;
+
+        codec_cxt_ptr_t
+            audioCodecContext,
+            videoCodecContext;
+
+        void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
 
         void readBlob(const std::string& path);
-        void setupCodec(const AVStream* stream);
+
+        void selectStreams();
         void decode();
 
         public:
-        VideoEncoder();
+        VideoDecoder();
     };
+
+    class VideoEncoder {
+        struct OutputFormatContextDeleter { void operator()(AVFormatContext*); };
+
+        std::unique_ptr<AVFormatContext, OutputFormatContextDeleter> outputFormatContext = nullptr;
+    };
+
 };
