@@ -1,5 +1,5 @@
 #include <libavcodec/packet.h>
-#include <models/VideoEncoder.hh>
+#include <models/VideoTranscoder.h>
 
 #include <libavcodec/codec.h>
 #include <libavcodec/avcodec.h>
@@ -100,13 +100,5 @@ void SlimyTube::VideoDecoder::decode() {
     mFrame.reset(av_frame_alloc());
     if(!mFrame.get()) {
         throw std::runtime_error("allocate AVFrame");
-    }
-}
-
-void SlimyTube::VideoEncoder::OutputFormatContextDeleter::operator()(AVFormatContext* p) {
-    if(p) {
-        if(!(p->oformat->flags & AVFMT_NOFILE))
-            avio_closep(&p->pb);
-        avformat_free_context(p);
     }
 }
