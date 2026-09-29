@@ -1,3 +1,4 @@
+#include <cerrno>
 #include <models/VideoTranscoder.h>
 
 extern "C" {
@@ -14,18 +15,6 @@ extern "C" {
 #include <string>
 
 SlimyTube::VideoDecoder::error::error(const char* const message) throw() : std::runtime_error(message) { }
-
-void SlimyTube::VideoDecoder::CodecDeleter::operator()(const AVCodec* p) const { }
-
-void SlimyTube::VideoDecoder::CodecContextDeleter::operator()(AVCodecContext* p) const {
-    if(p)
-        avcodec_free_context(&p);
-}
-
-void SlimyTube::VideoDecoder::PacketDeleter::operator()(AVPacket* p) const {
-    if(p)
-        av_packet_free(&p);
-}
 
 void SlimyTube::VideoDecoder::FormatContextDeleter::operator()(AVFormatContext* p) const {
     if(p)
@@ -111,6 +100,23 @@ SlimyTube::VideoDecoder::VideoDecoder(const std::string& path) {
     }
 }
 
+bool SlimyTube::VideoDecoder::decodeFrame() {
+    int ret;
+
+    ret = avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
+    if(ret < 0 && ret != AVERROR(EAGAIN))
+        throw error("sending packet to decoder");
+
+    ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
+    if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+        av_packet_unref(mPacket.get()); // TODO: Figure out where it actually belongs
+        return false;
+    } else if(ret < 0)
+        throw error("receiving frame from decoder");
+
+    return true;
+}
+
 std::optional<std::weak_ptr<AVFrame>> SlimyTube::VideoDecoder::getFrame() {
     int ret;
 
@@ -118,11 +124,10 @@ std::optional<std::weak_ptr<AVFrame>> SlimyTube::VideoDecoder::getFrame() {
     if(ret < 0)
         return std::nullopt;
 
-    do {
-        ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
-        if(ret == AVERROR(EAGAIN)) {
-            ret = avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
-        }
-    } while(ret == AVERROR(EAGAIN));
+    if(mPacket->stream_index == mVideoStreamIndex) {
+        if(!decodeFrame())
+            return std::nullopt;
+    } else if(mPacket->stream_index != mAudioStreamIndex)
+        printf("%d != %d\n", mPacket->stream_index, mAudioStreamIndex);
     return mFrame;
 }

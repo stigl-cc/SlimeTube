@@ -81,11 +81,10 @@ int main() {
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
 
+    // TODO: Remove testing decoder in main
     int counter = 0;
     VideoDecoder decoder(settings.blobs_dir + "/123456");
-    while(decoder.getFrame().has_value()) {
-        LOG_DEBUG << "Frame" << counter++ << "\n";
-    }
+    while(decoder.getFrame().has_value());
 
     return 0;
 

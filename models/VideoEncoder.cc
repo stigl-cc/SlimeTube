@@ -1,6 +1,6 @@
 #include <models/VideoTranscoder.h>
 
-void SlimyTube::VideoEncoder::OutputFormatContextDeleter::operator()(AVFormatContext* p) {
+void SlimyTube::VideoEncoder::FormatContextDeleter::operator()(AVFormatContext* p) const {
     if(p) {
         if(!(p->oformat->flags & AVFMT_NOFILE))
             avio_closep(&p->pb);
