@@ -6,6 +6,7 @@
 #include <models/Settings.hh>
 #include <models/Videos.h>
 #include <models/TimeUtility.h>
+#include <models/VideoTranscoder.h>
 
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>
@@ -79,6 +80,14 @@ int main() {
     settings.blobs_dir = custom_user_config.get("blobs_dir", "data/blobs").as<std::string>();
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
+
+    int counter = 0;
+    VideoDecoder decoder(settings.blobs_dir + "/123456");
+    while(decoder.getFrame().has_value()) {
+        LOG_DEBUG << "Frame" << counter++ << "\n";
+    }
+
+    return 0;
 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("error-text", "404 Not Found");

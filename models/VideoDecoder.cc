@@ -1,16 +1,21 @@
-#include <libavutil/frame.h>
 #include <models/VideoTranscoder.h>
 
+extern "C" {
+#include <libavutil/frame.h>
 #include <libavcodec/packet.h>
 #include <libavcodec/codec.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/error.h>
+}
 
 #include <optional>
 #include <stdexcept>
 #include <string>
 
 SlimyTube::VideoDecoder::error::error(const char* const message) throw() : std::runtime_error(message) { }
+
+void SlimyTube::VideoDecoder::CodecDeleter::operator()(const AVCodec* p) const { }
 
 void SlimyTube::VideoDecoder::CodecContextDeleter::operator()(AVCodecContext* p) const {
     if(p)
@@ -86,8 +91,11 @@ SlimyTube::VideoDecoder::VideoDecoder(const std::string& path) {
     readBlob(path);
     selectStreams();
 
-    setupCodec(mFormatContext->streams[mVideoStreamIndex], mVideoCodec, mVideoCodecContext);
-    setupCodec(mFormatContext->streams[mAudioStreamIndex], mAudioCodec, mAudioCodecContext);
+    if(mVideoStreamIndex >= 0)
+        setupCodec(mFormatContext->streams[mVideoStreamIndex], mVideoCodec, mVideoCodecContext);
+
+    if(mAudioStreamIndex >= 0)
+        setupCodec(mFormatContext->streams[mAudioStreamIndex], mAudioCodec, mAudioCodecContext);
 
     mPacket.reset(av_packet_alloc());
     if(!mPacket.get()) {
@@ -104,11 +112,17 @@ SlimyTube::VideoDecoder::VideoDecoder(const std::string& path) {
 }
 
 std::optional<std::weak_ptr<AVFrame>> SlimyTube::VideoDecoder::getFrame() {
-    if(av_read_frame(mFormatContext.get(), mPacket.get()) < 0) {
-        return std::nullopt;
-    }
+    int ret;
 
-    avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
-    avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
+    ret = av_read_frame(mFormatContext.get(), mPacket.get());
+    if(ret < 0)
+        return std::nullopt;
+
+    do {
+        ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
+        if(ret == AVERROR(EAGAIN)) {
+            ret = avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
+        }
+    } while(ret == AVERROR(EAGAIN));
     return mFrame;
 }

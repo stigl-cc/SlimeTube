@@ -1,10 +1,13 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <stdexcept>
+
+extern "C" {
 #include <libavutil/frame.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <stdexcept>
+}
 
 namespace SlimyTube {
     class VideoDecoder {
@@ -17,7 +20,8 @@ namespace SlimyTube {
         struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
         typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
 
-        typedef std::unique_ptr<const AVCodec> codec_ptr_t;
+        struct CodecDeleter { void operator()(const AVCodec*) const; };
+        typedef std::unique_ptr<const AVCodec, CodecDeleter> codec_ptr_t;
 
         struct CodecContextDeleter { void operator()(AVCodecContext*) const; };
         typedef std::unique_ptr<AVCodecContext, CodecContextDeleter> codec_cxt_ptr_t;
