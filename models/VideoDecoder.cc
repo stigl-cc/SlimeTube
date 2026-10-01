@@ -100,44 +100,35 @@ SlimyTube::VideoDecoder::VideoDecoder(const std::string& path) {
     }
 }
 
-bool SlimyTube::VideoDecoder::decodeFrame() {
-    int ret;
+SlimyTube::weak_frame_ptr_t SlimyTube::VideoDecoder::getFrame() {
+    while(true) {
+        if(!mGetFramePacketAvail) {
+            if(av_read_frame(mFormatContext.get(), mPacket.get()) < 0)
+                return {};
 
-    ret = avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
-    if(ret < 0 && ret != AVERROR(EAGAIN))
-        throw error("sending packet to decoder");
+            if(avcodec_send_packet(mVideoCodecContext.get(), mPacket.get()))
+                throw error("sending packet to decoder");
 
-    ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
-    if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-        av_packet_unref(mPacket.get()); // TODO: Figure out where it actually belongs
-        return false;
-    } else if(ret < 0)
-        throw error("receiving frame from decoder");
+            mGetFramePacketAvail = true;
+        }
 
-    return true;
+        if(mGetFramePacketAvail) {
+            int ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
+            if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                // new packet needs to be read
+                mGetFramePacketAvail = false;
+                av_packet_unref(mPacket.get());
+                continue;
+            } else if(ret < 0)
+                throw error("receiving frame from decoder");
+            return mFrame;
+        }
+    }
 }
 
-std::optional<std::weak_ptr<AVFrame>> SlimyTube::VideoDecoder::getFrame() {
-    int ret;
-
-    ret = av_read_frame(mFormatContext.get(), mPacket.get());
-    if(ret < 0)
-        return std::nullopt;
-
-    if(mPacket->stream_index == mVideoStreamIndex) {
-        if(!decodeFrame())
-            return std::nullopt;
-    } else if(mPacket->stream_index != mAudioStreamIndex)
-        printf("%d != %d\n", mPacket->stream_index, mAudioStreamIndex);
-    return mFrame;
-}
-
-void SlimyTube::VideoDecoder::getFrames(std::function<void(weak_frame_ptr_t)> callback) {
+void SlimyTube::VideoDecoder::getFrames(frame_callback_t callback) {
     int ret;
     while(av_read_frame(mFormatContext.get(), mPacket.get()) >= 0) {
-        if(mPacket->stream_index != mVideoStreamIndex)
-            continue;
-
         ret = avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
         if(ret < 0)
             throw error("sending packet to decoder");

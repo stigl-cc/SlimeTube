@@ -26,6 +26,8 @@ namespace SlimyTube {
     typedef std::shared_ptr<AVFrame> frame_ptr_t;
     typedef std::weak_ptr<AVFrame> weak_frame_ptr_t;
 
+    typedef std::function<void(weak_frame_ptr_t frame)> frame_callback_t;
+
     class VideoDecoder {
         public:
         class error : public std::runtime_error {
@@ -34,6 +36,7 @@ namespace SlimyTube {
         };
 
         private:
+
         struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
         typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
 
@@ -54,15 +57,18 @@ namespace SlimyTube {
         packet_ptr_t mPacket;
         frame_ptr_t mFrame;
 
+        bool mGetFramePacketAvail = false;
+
         void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
         void readBlob(const std::string& path);
         void selectStreams();
         bool decodeFrame();
-        std::optional<std::weak_ptr<AVFrame>> getFrame();
 
         public:
         VideoDecoder(const std::string& path);
-        void getFrames(std::function<void(weak_frame_ptr_t frame)> callback);
+
+        void getFrames(frame_callback_t callback);
+        weak_frame_ptr_t getFrame();
     };
 
     class VideoEncoder {
