@@ -55,14 +55,9 @@ void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec
         throw error("fill codec context");
 
     if(params.codec_type == AVMEDIA_TYPE_VIDEO) {
-        av_opt_set(codecContext->priv_data, "preset", "fast", 0);
-        av_opt_set(codecContext->priv_data, "x264-params", "keyint=60:min-keyint=60:scenecut=0", 0);
-        codecContext->time_base = {1, 60};
+        codecContext->time_base = { codecContext->framerate.den, codecContext->framerate.num };
     } else if(params.codec_type == AVMEDIA_TYPE_AUDIO) {
-        av_channel_layout_default(&codecContext->ch_layout, 2);
-        codecContext->time_base = {1, 48000};
-        codecContext->sample_rate = 48000;
-        codecContext->profile = AV_PROFILE_AAC_LOW;
+        codecContext->time_base = {1, codecContext->sample_rate};
     }
 
     if(avcodec_open2(codecContext.get(), codec, nullptr) < 0)
@@ -77,6 +72,7 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, int width, int he
         .profile = AV_PROFILE_H264_HIGH,
         .width = width,
         .height = height,
+        .framerate = { 60, 1 }
     };
     setupCodec(video_params, mVideoCodec, mVideoCodecContext);
 
@@ -85,7 +81,9 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, int width, int he
         .codec_id = audioCodec,
         .format = AVSampleFormat::AV_SAMPLE_FMT_FLTP,
         .profile = AV_PROFILE_AAC_LOW,
+        .sample_rate = 48000,
     };
+    av_channel_layout_default(&audio_params.ch_layout, 2);
     setupCodec(audio_params, mAudioCodec, mAudioCodecContext);
 
     openOutput(path, video_params, audio_params);
