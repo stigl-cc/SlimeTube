@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <functional>
 
@@ -35,6 +34,11 @@ namespace SlimyTube {
             error(const char* const message) throw();
         };
 
+        class user_error : public std::runtime_error {
+            public:
+            user_error(const char* const message) throw();
+        };
+
         private:
 
         struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
@@ -58,11 +62,13 @@ namespace SlimyTube {
         frame_ptr_t mFrame;
 
         bool mGetFramePacketAvail = false;
+        codec_cxt_ptr_t* mCurrentCodecUsed = nullptr;
 
         void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
         void readBlob(const std::string& path);
         void selectStreams();
-        bool decodeFrame();
+
+        bool getFramePacketAvail();
 
         public:
         VideoDecoder(const std::string& path);
@@ -82,6 +88,7 @@ namespace SlimyTube {
         struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
         typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
 
+        void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
 
     };
 
@@ -90,5 +97,4 @@ namespace SlimyTube {
         VideoDecoder mDecoder;
         VideoEncoder mEncoder;
     };
-
 };

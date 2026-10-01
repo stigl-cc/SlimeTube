@@ -10,11 +10,11 @@ extern "C" {
 #include <libavutil/error.h>
 }
 
-#include <optional>
 #include <stdexcept>
 #include <string>
 
 SlimyTube::VideoDecoder::error::error(const char* const message) throw() : std::runtime_error(message) { }
+SlimyTube::VideoDecoder::user_error::user_error(const char* const message) throw() : std::runtime_error(message) { }
 
 void SlimyTube::VideoDecoder::FormatContextDeleter::operator()(AVFormatContext* p) const {
     if(p)
@@ -100,41 +100,65 @@ SlimyTube::VideoDecoder::VideoDecoder(const std::string& path) {
     }
 }
 
+bool SlimyTube::VideoDecoder::getFramePacketAvail() {
+    int ret = avcodec_receive_frame(mCurrentCodecUsed->get(), mFrame.get());
+    if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+        // new packet needs to be read
+        mGetFramePacketAvail = false;
+        av_packet_unref(mPacket.get());
+        return false;
+    } else if(ret < 0)
+        throw error("receiving frame from decoder");
+    return true;
+}
+
 SlimyTube::weak_frame_ptr_t SlimyTube::VideoDecoder::getFrame() {
     while(true) {
         if(!mGetFramePacketAvail) {
             if(av_read_frame(mFormatContext.get(), mPacket.get()) < 0)
                 return {};
 
-            if(avcodec_send_packet(mVideoCodecContext.get(), mPacket.get()))
+            if(mPacket->stream_index == mVideoStreamIndex) {
+                mCurrentCodecUsed = &mVideoCodecContext;
+            } else if(mPacket->stream_index == mAudioStreamIndex) {
+                mCurrentCodecUsed = &mAudioCodecContext;
+            } else
+                continue;
+
+            if(avcodec_send_packet(mCurrentCodecUsed->get(), mPacket.get()))
                 throw error("sending packet to decoder");
 
             mGetFramePacketAvail = true;
         }
 
         if(mGetFramePacketAvail) {
-            int ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
-            if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-                // new packet needs to be read
-                mGetFramePacketAvail = false;
-                av_packet_unref(mPacket.get());
-                continue;
-            } else if(ret < 0)
-                throw error("receiving frame from decoder");
-            return mFrame;
+            if(getFramePacketAvail())
+                return mFrame;
+            continue;
         }
     }
 }
 
 void SlimyTube::VideoDecoder::getFrames(frame_callback_t callback) {
+    // flush all packets currently inside mPacket (if getFrame was run before getFrames)
+    while(mGetFramePacketAvail && getFramePacketAvail())
+        callback(mFrame);
+
     int ret;
     while(av_read_frame(mFormatContext.get(), mPacket.get()) >= 0) {
-        ret = avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
+        if(mPacket->stream_index == mVideoStreamIndex) {
+            mCurrentCodecUsed = &mVideoCodecContext;
+        } else if(mPacket->stream_index == mAudioStreamIndex) {
+            mCurrentCodecUsed = &mAudioCodecContext;
+        } else
+            continue;
+
+        ret = avcodec_send_packet(mCurrentCodecUsed->get(), mPacket.get());
         if(ret < 0)
-            throw error("sending packet to decoder");
+            throw error(std::string("sending packet to decoder" + std::to_string(ret)).c_str());
 
         while(ret >= 0) {
-            ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
+            ret = avcodec_receive_frame(mCurrentCodecUsed->get(), mFrame.get());
             if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
                 break;
             } else if(ret < 0)
