@@ -54,7 +54,7 @@
     ],
 
     "custom_config": {
-        "title" : "SlimyTube",
+        "title" : "SlimeTube",
         "zero_range_limit" : 10485760,
         "videos_dir" : "./data/videos",
         "thumbnails_dir" : "./data/thumbnails",
