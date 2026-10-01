@@ -99,8 +99,11 @@ namespace SlimyTube {
             mVideoCodecContext;
 
         stream_ptr_t
-            videoStream,
-            audioStream;
+            mVideoStream,
+            mAudioStream;
+
+        AVRational
+            sourceTimeBase;
 
         void openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams);
         void setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);

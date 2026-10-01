@@ -96,7 +96,7 @@ int main() {
         }, [&encoder](weak_frame_ptr_t frame) -> void {
             frame_ptr_t frame_ptr = frame.lock();
             if(frame_ptr) {
-                encoder.putAudioFrame(frame_ptr);
+                //encoder.putAudioFrame(frame_ptr);
             } else {
                 LOG_ERROR << "frame expired.";
             }
