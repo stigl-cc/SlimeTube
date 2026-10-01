@@ -1,4 +1,3 @@
-#include <cerrno>
 #include <models/VideoTranscoder.h>
 
 extern "C" {
@@ -12,6 +11,7 @@ extern "C" {
 
 #include <stdexcept>
 #include <string>
+#include <cerrno>
 
 SlimyTube::VideoDecoder::error::error(const char* const message) throw() : std::runtime_error(message) { }
 SlimyTube::VideoDecoder::user_error::user_error(const char* const message) throw() : std::runtime_error(message) { }
@@ -39,22 +39,22 @@ void SlimyTube::VideoDecoder::readBlob(const std::string& path) {
         throw error("retrieve InputStream info");
 }
 
-void SlimyTube::VideoDecoder::setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext) {
+void SlimyTube::VideoDecoder::setupCodec(const AVStream* stream, const AVCodec*& codec, codec_cxt_ptr_t& codecContext) {
     if(!stream)
-        throw error("Stream it not valid");
+        throw user_error("stream not valid");
 
-    codec.reset(avcodec_find_decoder(stream->codecpar->codec_id));
-    if(!codec.get())
-        throw error("find codec");
+    codec = avcodec_find_decoder(stream->codecpar->codec_id);
+    if(!codec)
+        throw user_error("find codec");
 
-    codecContext.reset(avcodec_alloc_context3(codec.get()));
+    codecContext.reset(avcodec_alloc_context3(codec));
     if(!codecContext.get())
         throw error("allocate memory for codec context");
 
     if(avcodec_parameters_to_context(codecContext.get(), stream->codecpar) < 0)
         throw error("fill codec context");
 
-    if(avcodec_open2(codecContext.get(), codec.get(), nullptr) < 0)
+    if(avcodec_open2(codecContext.get(), codec, nullptr) < 0)
         throw error("open codec");
 }
 

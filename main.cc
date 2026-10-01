@@ -84,18 +84,15 @@ int main() {
     // TODO: Remove testing decoder in main
 
     {
-        VideoDecoder decoder(settings.blobs_dir + "/123456");
-        {
-            decoder.getFrame();
-        }
-
-        decoder.getFrames([](weak_frame_ptr_t frame)-> void {
+        //VideoDecoder decoder(settings.blobs_dir + "/123456");
+        VideoEncoder encoder(settings.videos_dir + "/f38d-1080p", 1920, 1080, 30);
+        /*decoder.getFrames([](weak_frame_ptr_t frame)-> void {
             frame_ptr_t frame_ptr;
             if((frame_ptr = frame.lock())) {
             } else {
                 LOG_ERROR << "frame expired.";
             }
-        });
+            });*/
     }
 
     return 0;

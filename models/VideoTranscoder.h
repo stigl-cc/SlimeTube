@@ -13,9 +13,6 @@ namespace SlimyTube {
     class VideoDecoder;
     class VideoEncoder;
 
-    struct CodecDeleter { void operator()(const AVCodec*) const; };
-    typedef std::unique_ptr<const AVCodec, CodecDeleter> codec_ptr_t;
-
     struct CodecContextDeleter { void operator()(AVCodecContext*) const; };
     typedef std::unique_ptr<AVCodecContext, CodecContextDeleter> codec_cxt_ptr_t;
 
@@ -51,9 +48,9 @@ namespace SlimyTube {
 
         format_cxt_ptr_t
             mFormatContext = nullptr;
-        codec_ptr_t
-            mAudioCodec,
-            mVideoCodec;
+        const AVCodec
+            *mAudioCodec,
+            *mVideoCodec;
         codec_cxt_ptr_t
             mAudioCodecContext,
             mVideoCodecContext;
@@ -64,7 +61,7 @@ namespace SlimyTube {
         bool mGetFramePacketAvail = false;
         codec_cxt_ptr_t* mCurrentCodecUsed = nullptr;
 
-        void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
+        void setupCodec(const AVStream* stream, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);
         void readBlob(const std::string& path);
         void selectStreams();
 
@@ -85,10 +82,34 @@ namespace SlimyTube {
         };
 
         private:
+        static constexpr const std::string_view
+            format_name = "mp4";
+
         struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
         typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
 
-        void setupCodec(const AVStream* stream, codec_ptr_t& codec, codec_cxt_ptr_t& codecContext);
+        struct StreamDeleter { void operator()(const AVStream*) const; };
+        typedef std::unique_ptr<AVStream, StreamDeleter> stream_ptr_t;
+
+        format_cxt_ptr_t mFormatContext;
+
+        const AVCodec
+            *mAudioCodec,
+            *mVideoCodec;
+        codec_cxt_ptr_t
+            mAudioCodecContext,
+            mVideoCodecContext;
+
+        stream_ptr_t
+            videoStream,
+            audioStream;
+
+        void openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams);
+        void setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);
+
+        public:
+        VideoEncoder(const std::string& path, int width, int height, int rate, AVCodecID videoCodec = AV_CODEC_ID_H264, AVCodecID audioCodec = AV_CODEC_ID_AAC);
+
 
     };
 

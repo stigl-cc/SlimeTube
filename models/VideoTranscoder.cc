@@ -1,7 +1,5 @@
 #include <models/VideoTranscoder.h>
 
-void SlimyTube::CodecDeleter::operator()(const AVCodec* p) const { }
-
 void SlimyTube::CodecContextDeleter::operator()(AVCodecContext* p) const {
     if(p)
         avcodec_free_context(&p);
