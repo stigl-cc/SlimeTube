@@ -88,3 +88,30 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, int width, int he
 
     openOutput(path, video_params, audio_params);
 }
+
+void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
+    int res;
+    if(frame)
+        frame->pict_type = AV_PICTURE_TYPE_NONE;
+
+    AVPacket *output_packet = av_packet_alloc();
+    if(!output_packet)
+        throw error("allocate output packet");
+
+    res = avcodec_send_frame(mVideoCodecContext.get(), frame.get());
+
+    while (res >= 0) {
+        res = avcodec_receive_packet(mVideoCodecContext.get(), output_packet);
+        if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+            break;
+        } else if (res < 0) {
+            throw error("receive packet from encoder");
+        }
+
+        output_packet->stream_index = 0;
+    }
+}
+
+void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
+
+}

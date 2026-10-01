@@ -86,13 +86,21 @@ int main() {
     {
         VideoDecoder decoder(settings.blobs_dir + "/123456");
         VideoEncoder encoder(settings.videos_dir + "/f38d-1080p", 1920, 1080, 30);
-        decoder.getFrames([](weak_frame_ptr_t frame)-> void {
-            frame_ptr_t frame_ptr;
-            if((frame_ptr = frame.lock())) {
+        decoder.getFrames([&encoder](weak_frame_ptr_t frame)-> void {
+            frame_ptr_t frame_ptr = frame.lock();
+            if(frame_ptr) {
+                encoder.putVideoFrame(frame_ptr);
             } else {
                 LOG_ERROR << "frame expired.";
             }
-            });
+        }, [&encoder](weak_frame_ptr_t frame) -> void {
+            frame_ptr_t frame_ptr = frame.lock();
+            if(frame_ptr) {
+                encoder.putAudioFrame(frame_ptr);
+            } else {
+                LOG_ERROR << "frame expired.";
+            }
+        });
     }
 
     return 0;

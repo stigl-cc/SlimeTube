@@ -22,7 +22,8 @@ namespace SlimyTube {
     typedef std::shared_ptr<AVFrame> frame_ptr_t;
     typedef std::weak_ptr<AVFrame> weak_frame_ptr_t;
 
-    typedef std::function<void(weak_frame_ptr_t frame)> frame_callback_t;
+    typedef std::function<void(weak_frame_ptr_t frame)> video_callback_t;
+    typedef std::function<void(weak_frame_ptr_t frame)> audio_callback_t;
 
     class VideoDecoder {
         public:
@@ -65,13 +66,10 @@ namespace SlimyTube {
         void readBlob(const std::string& path);
         void selectStreams();
 
-        bool getFramePacketAvail();
-
         public:
         VideoDecoder(const std::string& path);
 
-        void getFrames(frame_callback_t callback);
-        weak_frame_ptr_t getFrame();
+        void getFrames(video_callback_t videoCallback, audio_callback_t audioCallback);
     };
 
     class VideoEncoder {
@@ -109,8 +107,8 @@ namespace SlimyTube {
 
         public:
         VideoEncoder(const std::string& path, int width, int height, int rate, AVCodecID videoCodec = AV_CODEC_ID_H264, AVCodecID audioCodec = AV_CODEC_ID_AAC);
-
-
+        void putVideoFrame(frame_ptr_t& frame);
+        void putAudioFrame(frame_ptr_t& frame);
     };
 
     class VideoTranscoder {

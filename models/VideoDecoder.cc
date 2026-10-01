@@ -7,6 +7,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/error.h>
+#include <libavutil/avutil.h>
 }
 
 #include <stdexcept>
@@ -100,50 +101,7 @@ SlimyTube::VideoDecoder::VideoDecoder(const std::string& path) {
     }
 }
 
-bool SlimyTube::VideoDecoder::getFramePacketAvail() {
-    int ret = avcodec_receive_frame(mCurrentCodecUsed->get(), mFrame.get());
-    if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-        // new packet needs to be read
-        mGetFramePacketAvail = false;
-        av_packet_unref(mPacket.get());
-        return false;
-    } else if(ret < 0)
-        throw error("receiving frame from decoder");
-    return true;
-}
-
-SlimyTube::weak_frame_ptr_t SlimyTube::VideoDecoder::getFrame() {
-    while(true) {
-        if(!mGetFramePacketAvail) {
-            if(av_read_frame(mFormatContext.get(), mPacket.get()) < 0)
-                return {};
-
-            if(mPacket->stream_index == mVideoStreamIndex) {
-                mCurrentCodecUsed = &mVideoCodecContext;
-            } else if(mPacket->stream_index == mAudioStreamIndex) {
-                mCurrentCodecUsed = &mAudioCodecContext;
-            } else
-                continue;
-
-            if(avcodec_send_packet(mCurrentCodecUsed->get(), mPacket.get()))
-                throw error("sending packet to decoder");
-
-            mGetFramePacketAvail = true;
-        }
-
-        if(mGetFramePacketAvail) {
-            if(getFramePacketAvail())
-                return mFrame;
-            continue;
-        }
-    }
-}
-
-void SlimyTube::VideoDecoder::getFrames(frame_callback_t callback) {
-    // flush all packets currently inside mPacket (if getFrame was run before getFrames)
-    while(mGetFramePacketAvail && getFramePacketAvail())
-        callback(mFrame);
-
+void SlimyTube::VideoDecoder::getFrames(video_callback_t videoCallback, audio_callback_t audioCallback) {
     int ret;
     while(av_read_frame(mFormatContext.get(), mPacket.get()) >= 0) {
         if(mPacket->stream_index == mVideoStreamIndex) {
@@ -164,7 +122,9 @@ void SlimyTube::VideoDecoder::getFrames(frame_callback_t callback) {
             } else if(ret < 0)
                 throw error("receiving frame from decoder");
 
-            callback(mFrame);
+            if(mCurrentCodecUsed->get()->codec_type == AVMEDIA_TYPE_VIDEO)
+                videoCallback(mFrame);
+            else audioCallback(mFrame);
         }
         av_packet_unref(mPacket.get());
     }
