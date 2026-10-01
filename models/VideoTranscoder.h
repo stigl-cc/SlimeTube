@@ -2,6 +2,7 @@
 #include <memory>
 #include <optional>
 #include <stdexcept>
+#include <functional>
 
 extern "C" {
 #include <libavutil/frame.h>
@@ -41,7 +42,8 @@ namespace SlimyTube {
             mAudioStreamIndex = -1,
             mVideoStreamIndex = -1;
 
-        format_cxt_ptr_t mFormatContext = nullptr;
+        format_cxt_ptr_t
+            mFormatContext = nullptr;
         codec_ptr_t
             mAudioCodec,
             mVideoCodec;
@@ -56,11 +58,11 @@ namespace SlimyTube {
         void readBlob(const std::string& path);
         void selectStreams();
         bool decodeFrame();
+        std::optional<std::weak_ptr<AVFrame>> getFrame();
 
         public:
         VideoDecoder(const std::string& path);
-
-        std::optional<std::weak_ptr<AVFrame>> getFrame();
+        void getFrames(std::function<void(weak_frame_ptr_t frame)> callback);
     };
 
     class VideoEncoder {

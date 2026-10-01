@@ -84,7 +84,14 @@ int main() {
     // TODO: Remove testing decoder in main
     int counter = 0;
     VideoDecoder decoder(settings.blobs_dir + "/123456");
-    while(decoder.getFrame().has_value());
+    decoder.getFrames([](weak_frame_ptr_t frame)-> void{
+        frame_ptr_t frame_ptr;
+        if((frame_ptr = frame.lock())) {
+            LOG_DEBUG << "frame " << frame_ptr->best_effort_timestamp;
+        } else {
+            LOG_ERROR << "frame expired.";
+        }
+    });
 
     return 0;
 

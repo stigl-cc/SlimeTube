@@ -131,3 +131,26 @@ std::optional<std::weak_ptr<AVFrame>> SlimyTube::VideoDecoder::getFrame() {
         printf("%d != %d\n", mPacket->stream_index, mAudioStreamIndex);
     return mFrame;
 }
+
+void SlimyTube::VideoDecoder::getFrames(std::function<void(weak_frame_ptr_t)> callback) {
+    int ret;
+    while(av_read_frame(mFormatContext.get(), mPacket.get()) >= 0) {
+        if(mPacket->stream_index != mVideoStreamIndex)
+            continue;
+
+        ret = avcodec_send_packet(mVideoCodecContext.get(), mPacket.get());
+        if(ret < 0)
+            throw error("sending packet to decoder");
+
+        while(ret >= 0) {
+            ret = avcodec_receive_frame(mVideoCodecContext.get(), mFrame.get());
+            if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                break;
+            } else if(ret < 0)
+                throw error("receiving frame from decoder");
+
+            callback(mFrame);
+        }
+        av_packet_unref(mPacket.get());
+    }
+}
