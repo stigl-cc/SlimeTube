@@ -85,7 +85,9 @@ int main() {
 
     {
         VideoDecoder decoder(settings.blobs_dir + "/123456");
-        VideoEncoder encoder(settings.videos_dir + "/f38d-1080p", 1920, 1080, 30);
+        AVRational video, audio;
+        decoder.getTimeBase(video, audio);
+        VideoEncoder encoder(settings.videos_dir + "/f38d-1080p", 1920, 1080, 30, video, audio);
         decoder.getFrames([&encoder](weak_frame_ptr_t frame)-> void {
             frame_ptr_t frame_ptr = frame.lock();
             if(frame_ptr) {
@@ -101,6 +103,7 @@ int main() {
                 LOG_ERROR << "frame expired.";
             }
         });
+        encoder.write();
     }
 
     return 0;

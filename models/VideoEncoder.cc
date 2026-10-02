@@ -41,9 +41,23 @@ void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecP
 
     mVideoStream.reset(avformat_new_stream(mFormatContext.get(), nullptr));
     avcodec_parameters_copy(mVideoStream->codecpar, &videoParams);
+    mVideoStream->time_base = {1, 60 * 256};
 
     mAudioStream.reset(avformat_new_stream(mFormatContext.get(), nullptr));
     avcodec_parameters_copy(mAudioStream->codecpar, &audioParams);
+
+    if(mFormatContext->oformat->flags & AVFMT_GLOBALHEADER)
+        mFormatContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+    if(!(mFormatContext->oformat->flags & AVFMT_NOFILE)) {
+        if(avio_open(&mFormatContext->pb, path.c_str(), AVIO_FLAG_WRITE) < 0) {
+            throw error("open output file");
+        }
+    }
+
+    if(avformat_write_header(mFormatContext.get(), nullptr) < 0) {
+        throw error("write hedaer");
+    }
 }
 
 void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext) {
@@ -56,7 +70,7 @@ void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec
         throw error("fill codec context");
 
     if(params.codec_type == AVMEDIA_TYPE_VIDEO) {
-        codecContext->time_base = { codecContext->framerate.den, codecContext->framerate.num };
+        codecContext->time_base = { 1, 30 };
     } else if(params.codec_type == AVMEDIA_TYPE_AUDIO) {
         codecContext->time_base = {1, codecContext->sample_rate};
     }
@@ -65,7 +79,11 @@ void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec
         throw error("open codec");
 }
 
-SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, int width, int height, int rate, AVCodecID videoCodec, AVCodecID audioCodec) {
+SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, int width, int height, int rate,
+    AVRational videoTimeBase,
+    AVRational audioTimeBase, AVCodecID videoCodec, AVCodecID audioCodec) : mAudioSourceTimeBase(audioTimeBase),
+                                                                            mVideoSourceTimeBase(videoTimeBase) {
+
     AVCodecParameters video_params = {
         .codec_type = AVMEDIA_TYPE_VIDEO,
         .codec_id = videoCodec,
@@ -108,15 +126,21 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
             throw error("receive packet from encoder");
         }
 
+        printf("%d/%d %d/%d\n", mVideoStream->time_base.den, mVideoStream->time_base.num, mVideoSourceTimeBase.den, mVideoSourceTimeBase.num);
         output_packet->stream_index = 0;
-        output_packet->duration = mVideoStream->time_base.den / mVideoStream->time_base.num / sourceTimeBase.num * sourceTimeBase.den;
-        av_packet_rescale_ts(output_packet, sourceTimeBase, mVideoStream->time_base);
+        output_packet->duration = mVideoStream->time_base.den / mVideoStream->time_base.num / mVideoSourceTimeBase.num * mVideoSourceTimeBase.den;
+
+        av_packet_rescale_ts(output_packet, mVideoSourceTimeBase, mVideoStream->time_base);
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
             throw error("writing packet to encoder");
     }
 
     av_packet_unref(output_packet);
     av_packet_free(&output_packet);
+}
+
+void SlimyTube::VideoEncoder::write() {
+    av_write_trailer(mFormatContext.get());
 }
 
 void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {

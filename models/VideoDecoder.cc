@@ -129,3 +129,8 @@ void SlimyTube::VideoDecoder::getFrames(video_callback_t videoCallback, audio_ca
         av_packet_unref(mPacket.get());
     }
 }
+
+void SlimyTube::VideoDecoder::getTimeBase(AVRational& video, AVRational& audio) {
+    video = mFormatContext->streams[mVideoStreamIndex]->time_base;
+    audio = mFormatContext->streams[mAudioStreamIndex]->time_base;
+}

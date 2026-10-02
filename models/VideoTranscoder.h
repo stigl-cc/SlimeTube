@@ -1,4 +1,5 @@
 #pragma once
+#include <libavutil/rational.h>
 #include <memory>
 #include <stdexcept>
 #include <functional>
@@ -70,6 +71,8 @@ namespace SlimyTube {
         VideoDecoder(const std::string& path);
 
         void getFrames(video_callback_t videoCallback, audio_callback_t audioCallback);
+
+        void getTimeBase(AVRational& video, AVRational& audio);
     };
 
     class VideoEncoder {
@@ -103,13 +106,18 @@ namespace SlimyTube {
             mAudioStream;
 
         AVRational
-            sourceTimeBase;
+            mAudioSourceTimeBase,
+            mVideoSourceTimeBase;
 
         void openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams);
         void setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);
 
         public:
-        VideoEncoder(const std::string& path, int width, int height, int rate, AVCodecID videoCodec = AV_CODEC_ID_H264, AVCodecID audioCodec = AV_CODEC_ID_AAC);
+        VideoEncoder(const std::string& path, int width, int height, int rate,
+            AVRational videoTimeBase,
+            AVRational audioTimeBase,
+            AVCodecID videoCodec = AV_CODEC_ID_H264, AVCodecID audioCodec = AV_CODEC_ID_AAC);
+        void write();
         void putVideoFrame(frame_ptr_t& frame);
         void putAudioFrame(frame_ptr_t& frame);
     };
