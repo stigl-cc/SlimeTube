@@ -14,6 +14,7 @@ extern "C" {
 #include <libavutil/opt.h>
 #include <libavcodec/defs.h>
 #include <libavcodec/packet.h>
+#include <libavutil/mathematics.h>
 }
 
 SlimyTube::VideoEncoder::error::error(const char* const message) throw() : std::runtime_error(message) { }
@@ -126,11 +127,39 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
             throw error("receive packet from encoder");
         }
 
-        printf("%d/%d %d/%d\n", mVideoStream->time_base.den, mVideoStream->time_base.num, mVideoSourceTimeBase.den, mVideoSourceTimeBase.num);
         output_packet->stream_index = 0;
-        output_packet->duration = mVideoStream->time_base.den / mVideoStream->time_base.num / mVideoSourceTimeBase.num * mVideoSourceTimeBase.den;
+        output_packet->pts = av_rescale_q_rnd(output_packet->pts, mVideoSourceTimeBase, mVideoStream->time_base, static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+        output_packet->dts = av_rescale_q_rnd(output_packet->dts, mVideoSourceTimeBase, mVideoStream->time_base, static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+        output_packet->duration = av_rescale_q(output_packet->duration, mVideoSourceTimeBase, mVideoStream->time_base);;
 
-        av_packet_rescale_ts(output_packet, mVideoSourceTimeBase, mVideoStream->time_base);
+        //av_packet_rescale_ts(output_packet, mVideoSourceTimeBase, mVideoStream->time_base);
+        if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
+            throw error("writing packet to encoder");
+    }
+
+    av_packet_unref(output_packet);
+    av_packet_free(&output_packet);
+}
+
+void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
+    AVPacket *output_packet = av_packet_alloc();
+    if(!output_packet)
+        throw error("allocate output packet");
+
+    int ret;
+    ret = avcodec_send_frame(mAudioCodecContext.get(), frame.get());
+
+    while (ret >= 0) {
+        ret = avcodec_receive_packet(mAudioCodecContext.get(), output_packet);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            break;
+        } else if (ret < 0) {
+            throw error("receive packet from encoder");
+        }
+
+        output_packet->stream_index = 1;
+        av_packet_rescale_ts(output_packet, mAudioSourceTimeBase, mAudioStream->time_base);
+
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
             throw error("writing packet to encoder");
     }
@@ -143,6 +172,5 @@ void SlimyTube::VideoEncoder::write() {
     av_write_trailer(mFormatContext.get());
 }
 
-void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
-
-}
+// 02.97
+// 05.13
