@@ -187,7 +187,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     const std::string_view& body = req->getBody();
     size_t body_skipped = current_file_size - offset_header;
 
-    bool is_last_param = req->getHeader(Headers::offset.data()) == "true";
+    bool is_last_param = req->getHeader(Headers::last.data()) == "true";
 
     if(body_skipped >= body.size() && !is_last_param) { // body already written (X-Offset too small)
         HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, drogon::CT_NONE);

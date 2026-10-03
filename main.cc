@@ -6,6 +6,7 @@
 #include <models/Settings.hh>
 #include <models/Videos.h>
 #include <models/TimeUtility.h>
+#include <models/VideoTranscoder.h>
 
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>
