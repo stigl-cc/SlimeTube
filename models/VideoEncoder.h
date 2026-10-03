@@ -55,6 +55,6 @@ namespace SlimyTube {
         void putVideoFrame(frame_ptr_t& frame);
         void putAudioFrame(frame_ptr_t& frame);
 
-        ~VideoEncoder();
+        void finish();
     };
 }

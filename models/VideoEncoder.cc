@@ -207,7 +207,7 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
     av_packet_free(&output_packet);
 }
 
-SlimyTube::VideoEncoder::~VideoEncoder() {
+void SlimyTube::VideoEncoder::finish() {
     // Flush the stream
     frame_ptr_t null_frame = { nullptr };
     putVideoFrame(null_frame);
