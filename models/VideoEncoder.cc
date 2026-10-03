@@ -1,4 +1,6 @@
+#include "VideoEncoder.h"
 #include <models/VideoTranscoder.h>
+#include <utility>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -82,25 +84,25 @@ void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec
         throw error("open codec");
 }
 
-SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, int width, int height, int rate,
+SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget& target,
     AVRational videoTimeBase,
-    AVRational audioTimeBase, AVCodecID videoCodec, AVCodecID audioCodec) : mAudioSourceTimeBase(audioTimeBase),
-                                                                            mVideoSourceTimeBase(videoTimeBase) {
-
+    AVRational audioTimeBase)
+    : mAudioSourceTimeBase(audioTimeBase),
+      mVideoSourceTimeBase(videoTimeBase) {
     AVCodecParameters video_params = {
         .codec_type = AVMEDIA_TYPE_VIDEO,
-        .codec_id = videoCodec,
+        .codec_id = target.videoCodec,
         .format = AVPixelFormat::AV_PIX_FMT_YUV420P,
         .profile = AV_PROFILE_H264_HIGH,
-        .width = width,
-        .height = height,
-        .framerate = { 60, 1 }
+        .width = target.width,
+        .height = target.height,
+        .framerate = target.rate
     };
     setupCodec(video_params, mVideoCodec, mVideoCodecContext);
 
     AVCodecParameters audio_params = {
         .codec_type = AVMEDIA_TYPE_AUDIO,
-        .codec_id = audioCodec,
+        .codec_id = target.audioCodec,
         .format = AVSampleFormat::AV_SAMPLE_FMT_FLTP,
         .profile = AV_PROFILE_AAC_LOW,
         .sample_rate = 48000,
@@ -109,6 +111,42 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, int width, int he
     setupCodec(audio_params, mAudioCodec, mAudioCodecContext);
 
     openOutput(path, video_params, audio_params);
+}
+
+SlimyTube::VideoEncoder::VideoEncoder(VideoEncoder&& other) {
+    mFormatContext = std::move(other.mFormatContext);
+
+    mAudioCodec = std::exchange(other.mAudioCodec, nullptr);
+    mVideoCodec = std::exchange(other.mVideoCodec, nullptr);
+
+    mAudioCodecContext = std::move(other.mAudioCodecContext);
+    mVideoCodecContext = std::move(other.mVideoCodecContext);
+
+    mVideoStream = std::move(other.mVideoStream);
+    mAudioStream = std::move(other.mAudioStream);
+
+    mAudioSourceTimeBase = other.mAudioSourceTimeBase;
+    mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+}
+
+SlimyTube::VideoEncoder& SlimyTube::VideoEncoder::operator=(VideoEncoder&& other) {
+    if(&other == this)
+        return *this;
+
+    mFormatContext = std::move(other.mFormatContext);
+
+    mAudioCodec = std::exchange(other.mAudioCodec, nullptr);
+    mVideoCodec = std::exchange(other.mVideoCodec, nullptr);
+
+    mAudioCodecContext = std::move(other.mAudioCodecContext);
+    mVideoCodecContext = std::move(other.mVideoCodecContext);
+
+    mVideoStream = std::move(other.mVideoStream);
+    mAudioStream = std::move(other.mAudioStream);
+
+    mAudioSourceTimeBase = other.mAudioSourceTimeBase;
+    mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+    return *this;
 }
 
 void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
@@ -169,7 +207,7 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
     av_packet_free(&output_packet);
 }
 
-void SlimyTube::VideoEncoder::write() {
+SlimyTube::VideoEncoder::~VideoEncoder() {
     // Flush the stream
     frame_ptr_t null_frame = { nullptr };
     putVideoFrame(null_frame);

@@ -81,8 +81,18 @@ int main() {
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
 
+    std::vector<VideoTarget> videoTargets = {
+        VideoTarget {
+            1920, 1080,
+            {60, 1}
+        },
+    };
+
+    VideoTranscoder transcoder(settings.blobs_dir + "/123456", settings.videos_dir + "/f38d-", videoTargets);
+    transcoder.transcode();
+
     // TODO: Remove testing transcoder in main
-    {
+    /*{
         VideoDecoder decoder(settings.blobs_dir + "/123456");
         AVRational video, audio;
         decoder.getTimeBase(video, audio);
@@ -102,8 +112,7 @@ int main() {
                 LOG_ERROR << "frame expired.";
             }
         });
-        encoder.write();
-    }
+        }*/
 
     return 0;
 
