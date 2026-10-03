@@ -81,8 +81,7 @@ int main() {
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
 
-    // TODO: Remove testing decoder in main
-
+    // TODO: Remove testing transcoder in main
     {
         VideoDecoder decoder(settings.blobs_dir + "/123456");
         AVRational video, audio;

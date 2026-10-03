@@ -2,19 +2,21 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
 #include <libavformat/avio.h>
-#include <libavcodec/avcodec.h>
-#include <libavcodec/codec.h>
-#include <libavcodec/codec_par.h>
+
+#include <libavutil/avutil.h>
 #include <libavutil/pixfmt.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/rational.h>
 #include <libavutil/opt.h>
+#include <libavutil/mathematics.h>
+
 #include <libavcodec/defs.h>
 #include <libavcodec/packet.h>
-#include <libavutil/mathematics.h>
+#include <libavcodec/avcodec.h>
+#include <libavcodec/codec.h>
+#include <libavcodec/codec_par.h>
 }
 
 SlimyTube::VideoEncoder::error::error(const char* const message) throw() : std::runtime_error(message) { }
@@ -131,8 +133,7 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
         output_packet->pts = av_rescale_q_rnd(output_packet->pts, mVideoSourceTimeBase, mVideoStream->time_base, static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
         output_packet->dts = av_rescale_q_rnd(output_packet->dts, mVideoSourceTimeBase, mVideoStream->time_base, static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
         output_packet->duration = av_rescale_q(output_packet->duration, mVideoSourceTimeBase, mVideoStream->time_base);;
-
-        //av_packet_rescale_ts(output_packet, mVideoSourceTimeBase, mVideoStream->time_base);
+        av_packet_rescale_ts(output_packet, mVideoSourceTimeBase, mVideoStream->time_base);
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
             throw error("writing packet to encoder");
     }
@@ -169,8 +170,10 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
 }
 
 void SlimyTube::VideoEncoder::write() {
+    // Flush the stream
+    frame_ptr_t null_frame = { nullptr };
+    putVideoFrame(null_frame);
+    putAudioFrame(null_frame);
+
     av_write_trailer(mFormatContext.get());
 }
-
-// 02.97
-// 05.13
