@@ -81,41 +81,6 @@ int main() {
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
 
-    std::vector<VideoTarget> videoTargets = {
-        VideoTarget {
-            1920, 1080,
-            {60, 1}
-        },
-    };
-
-    VideoTranscoder transcoder(settings.blobs_dir + "/123456", settings.videos_dir + "/f38d", videoTargets);
-    transcoder.transcode();
-
-    // TODO: Remove testing transcoder in main
-    /*{
-        VideoDecoder decoder(settings.blobs_dir + "/123456");
-        AVRational video, audio;
-        decoder.getTimeBase(video, audio);
-        VideoEncoder encoder(settings.videos_dir + "/f38d-1080p", 1920, 1080, 30, video, audio);
-        decoder.getFrames([&encoder](weak_frame_ptr_t frame)-> void {
-            frame_ptr_t frame_ptr = frame.lock();
-            if(frame_ptr) {
-                encoder.putVideoFrame(frame_ptr);
-            } else {
-                LOG_ERROR << "frame expired.";
-            }
-        }, [&encoder](weak_frame_ptr_t frame) -> void {
-            frame_ptr_t frame_ptr = frame.lock();
-            if(frame_ptr) {
-                encoder.putAudioFrame(frame_ptr);
-            } else {
-                LOG_ERROR << "frame expired.";
-            }
-        });
-        }*/
-
-    return 0;
-
     HttpViewData data = Settings::getInstance().getData();
     data.insert("error-text", "404 Not Found");
     data.insert("back", "/");
