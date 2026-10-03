@@ -1,4 +1,5 @@
 #include "VideoEncoder.h"
+#include "VideoTypes.h"
 #include <models/VideoTranscoder.h>
 #include <utility>
 
@@ -21,8 +22,6 @@ extern "C" {
 #include <libavcodec/codec_par.h>
 }
 
-SlimyTube::VideoEncoder::error::error(const char* const message) throw() : std::runtime_error(message) { }
-
 void SlimyTube::VideoEncoder::StreamDeleter::operator()(const AVStream* p) const {
     if(p) {
     }
@@ -40,7 +39,7 @@ void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecP
     AVFormatContext* fmt_cxt = nullptr;
     avformat_alloc_output_context2(&fmt_cxt, nullptr, format_name.data(), path.c_str());
     if(!fmt_cxt)
-        throw error("open output");
+        throw video_proc_error(false, "open output");
 
     mFormatContext.reset(fmt_cxt);
 
@@ -56,12 +55,12 @@ void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecP
 
     if(!(mFormatContext->oformat->flags & AVFMT_NOFILE)) {
         if(avio_open(&mFormatContext->pb, path.c_str(), AVIO_FLAG_WRITE) < 0) {
-            throw error("open output file");
+            throw video_proc_error(false, "open output file");
         }
     }
 
     if(avformat_write_header(mFormatContext.get(), nullptr) < 0) {
-        throw error("write hedaer");
+        throw video_proc_error(false, "write header");
     }
 }
 
@@ -69,10 +68,10 @@ void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec
     codec = avcodec_find_encoder(params.codec_id);
     codecContext.reset(avcodec_alloc_context3(codec));
     if(!codecContext.get())
-        throw error("allocate memory for codec context");
+        throw video_proc_error(false, "allocate memory for codec context");
 
     if(avcodec_parameters_to_context(codecContext.get(), &params) < 0)
-        throw error("fill codec context");
+        throw video_proc_error(false, "fill codec context");
 
     if(params.codec_type == AVMEDIA_TYPE_VIDEO) {
         codecContext->time_base = { 1, 30 };
@@ -81,7 +80,7 @@ void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec
     }
 
     if(avcodec_open2(codecContext.get(), codec, nullptr) < 0)
-        throw error("open codec");
+        throw video_proc_error(false, "open codec");
 }
 
 SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget& target,
@@ -154,7 +153,7 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
 
     AVPacket *output_packet = av_packet_alloc();
     if(!output_packet)
-        throw error("allocate output packet");
+        throw video_proc_error(false, "allocate output packet");
 
     int ret;
     ret = avcodec_send_frame(mVideoCodecContext.get(), frame.get());
@@ -164,7 +163,7 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;
         } else if (ret < 0) {
-            throw error("receive packet from encoder");
+            throw video_proc_error(false, "receive packet from encoder");
         }
 
         output_packet->stream_index = 0;
@@ -173,7 +172,7 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
         output_packet->duration = av_rescale_q(output_packet->duration, mVideoSourceTimeBase, mVideoStream->time_base);;
         av_packet_rescale_ts(output_packet, mVideoSourceTimeBase, mVideoStream->time_base);
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
-            throw error("writing packet to encoder");
+            throw video_proc_error(false, "writing packet to encoder");
     }
 
     av_packet_unref(output_packet);
@@ -183,7 +182,7 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
 void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
     AVPacket *output_packet = av_packet_alloc();
     if(!output_packet)
-        throw error("allocate output packet");
+        throw video_proc_error(false, "allocate output packet");
 
     int ret;
     ret = avcodec_send_frame(mAudioCodecContext.get(), frame.get());
@@ -193,14 +192,14 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;
         } else if (ret < 0) {
-            throw error("receive packet from encoder");
+            throw video_proc_error(false, "receive packet from encoder");
         }
 
         output_packet->stream_index = 1;
         av_packet_rescale_ts(output_packet, mAudioSourceTimeBase, mAudioStream->time_base);
 
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
-            throw error("writing packet to encoder");
+            throw video_proc_error(false, "writing packet to encoder");
     }
 
     av_packet_unref(output_packet);
@@ -212,6 +211,6 @@ void SlimyTube::VideoEncoder::finish() {
     frame_ptr_t null_frame = { nullptr };
     putVideoFrame(null_frame);
     putAudioFrame(null_frame);
-
-    av_write_trailer(mFormatContext.get());
+    if(av_write_trailer(mFormatContext.get()))
+        throw video_proc_error(false, "write trailer");
 }

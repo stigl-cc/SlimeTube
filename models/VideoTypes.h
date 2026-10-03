@@ -2,6 +2,7 @@
 #include <libavutil/rational.h>
 #include <memory>
 #include <functional>
+#include <stdexcept>
 
 extern "C" {
 #include <libavutil/frame.h>
@@ -10,6 +11,12 @@ extern "C" {
 }
 
 namespace SlimyTube {
+    class video_proc_error : public std::runtime_error {
+        public:
+        bool isUserCaused;
+        video_proc_error(bool isUserCaused, const char* const message) throw();
+    };
+
     struct CodecContextDeleter { void operator()(AVCodecContext*) const; };
     typedef std::unique_ptr<AVCodecContext, CodecContextDeleter> codec_cxt_ptr_t;
 

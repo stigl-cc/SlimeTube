@@ -3,19 +3,7 @@
 
 namespace SlimyTube {
     class VideoDecoder {
-        public:
-        class error : public std::runtime_error {
-            public:
-            error(const char* const message) throw();
-        };
-
-        class user_error : public std::runtime_error {
-            public:
-            user_error(const char* const message) throw();
-        };
-
         private:
-
         struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
         typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
 

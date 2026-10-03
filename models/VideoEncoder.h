@@ -3,12 +3,6 @@
 
 namespace SlimyTube {
     class VideoEncoder {
-        public:
-        class error : public std::runtime_error {
-            public:
-            error(const char* const message) throw();
-        };
-
         private:
         static constexpr const std::string_view
             format_name = "mp4";

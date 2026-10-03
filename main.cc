@@ -88,7 +88,7 @@ int main() {
         },
     };
 
-    VideoTranscoder transcoder(settings.blobs_dir + "/123456", settings.videos_dir + "/f38d-", videoTargets);
+    VideoTranscoder transcoder(settings.blobs_dir + "/123456", settings.videos_dir + "/f38d", videoTargets);
     transcoder.transcode();
 
     // TODO: Remove testing transcoder in main
