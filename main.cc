@@ -170,8 +170,7 @@ int main() {
 
     app()
         .setClientMaxBodySize(10'485'760)
-        .setClientMaxMemoryBodySize(10'485'760)
-        .setClientMaxWebSocketMessageSize(131'072);
+        .setClientMaxMemoryBodySize(10'485'760);
 
     app()
         .setMaxConnectionNum(10'000)
