@@ -142,7 +142,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 
         case SinglePart:
         case MultiPart: {
-            ranges[0].end = std::min<size_t>(ranges[0].start + Settings::getInstance().zeroRangeLimit, ranges[0].end);
+            ranges[0].end = std::min<size_t>(ranges[0].start + Settings::getInstance().limits.getVideoMaxRange, ranges[0].end);
             res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", CT_VIDEO_MP4, "video/mp4", req);
             if(res->getStatusCode() == HttpStatusCode::k200OK)
                 res->setStatusCode(HttpStatusCode::k206PartialContent);

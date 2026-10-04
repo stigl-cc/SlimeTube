@@ -4,15 +4,23 @@
 #include <string>
 
 namespace SlimyTube {
+    class Limits {
+        public:
+        ssize_t
+            blobSize,
+            totalUserSize;
+        ssize_t getVideoMaxRange;
+    };
+
     class Settings {
         public:
         std::string title;
-        size_t zeroRangeLimit;
         std::string
             thumbnails_dir,
             videos_dir,
             blobs_dir;
         size_t salt_len;
+        Limits limits;
 
         static inline Settings& getInstance() {
             static Settings setting = {};

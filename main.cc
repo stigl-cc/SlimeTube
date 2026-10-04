@@ -1,8 +1,10 @@
+#include "VideoTypes.h"
 #include <RecordManager.hh>
 #include <drogon/orm/Criteria.h>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
 
+#include <limits>
 #include <models/Settings.hh>
 #include <models/Videos.h>
 #include <models/TimeUtility.h>
@@ -45,9 +47,9 @@ bool ensureDirectory(fs::path p) {
     return true;
 }
 
-using namespace std::chrono;
+// Delete all videos that have not finished uploading after a day from creation
 void cleanupVideos() {
-    const uint64_t min_time = TimeUtil::GetUnixSecond() - TimeConstants::day;;
+    const uint64_t min_time = TimeUtil::GetUnixSecond() - TimeConstants::day;
 
     Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
     std::vector<Videos> videos_to_delete = video_mapper.findBy(
@@ -59,14 +61,29 @@ void cleanupVideos() {
         RecordManager::deleteVideo(video_to_delete);
 }
 
-int main() {
-    Settings& settings = Settings::getInstance();
-    app().loadConfigFile("data/config.json");
+void parseLimits(Json::Value config, Limits& limits) {
+    Json::Value user_limit_config = config.get("limits", {});
 
+    // max of int32 - 2 GB
+    constexpr ssize_t max_per_default_capacity = std::numeric_limits<int32_t>::max();
+
+    limits.blobSize = user_limit_config.get("max_blob_size", max_per_default_capacity).as<ssize_t>();
+    if(limits.blobSize == -1)
+        limits.blobSize = std::numeric_limits<ssize_t>::max();
+
+    limits.totalUserSize = user_limit_config.get("max_user_size", max_per_default_capacity).as<ssize_t>();
+    if(limits.totalUserSize == -1)
+        limits.totalUserSize = std::numeric_limits<ssize_t>::max();
+
+    limits.getVideoMaxRange = user_limit_config.get("get_video_max_range_size", 10 * 1024 * 1024).as<ssize_t>();
+    if(limits.getVideoMaxRange == -1)
+        limits.getVideoMaxRange = std::numeric_limits<ssize_t>::max();
+}
+
+int parseSettings(Settings& settings) {
     Json::Value custom_user_config = app().getCustomConfig();
-    settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
 
-    settings.zeroRangeLimit = custom_user_config.get("zero_range_limit", 10 * 1024 * 1024).as<uint64_t>();
+    settings.title = custom_user_config.get("title", "SlimyTube").as<std::string>();
     settings.salt_len = custom_user_config.get("salt_len", 16).as<size_t>();
 
     settings.thumbnails_dir = custom_user_config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
@@ -81,6 +98,23 @@ int main() {
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
 
+    std::string ffmpeg_log = custom_user_config.get("ffmpeg_log", "").as<std::string>();
+    int ffmpeg_log_level = custom_user_config.get("ffmpeg_log_level", 32).as<int>();
+
+    if(!ffmpeg_log.empty())
+        VideoTranscoder::redirectLog(ffmpeg_log, ffmpeg_log_level);
+
+    parseLimits(custom_user_config, settings.limits);
+    return 0;
+}
+
+int main() {
+    Settings& settings = Settings::getInstance();
+    app().loadConfigFile("data/config.json");
+
+    if(parseSettings(settings) != 0)
+        return 1;
+
     HttpViewData data = Settings::getInstance().getData();
     data.insert("error-text", "404 Not Found");
     data.insert("back", "/");
@@ -88,11 +122,11 @@ int main() {
     const drogon::HttpResponsePtr
         res404 = HttpResponse::newHttpViewResponse("error", std::move(data));
 
+    app().getLoop()->runEvery(3'600, cleanupVideos);
+
     app().setSSLConfigCommands({
             { "Options", "Compression" }
         });
-
-    app().getLoop()->runEvery(3'600, cleanupVideos );
 
     app().setFileTypes({
             "html",
@@ -104,7 +138,6 @@ int main() {
     app().setStaticFileHeaders({
             { "Access-Control-Allow-Origin", "*" },
         });
-
 
     app().setCustom404Page(std::move(res404), true);
 
@@ -145,5 +178,12 @@ int main() {
         .setMaxConnectionNumPerIP(10);
 
     app().run();
+    VideoTranscoder transcoder("data/blobs/123456", "data/videos/f38d", {
+            VideoTarget{
+                .width = 1920,
+                .height = 1080,
+                .rate = {30, 1},
+            }
+        });
     return 0;
 }

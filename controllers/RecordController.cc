@@ -164,7 +164,7 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
 
     const uint64_t
         channel = req->attributes()->get<userId_t>(Attributes::userId.data());
-    
+
     std::string id;
     do {
         id = RecordManager::generateVideoId();
@@ -179,6 +179,7 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
     video.setChannel(channel);
     video.setCreationTime(TimeUtil::GetUnixSecond());
     video.setViews(0);
+    video.setState(static_cast<int32_t>(VideoState::Upload));
     video_mapper.insert(video);
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);

@@ -1,9 +1,4 @@
 {
-    "ssl": {
-        "cert": "data/certs/server.crt",
-        "key": "data/certs/server.key",
-    },
-
     "listeners": [
         { "address": "0.0.0.0", "port": 8080, "https": false },
         { "address": "0.0.0.0", "port": 8081, "https": true, "use_old_tls": true },
@@ -34,6 +29,27 @@
         },
     },
 
+    "custom_config": {
+        "title" : "SlimeTube",
+        "zero_range_limit" : 10485760,
+        "videos_dir" : "./data/videos",
+        "thumbnails_dir" : "./data/thumbnails",
+        "blobs_dir" : "./data/blobs",
+        "salt_length": 16,
+        "ffmpeg_log": "data/ffmpeg.log",
+        "ffmpeg_log_level": 32,
+        "limits" : {
+            "max_blob_size": -1,
+            "total_user_size": -1,
+            "get_video_max_range_size": 10485760,
+        },
+    },
+
+    "ssl": {
+        "cert": "data/certs/server.crt",
+        "key": "data/certs/server.key",
+    },
+
     "plugins": [
         {
             "name": "drogon::plugin::AccessLogger",
@@ -52,17 +68,4 @@
             },
         },
     ],
-
-    "custom_config": {
-        "title" : "SlimeTube",
-        "zero_range_limit" : 10485760,
-        "videos_dir" : "./data/videos",
-        "thumbnails_dir" : "./data/thumbnails",
-        "blobs_dir" : "./data/blobs",
-        "salt_length": 16,
-        "limits" : {
-            "get_video_range_size" : 10485760,
-            "upload_video_blob_size": 2147483648,
-        },
-    },
 }
