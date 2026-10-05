@@ -35,9 +35,7 @@ namespace SlimyTube {
         VideoDecoder(const std::string& path);
 
         void getFrames(video_callback_t videoCallback, audio_callback_t audioCallback);
-
         void getTimeBase(AVRational& video, AVRational& audio);
+        void getMetaData(int& width, int& height, int& bitRate);
     };
-
-
 }

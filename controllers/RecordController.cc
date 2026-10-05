@@ -7,7 +7,7 @@
 
 #include <drogon/orm/DbClient.h>
 #include <drogon/orm/Mapper.h>
-#include <models/RecordManager.hh>
+#include <models/RecordManager.h>
 #include <models/Attributes.hh>
 #include <models/Users.h>
 #include <models/Videos.h>

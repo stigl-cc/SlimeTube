@@ -1,3 +1,5 @@
+#include "Settings.hh"
+#include <filesystem>
 #include <models/VideoTranscoder.h>
 #include <models/VideoDecoder.h>
 #include <models/VideoEncoder.h>
@@ -31,14 +33,20 @@ void SlimyTube::VideoTranscoder::onAudioFrame(weak_frame_ptr_t weak_frame) {
 
 SlimyTube::VideoTranscoder::VideoTranscoder(const std::string& inpath, const std::string& outpath, const std::vector<VideoTarget>& targets)
     : mDecoder(inpath),
-      mEncoders() {
-    AVRational video, audio;
-    mDecoder.getTimeBase(video, audio);
+      mEncoders(),
+      mOutPath(outpath) {
+
     for(const VideoTarget& target : targets)
-        mEncoders.emplace_back(std::format("{}-{}", outpath, target.height), target, video, audio);
+        mTargets.push_back(target);
 }
 
 void SlimyTube::VideoTranscoder::transcode() {
+    AVRational video, audio;
+    mDecoder.getTimeBase(video, audio);
+
+    for(const VideoTarget& target : mTargets)
+        mEncoders.emplace_back(std::format("{}-{}", mOutPath, target.height), target, video, audio);
+
     mDecoder.getFrames(
         std::bind(&VideoTranscoder::onVideoFrame, this, std::placeholders::_1),
         std::bind(&VideoTranscoder::onAudioFrame, this, std::placeholders::_1)
@@ -46,6 +54,11 @@ void SlimyTube::VideoTranscoder::transcode() {
 
     for(VideoEncoder& encoder : mEncoders)
         encoder.finish();
+}
+
+void SlimyTube::VideoTranscoder::assumeTargets() {
+    int width, height, bit_rate;
+    mDecoder.getMetaData(width, height, bit_rate);
 }
 
 char SlimyTube::VideoTranscoder::logBuffer[2048] = {};
@@ -70,4 +83,30 @@ void SlimyTube::VideoTranscoder::redirectLog(const std::string& path, int logLev
 
     av_log_set_level(logLevel);
     av_log_set_callback(&VideoTranscoder::log);
+}
+
+SlimyTube::TranscodeManager::TranscodeManager()
+    : mJobs() { }
+
+void SlimyTube::TranscodeManager::worker() {
+    std::lock_guard<std::mutex> lk(mJobsMutex);
+    if(!mJobs.empty()) {
+        try {
+            std::string
+                in_path = Settings::getInstance().blobs_dir / mJobs.front(),
+                out_path = Settings::getInstance().videos_dir / mJobs.front();
+
+            VideoTranscoder transcoder(in_path, out_path);
+            transcoder.assumeTargets();
+            transcoder.transcode();
+        } catch(const video_proc_error& err) {
+
+        }
+        mJobs.pop_front();
+    }
+}
+
+void SlimyTube::TranscodeManager::enqueueJob(const std::string& id) {
+    std::lock_guard<std::mutex> lk(mJobsMutex);
+    mJobs.emplace_back(id);
 }

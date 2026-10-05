@@ -11,7 +11,7 @@
 #include <drogon/utils/Utilities.h>
 #include <lib/drogon/lib/src/HttpUtils.h>
 
-#include <models/RecordManager.hh>
+#include <models/RecordManager.h>
 #include <models/Attributes.hh>
 #include <models/Settings.hh>
 #include <models/Users.h>

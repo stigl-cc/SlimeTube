@@ -1,6 +1,7 @@
 #pragma once
 
 #include <drogon/HttpViewData.h>
+#include <filesystem>
 #include <string>
 
 namespace SlimyTube {
@@ -15,7 +16,7 @@ namespace SlimyTube {
     class Settings {
         public:
         std::string title;
-        std::string
+        std::filesystem::path
             thumbnails_dir,
             videos_dir,
             blobs_dir;

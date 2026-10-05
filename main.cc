@@ -1,5 +1,3 @@
-#include "VideoTypes.h"
-#include <RecordManager.hh>
 #include <drogon/orm/Criteria.h>
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
@@ -9,6 +7,8 @@
 #include <models/Videos.h>
 #include <models/TimeUtility.h>
 #include <models/VideoTranscoder.h>
+#include <models/RecordManager.h>
+#include <models/VideoTypes.h>
 
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>

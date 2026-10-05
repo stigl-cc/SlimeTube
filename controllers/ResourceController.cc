@@ -18,7 +18,7 @@
 #include <system_error>
 
 #include <models/Attributes.hh>
-#include <models/RecordManager.hh>
+#include <models/RecordManager.h>
 #include <models/Settings.hh>
 
 using namespace SlimyTube::Attributes;

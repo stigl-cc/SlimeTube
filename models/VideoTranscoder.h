@@ -1,6 +1,7 @@
 #pragma once
-#include "VideoTypes.h"
+#include <deque>
 #include <fstream>
+#include <models/VideoTypes.h>
 #include <models/VideoDecoder.h>
 #include <models/VideoEncoder.h>
 #include <mutex>
@@ -27,10 +28,26 @@ namespace SlimyTube {
         static std::ofstream logFileStream;
         static void log(void*, int, const char*, va_list);
 
+        std::string mOutPath;
+
         public:
-        VideoTranscoder(const std::string& inpath, const std::string& outpath, const std::vector<VideoTarget>& targets);
+        std::vector<VideoTarget> mTargets;
+
+        VideoTranscoder(const std::string& inpath, const std::string& outpath, const std::vector<VideoTarget>& targets = {});
         void transcode();
+        void assumeTargets();
 
         static void redirectLog(const std::string& path, int logLevel);
+    };
+
+    class TranscodeManager {
+        protected:
+        std::mutex mJobsMutex;
+        std::deque<std::string> mJobs;
+        void worker();
+
+        public:
+        TranscodeManager();
+        void enqueueJob(const std::string& id);
     };
 };

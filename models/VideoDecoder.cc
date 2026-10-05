@@ -1,3 +1,5 @@
+#include "VideoDecoder.h"
+#include "VideoTypes.h"
 #include <models/VideoTranscoder.h>
 
 extern "C" {
@@ -10,7 +12,6 @@ extern "C" {
 #include <libavutil/avutil.h>
 }
 
-#include <stdexcept>
 #include <string>
 #include <cerrno>
 
@@ -130,4 +131,13 @@ void SlimyTube::VideoDecoder::getFrames(video_callback_t videoCallback, audio_ca
 void SlimyTube::VideoDecoder::getTimeBase(AVRational& video, AVRational& audio) {
     video = mFormatContext->streams[mVideoStreamIndex]->time_base;
     audio = mFormatContext->streams[mAudioStreamIndex]->time_base;
+}
+
+void SlimyTube::VideoDecoder::getMetaData(int& width, int& height, int& bitRate) {
+    width = mFormatContext->streams[mVideoStreamIndex]->codecpar->width;
+    height = mFormatContext->streams[mVideoStreamIndex]->codecpar->height;
+    bitRate = mFormatContext->streams[mVideoStreamIndex]->codecpar->bit_rate;
+
+    if(!width || !height || !bitRate)
+        throw video_proc_error(true, "getting video width/height");
 }

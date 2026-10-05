@@ -1,4 +1,4 @@
-#include <RecordManager.hh>
+#include <RecordManager.h>
 #include <Settings.hh>
 
 #include <drogon/HttpResponse.h>
