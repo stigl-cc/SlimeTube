@@ -38,4 +38,14 @@ namespace SlimyTube {
             videoCodec = AV_CODEC_ID_H264,
             audioCodec = AV_CODEC_ID_AAC;
     };
+
+    class SupportedTarget {
+        public:
+        int ratio_num, ratio_den;
+        int width, height;
+        int
+            max_framerate,
+            max_bitrate;
+        std::vector<int> also_encode;
+    };
 }

@@ -1,7 +1,9 @@
 #pragma once
 
+#include "VideoTypes.h"
 #include <drogon/HttpViewData.h>
 #include <filesystem>
+#include <set>
 #include <string>
 
 namespace SlimyTube {
@@ -24,6 +26,9 @@ namespace SlimyTube {
             blobs_dir;
         size_t salt_len;
         Limits limits;
+
+        std::vector<SupportedTarget> supported_targets;
+        std::set<std::pair<int, int>> supported_ratios;
 
         static inline Settings& getInstance() {
             static Settings setting = {};

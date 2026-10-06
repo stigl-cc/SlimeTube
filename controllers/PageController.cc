@@ -157,5 +157,7 @@ void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("error-text", std::format("{} {}", static_cast<int>(err), drogon::statusCodeToString(err)));
     data.insert("back", back);
-    respond(HttpResponse::newHttpViewResponse("error.csp", std::move(data)));
+    HttpResponsePtr res = HttpResponse::newHttpViewResponse("error.csp", std::move(data));
+    res->setStatusCode(err);
+    respond(res);
 }

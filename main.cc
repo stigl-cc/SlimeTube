@@ -2,6 +2,7 @@
 #include <controllers/PageController.h>
 #include <controllers/ResourceController.h>
 
+#include <json/value.h>
 #include <limits>
 #include <models/Settings.hh>
 #include <models/Videos.h>
@@ -29,8 +30,7 @@ using
     drogon::HttpViewData,
     drogon::HttpResponse,
     drogon::Cookie,
-    drogon::app,
-    SlimyTube::Settings;
+    drogon::app;
 
 bool ensureDirectory(fs::path p) {
     std::error_code ec;
@@ -101,6 +101,29 @@ int parseSettings(Settings& settings) {
     settings.blobs_dir = custom_user_config.get("blobs_dir", "data/blobs").as<std::string>();
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
+
+    for(const Json::Value& resolution : custom_user_config.get("resolutions", {})) {
+        SupportedTarget target;
+        try {
+            if(resolution.size() < 6)
+                throw Json::LogicError("config resolution format not recognized, please use [[ratio_n, ratio_d], w, h, r, br, also_encode],");
+            target.ratio_num = resolution[0][0].asInt();
+            target.ratio_den = resolution[0][1].asInt();
+
+            settings.supported_ratios.emplace(target.ratio_num, target.ratio_den);
+
+            target.width = resolution[1].asInt();
+            target.height = resolution[2].asInt();
+
+            target.max_framerate = resolution[3].asInt();
+            target.max_bitrate = resolution[4].asInt();
+            for(const Json::Value& also : resolution[5])
+                target.also_encode.push_back(also.asInt());
+        } catch(const Json::LogicError& ex) {
+            LOG_ERROR << "Error while processing resolution " << resolution.toStyledString() << "" << ex.what();
+            return 1;
+        }
+    }
 
     std::string ffmpeg_log = custom_user_config.get("ffmpeg_log", "").as<std::string>();
     int ffmpeg_log_level = custom_user_config.get("ffmpeg_log_level", 32).as<int>();

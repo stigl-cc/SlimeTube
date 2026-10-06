@@ -25,7 +25,7 @@
                     <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
                 </div>
             </a>
-            <%c++ }%>
+            <%c++ } if(previews.empty()) { %> <div class="centered-message">No videos to show.</div> <%c++ } %>
         </div>
         <%view footer %>
     </body>

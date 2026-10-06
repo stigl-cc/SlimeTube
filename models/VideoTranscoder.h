@@ -35,7 +35,7 @@ namespace SlimyTube {
 
         VideoTranscoder(const std::string& inpath, const std::string& outpath, const std::vector<VideoTarget>& targets = {});
         void transcode();
-        void assumeTargets();
+        const VideoDecoder& getDecoder() const;
 
         static void redirectLog(const std::string& path, int logLevel);
     };
