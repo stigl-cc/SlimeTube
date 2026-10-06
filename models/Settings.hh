@@ -9,8 +9,10 @@ namespace SlimyTube {
         public:
         ssize_t
             blobSize,
-            totalUserSize;
-        ssize_t getVideoMaxRange;
+            totalUserSize,
+            getVideoMaxRange;
+        float
+            aspectRatio;
     };
 
     class Settings {

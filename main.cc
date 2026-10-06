@@ -75,9 +75,13 @@ void parseLimits(Json::Value config, Limits& limits) {
     if(limits.totalUserSize == -1)
         limits.totalUserSize = std::numeric_limits<ssize_t>::max();
 
-    limits.getVideoMaxRange = user_limit_config.get("get_video_max_range_size", 10 * 1024 * 1024).as<ssize_t>();
+    limits.getVideoMaxRange = user_limit_config.get("max_get_video_range_size", 10 * 1024 * 1024).as<ssize_t>();
     if(limits.getVideoMaxRange == -1)
         limits.getVideoMaxRange = std::numeric_limits<ssize_t>::max();
+
+    limits.aspectRatio = user_limit_config.get("max_aspect_ratio", 10).as<float>();
+    if(std::fabs(limits.aspectRatio + 1) <= std::numeric_limits<float>::epsilon())
+        limits.aspectRatio = std::numeric_limits<float>::max();
 }
 
 int parseSettings(Settings& settings) {

@@ -58,7 +58,11 @@ void SlimyTube::VideoTranscoder::transcode() {
 
 void SlimyTube::VideoTranscoder::assumeTargets() {
     int width, height, bit_rate;
+    float ratio = std::fabs(static_cast<float>(width) / height);
     mDecoder.getMetaData(width, height, bit_rate);
+
+    if(ratio >= Settings::getInstance().limits.aspectRatio)
+        throw video_proc_error(true, "wrong aspect ratio");
 }
 
 char SlimyTube::VideoTranscoder::logBuffer[2048] = {};

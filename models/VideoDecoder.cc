@@ -106,8 +106,10 @@ void SlimyTube::VideoDecoder::getFrames(video_callback_t videoCallback, audio_ca
             mCurrentCodecUsed = &mVideoCodecContext;
         } else if(mPacket->stream_index == mAudioStreamIndex) {
             mCurrentCodecUsed = &mAudioCodecContext;
-        } else
+        } else {
+            av_packet_unref(mPacket.get());
             continue;
+        }
 
         ret = avcodec_send_packet(mCurrentCodecUsed->get(), mPacket.get());
         if(ret < 0)
