@@ -100,11 +100,6 @@ void SlimyTube::TranscodeManager::worker() {
             int width, height, bit_rate;
             transcoder.getDecoder().getMetaData(width, height, bit_rate);
 
-            /*float ratio = std::fabs(static_cast<float>(width) / height);
-            if(ratio >= Settings::getInstance().limits.aspectRatio)
-                throw video_proc_error(true, "wrong aspect ratio");
-            */
-
             int larger = std::max(width, height),
                 smaller = std::min(width, height);
 
@@ -115,6 +110,10 @@ void SlimyTube::TranscodeManager::worker() {
                     break;
                 }
             }
+
+            float ratio = static_cast<float>(larger) / smaller;
+            if(ratio >= Settings::getInstance().limits.aspectRatio)
+                throw video_proc_error(true, "bad aspect ratio");
 
             transcoder.transcode();
         } catch(const video_proc_error& err) {

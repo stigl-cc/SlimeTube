@@ -125,6 +125,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
                 { "id", video.getValueOfId() },
                 { "title", HttpViewData::htmlTranslate(video.getValueOfTitle()) },
                 { "description", HttpViewData::htmlTranslate(video.getValueOfDescription()) },
+                { "state", std::to_string(video.getValueOfState()) },
                 { "size", "500.0mb" },
             });
     }

@@ -57,7 +57,7 @@
                     </tr>
                     <%c++
                         for(const auto& video : videos) {%>
-                    <tr>
+                    <tr class="video-table-{%video.at("state")%}">
                         <td>{%video.at("id")%}</td>
                         <td>{%video.at("title")%}</td>
                         <td>{%video.at("description")%}</td>

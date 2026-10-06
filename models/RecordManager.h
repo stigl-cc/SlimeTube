@@ -12,8 +12,9 @@ using drogon::orm::DbClientPtr,
 namespace SlimyTube {
     enum class VideoState {
         Upload = 0, // blob present
-        Encode = 0, // blob undefined, processing/queued for processing
-        Ready = 0
+        Encode,     // blob undefined, processing/queued for processing
+        Ready,
+        Failed,
     };
 
     class RecordManager {

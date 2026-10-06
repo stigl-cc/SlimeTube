@@ -95,6 +95,11 @@
     white-space: nowrap;
 }
 
+.video-table-0 { }
+.video-table-1 { background-color: var(--extra-highlighted-color); }
+.video-table-2 {}
+.video-table-3 { background-color: var(--fail-color-fill); }
+
 #upload-link {
     position: absolute;
     right: 10px;
