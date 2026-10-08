@@ -82,6 +82,12 @@ void parseLimits(Json::Value config, Limits& limits) {
     limits.aspectRatio = user_limit_config.get("max_aspect_ratio", 10).as<float>();
     if(std::fabs(limits.aspectRatio + 1) <= std::numeric_limits<float>::epsilon())
         limits.aspectRatio = std::numeric_limits<float>::max();
+
+    limits.max_input.w = user_limit_config.get("max_input_video_width", std::numeric_limits<dimension_t>::max()).as<dimension_t>();
+    limits.max_input.h = user_limit_config.get("max_input_video_height", std::numeric_limits<dimension_t>::max()).as<dimension_t>();
+
+    limits.max_encode.w = user_limit_config.get("max_encode_video_width", std::numeric_limits<dimension_t>::max()).as<dimension_t>();
+    limits.max_encode.h = user_limit_config.get("max_encode_video_height", std::numeric_limits<dimension_t>::max()).as<dimension_t>();
 }
 
 int parseSettings(Settings& settings) {
@@ -102,6 +108,8 @@ int parseSettings(Settings& settings) {
     if(!ensureDirectory(settings.blobs_dir))
         return 1;
 
+    settings.allow_unlisted_ratios = custom_user_config.get("allow_unlisted_ratios", false).as<bool>();
+
     for(const Json::Value& resolution : custom_user_config.get("resolutions", {})) {
         SupportedTarget target;
         try {
@@ -121,6 +129,32 @@ int parseSettings(Settings& settings) {
                 target.also_encode.push_back(also.asInt());
         } catch(const Json::LogicError& ex) {
             LOG_ERROR << "Error while processing resolution " << resolution.toStyledString() << "" << ex.what();
+            return 1;
+        }
+    }
+
+    // convert also_encode heights to their indexes (O(n^2) - in practice O(n))
+    for(int n =0; n < settings.supported_targets.size(); n++) {
+        SupportedTarget& target = settings.supported_targets[n];
+
+        int also_encode_i = 0;
+        if(target.also_encode.empty())
+            continue;
+
+        for(int i =n; i < settings.supported_targets.size(); i++) {
+            if(target.ratio_num != settings.supported_targets[i].ratio_num || target.ratio_den != settings.supported_targets[i].ratio_den)
+                continue;
+
+            if(target.also_encode[also_encode_i] == settings.supported_targets[i].height) {
+                target.also_encode[also_encode_i] = i;
+
+                if(++also_encode_i == target.also_encode.size())
+                    break;
+            }
+        }
+
+        if(also_encode_i < target.also_encode.size()) {
+            LOG_ERROR << "also_encode resolution not defined for " << target.width << 'x' << target.height;
             return 1;
         }
     }

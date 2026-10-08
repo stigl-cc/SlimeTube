@@ -29,6 +29,9 @@ namespace SlimyTube {
     typedef std::function<void(weak_frame_ptr_t frame)> video_callback_t;
     typedef std::function<void(weak_frame_ptr_t frame)> audio_callback_t;
 
+    typedef int dimension_t;
+    struct resolution_t { dimension_t w, h; };
+
     struct VideoTarget {
         int
             width,
@@ -46,6 +49,6 @@ namespace SlimyTube {
         int
             max_framerate,
             max_bitrate;
-        std::vector<int> also_encode;
+        std::vector<size_t> also_encode;
     };
 }

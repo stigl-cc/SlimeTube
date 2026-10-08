@@ -15,6 +15,9 @@ namespace SlimyTube {
             getVideoMaxRange;
         float
             aspectRatio;
+
+        resolution_t max_input;
+        resolution_t max_encode;
     };
 
     class Settings {
@@ -24,11 +27,13 @@ namespace SlimyTube {
             thumbnails_dir,
             videos_dir,
             blobs_dir;
+
         size_t salt_len;
         Limits limits;
 
         std::vector<SupportedTarget> supported_targets;
         std::set<std::pair<int, int>> supported_ratios;
+        bool allow_unlisted_ratios;
 
         static inline Settings& getInstance() {
             static Settings setting = {};

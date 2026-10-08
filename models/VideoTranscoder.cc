@@ -1,3 +1,4 @@
+#include "ResolutionUtility.h"
 #include "Settings.hh"
 #include <filesystem>
 #include <models/VideoTranscoder.h>
@@ -99,21 +100,7 @@ void SlimyTube::TranscodeManager::worker() {
 
             int width, height, bit_rate;
             transcoder.getDecoder().getMetaData(width, height, bit_rate);
-
-            int larger = std::max(width, height),
-                smaller = std::min(width, height);
-
-            std::pair<int, int> selected_ratio = { 0, 0 };
-            for(std::pair<int, int> ratio : Settings::getInstance().supported_ratios) {
-                if(larger * ratio.second == smaller * ratio.first) {
-                    selected_ratio = ratio;
-                    break;
-                }
-            }
-
-            float ratio = static_cast<float>(larger) / smaller;
-            if(ratio >= Settings::getInstance().limits.aspectRatio)
-                throw video_proc_error(true, "bad aspect ratio");
+            transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}));
 
             transcoder.transcode();
         } catch(const video_proc_error& err) {
