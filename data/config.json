@@ -43,6 +43,7 @@
             "total_user_size": -1,
             "max_get_video_range_size": 10485760,
 
+            "max_unlisted_bitrate": 3150000,
             "max_aspect_ratio": 5.000,
             "max_input_video_width": 4096,
             "max_input_video_height": 4096,

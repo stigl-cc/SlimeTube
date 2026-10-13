@@ -1,5 +1,8 @@
 #pragma once
 #include <models/VideoTypes.h>
+extern "C" {
+#include <libswscale/swscale.h>
+}
 
 namespace SlimyTube {
     class VideoEncoder {
@@ -12,6 +15,9 @@ namespace SlimyTube {
 
         struct StreamDeleter { void operator()(const AVStream*) const; };
         typedef std::unique_ptr<AVStream, StreamDeleter> stream_ptr_t;
+
+        struct ResizeContextDeleter { void operator()(SwsContext*) const; };
+        typedef std::unique_ptr<SwsContext, ResizeContextDeleter> resize_cxt_ptr_t;
 
         format_cxt_ptr_t mFormatContext;
 
@@ -30,8 +36,14 @@ namespace SlimyTube {
             mAudioSourceTimeBase,
             mVideoSourceTimeBase;
 
+        unique_frame_ptr_t mScaledFrame;
+        resize_cxt_ptr_t mResizeContext;
+
+        void setupResize(int srcW, int srcH, AVPixelFormat fmt);
         void openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams);
         void setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);
+
+        VideoTarget mTarget;
 
         public:
         VideoEncoder(
@@ -48,6 +60,8 @@ namespace SlimyTube {
 
         void putVideoFrame(frame_ptr_t& frame);
         void putAudioFrame(frame_ptr_t& frame);
+
+        const VideoTarget& getTarget();
 
         void finish();
     };

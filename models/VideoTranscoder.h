@@ -5,6 +5,7 @@
 #include <models/VideoDecoder.h>
 #include <models/VideoEncoder.h>
 #include <mutex>
+#include <thread>
 
 extern "C" {
 #include <libavutil/frame.h>
@@ -42,12 +43,14 @@ namespace SlimyTube {
 
     class TranscodeManager {
         protected:
+        std::thread worker_thread;
         std::mutex mJobsMutex;
         std::deque<std::string> mJobs;
         void worker();
 
         public:
         TranscodeManager();
+        ~TranscodeManager();
         void enqueueJob(const std::string& id);
     };
 };

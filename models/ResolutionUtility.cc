@@ -24,7 +24,7 @@ void SlimyTube::ResolutionUtility::CheckLimits(resolution_t res, resolution_t ho
         throw video_proc_error(true, "bad aspect ratio");
 }
 
-std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(resolution_t res) {
+std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(resolution_t res, int bitrate) {
     const Settings& settings = Settings::getInstance();
 
     resolution_t horizontal = {
@@ -45,7 +45,7 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
             throw video_proc_error(true, "bad aspect ratio");
 
         if(res.w <= settings.limits.max_encode.w && res.h <= settings.limits.max_encode.h) {
-            result.emplace_back(res.w, res.h);
+            result.emplace_back(res.w, res.h, std::min(settings.limits.max_unlisted_br, bitrate));
         }
         return result;
     }
@@ -61,18 +61,20 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
 
     // smaller than the smallest resolution of ratio
     if(!selected_target.width)
-        return { {res.w, res.h, std::min(settings.default_unlisted_framerate, /* TODO: Replace with video framerate */ settings.default_unlisted_framerate)} };
+        return { {res.w, res.h, std::min(settings.limits.max_unlisted_br, bitrate), std::min(settings.default_unlisted_framerate, /* TODO: Replace with video framerate */ settings.default_unlisted_framerate)} };
 
     result.emplace_back(
         selected_target.width,
-        selected_target.height
+        selected_target.height,
+        std::min(selected_target.max_bitrate, bitrate)
     );
 
     for(size_t also_encode : selected_target.also_encode) {
         const SupportedTarget& also_target = settings.supported_targets[also_encode];
         result.emplace_back(
             also_target.width,
-            also_target.height
+            also_target.height,
+            std::min(also_target.max_bitrate, bitrate)
         );
     }
     return result;

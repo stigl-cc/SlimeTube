@@ -1,5 +1,4 @@
 #pragma once
-#include <libavutil/rational.h>
 #include <memory>
 #include <functional>
 #include <stdexcept>
@@ -8,6 +7,7 @@ extern "C" {
 #include <libavutil/frame.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/rational.h>
 }
 
 namespace SlimyTube {
@@ -23,6 +23,8 @@ namespace SlimyTube {
     struct PacketDeleter {void operator()(AVPacket*) const; };
     typedef std::unique_ptr<AVPacket, PacketDeleter> packet_ptr_t;
 
+    struct FrameDeleter { void operator()(AVFrame*) const; };
+    typedef std::unique_ptr<AVFrame, FrameDeleter> unique_frame_ptr_t;
     typedef std::shared_ptr<AVFrame> frame_ptr_t;
     typedef std::weak_ptr<AVFrame> weak_frame_ptr_t;
 
@@ -36,6 +38,7 @@ namespace SlimyTube {
         int
             width,
             height;
+        int bitrate;
         AVRational rate;
         AVCodecID
             videoCodec = AV_CODEC_ID_H264,

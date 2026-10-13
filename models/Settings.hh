@@ -18,6 +18,7 @@ namespace SlimyTube {
 
         resolution_t max_input;
         resolution_t max_encode;
+        int max_unlisted_br;
     };
 
     class Settings {

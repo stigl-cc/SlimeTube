@@ -1,9 +1,18 @@
 #include <models/VideoTypes.h>
+
+extern "C" {
+#include <libavutil/frame.h>
+}
 #include <stdexcept>
 
 SlimyTube::video_proc_error::video_proc_error(bool isUserCaused, const char* const message) throw()
     : std::runtime_error(message),
       isUserCaused(isUserCaused) {
+}
+
+void SlimyTube::FrameDeleter::operator()(AVFrame* p) const {
+    if(p)
+        av_free(p);
 }
 
 void SlimyTube::CodecContextDeleter::operator()(AVCodecContext* p) const {

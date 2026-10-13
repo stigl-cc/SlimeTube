@@ -39,7 +39,7 @@ bool ensureDirectory(fs::path p) {
     if (!fs::exists(p)) {
         fs::create_directory(p, ec);
         if(ec != std::errc())
-            LOG_ERROR << "Failed to create directory " << fs::canonical(p) << ": " << ec.message();
+            LOG_ERROR << "Failed to create directory " << fs::weakly_canonical(p) << ": " << ec.message();
     } else if (!fs::is_directory(status)) {
         LOG_ERROR << fs::canonical(p) << ": path exists but is not a directory.";
         return false;
@@ -80,7 +80,7 @@ void parseLimits(Json::Value config, Limits& limits) {
         limits.getVideoMaxRange = std::numeric_limits<ssize_t>::max();
 
     limits.aspectRatio = user_limit_config.get("max_aspect_ratio", 10).as<float>();
-    if(std::fabs(limits.aspectRatio + 1) <= std::numeric_limits<float>::epsilon())
+    if(std::fabs(limits.aspectRatio + 1) <= std::numeric_limits<float>::epsilon()) // handles 0.00000
         limits.aspectRatio = std::numeric_limits<float>::max();
 
     limits.max_input.w = user_limit_config.get("max_input_video_width", std::numeric_limits<dimension_t>::max()).as<dimension_t>();
@@ -88,6 +88,9 @@ void parseLimits(Json::Value config, Limits& limits) {
 
     limits.max_encode.w = user_limit_config.get("max_encode_video_width", std::numeric_limits<dimension_t>::max()).as<dimension_t>();
     limits.max_encode.h = user_limit_config.get("max_encode_video_height", std::numeric_limits<dimension_t>::max()).as<dimension_t>();
+    limits.max_unlisted_br = user_limit_config.get("max_unlisted_bitrate", 3150000).as<int32_t>();
+    if(limits.max_unlisted_br == -1) // 2gbps ish at the maximum per second of video - likely fine
+        limits.max_unlisted_br = std::numeric_limits<int>::max();
 }
 
 int parseSettings(Settings& settings) {
@@ -128,6 +131,7 @@ int parseSettings(Settings& settings) {
             target.max_bitrate = resolution[4].asInt();
             for(const Json::Value& also : resolution[5])
                 target.also_encode.push_back(also.asInt());
+            settings.supported_targets.push_back(target);
         } catch(const Json::LogicError& ex) {
             LOG_ERROR << "Error while processing resolution " << resolution.toStyledString() << "" << ex.what();
             return 1;
@@ -238,13 +242,8 @@ int main() {
         .setMaxConnectionNum(10'000)
         .setMaxConnectionNumPerIP(10);
 
-    app().run();
-    VideoTranscoder transcoder("data/blobs/123456", "data/videos/f38d", {
-            VideoTarget{
-                .width = 1920,
-                .height = 1080,
-                .rate = {30, 1},
-            }
-        });
+    //app().run();
+    TranscodeManager transcode_manager;
+    transcode_manager.enqueueJob("123456");
     return 0;
 }

@@ -1,5 +1,6 @@
 #include "VideoEncoder.h"
 #include "VideoTypes.h"
+#include <libavutil/frame.h>
 #include <models/VideoTranscoder.h>
 #include <utility>
 
@@ -11,9 +12,11 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/channel_layout.h>
+#include <libavutil/imgutils.h>
 #include <libavutil/rational.h>
 #include <libavutil/opt.h>
 #include <libavutil/mathematics.h>
+#include <libswscale/swscale.h>
 
 #include <libavcodec/defs.h>
 #include <libavcodec/packet.h>
@@ -33,6 +36,25 @@ void SlimyTube::VideoEncoder::FormatContextDeleter::operator()(AVFormatContext* 
             avio_closep(&p->pb);
         avformat_free_context(p);
     }
+}
+
+void SlimyTube::VideoEncoder::ResizeContextDeleter::operator()(SwsContext* p) const {
+    if(p)
+        sws_freeContext(p);
+}
+
+void SlimyTube::VideoEncoder::setupResize(int srcW, int srcH, AVPixelFormat fmt) {
+    SwsContext* cxt = sws_getContext(srcW, srcH, fmt, mTarget.width, mTarget.height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, nullptr, nullptr, nullptr);
+    mResizeContext.reset(cxt);
+
+    mScaledFrame.reset(av_frame_alloc());
+    if(!mScaledFrame)
+        throw video_proc_error(false, "alloc frame");
+
+    mScaledFrame->format = AV_PIX_FMT_YUV420P;
+    mScaledFrame->width = mTarget.width;
+    mScaledFrame->height = mTarget.height;
+    av_frame_get_buffer(mScaledFrame.get(), 32);
 }
 
 void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams) {
@@ -87,15 +109,17 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget
     AVRational videoTimeBase,
     AVRational audioTimeBase)
     : mAudioSourceTimeBase(audioTimeBase),
-      mVideoSourceTimeBase(videoTimeBase) {
+      mVideoSourceTimeBase(videoTimeBase),
+      mTarget(target) {
     AVCodecParameters video_params = {
         .codec_type = AVMEDIA_TYPE_VIDEO,
         .codec_id = target.videoCodec,
         .format = AVPixelFormat::AV_PIX_FMT_YUV420P,
+        .bit_rate = target.bitrate,
         .profile = AV_PROFILE_H264_HIGH,
         .width = target.width,
         .height = target.height,
-        .framerate = target.rate
+        .framerate = target.rate,
     };
     setupCodec(video_params, mVideoCodec, mVideoCodecContext);
 
@@ -126,6 +150,8 @@ SlimyTube::VideoEncoder::VideoEncoder(VideoEncoder&& other) {
 
     mAudioSourceTimeBase = other.mAudioSourceTimeBase;
     mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+
+    mTarget = std::move(other.mTarget);
 }
 
 SlimyTube::VideoEncoder& SlimyTube::VideoEncoder::operator=(VideoEncoder&& other) {
@@ -145,6 +171,9 @@ SlimyTube::VideoEncoder& SlimyTube::VideoEncoder::operator=(VideoEncoder&& other
 
     mAudioSourceTimeBase = other.mAudioSourceTimeBase;
     mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+
+    mTarget = std::move(other.mTarget);
+
     return *this;
 }
 
@@ -156,7 +185,15 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
         throw video_proc_error(false, "allocate output packet");
 
     int ret;
-    ret = avcodec_send_frame(mVideoCodecContext.get(), frame.get());
+    if(frame) {
+        if(!mResizeContext)
+            setupResize(frame->width, frame->height, static_cast<AVPixelFormat>(frame->format));
+        sws_scale(mResizeContext.get(), frame->data, frame->linesize, 0, frame->height, mScaledFrame->data, mScaledFrame->linesize);
+        av_frame_copy_props(mScaledFrame.get(), frame.get());
+
+        ret = avcodec_send_frame(mVideoCodecContext.get(), mScaledFrame.get());
+    } else
+        ret = avcodec_send_frame(mVideoCodecContext.get(), frame.get());
 
     while (ret >= 0) {
         ret = avcodec_receive_packet(mVideoCodecContext.get(), output_packet);
@@ -213,4 +250,8 @@ void SlimyTube::VideoEncoder::finish() {
     putAudioFrame(null_frame);
     if(av_write_trailer(mFormatContext.get()))
         throw video_proc_error(false, "write trailer");
+}
+
+const SlimyTube::VideoTarget& SlimyTube::VideoEncoder::getTarget() {
+    return mTarget;
 }

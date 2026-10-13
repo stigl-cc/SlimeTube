@@ -10,9 +10,11 @@
 #include <format>
 #include <mutex>
 #include <stdexcept>
+#include <thread>
 
 extern "C" {
 #include <libavutil/log.h>
+#include <libavcodec/codec.h>
 }
 
 void SlimyTube::VideoTranscoder::onVideoFrame(weak_frame_ptr_t weak_frame) {
@@ -86,21 +88,31 @@ void SlimyTube::VideoTranscoder::redirectLog(const std::string& path, int logLev
 }
 
 SlimyTube::TranscodeManager::TranscodeManager()
-    : mJobs() { }
+    : mJobs(),
+      worker_thread(std::thread(std::bind(&TranscodeManager::worker, this))) {
+}
+
+SlimyTube::TranscodeManager::~TranscodeManager() {
+    if(worker_thread.joinable())
+        worker_thread.join();
+}
 
 void SlimyTube::TranscodeManager::worker() {
+    while(mJobs.empty());
+
     std::lock_guard<std::mutex> lk(mJobsMutex);
     if(!mJobs.empty()) {
+        std::string current_job = mJobs.front();
         try {
             std::string
-                in_path = Settings::getInstance().blobs_dir / mJobs.front(),
-                out_path = Settings::getInstance().videos_dir / mJobs.front();
+                in_path = Settings::getInstance().blobs_dir / current_job,
+                out_path = Settings::getInstance().videos_dir / current_job;
 
             VideoTranscoder transcoder(in_path, out_path);
 
             int width, height, bit_rate;
             transcoder.getDecoder().getMetaData(width, height, bit_rate);
-            transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}));
+            transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}, bit_rate));
 
             transcoder.transcode();
         } catch(const video_proc_error& err) {
