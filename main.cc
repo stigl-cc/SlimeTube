@@ -109,6 +109,7 @@ int parseSettings(Settings& settings) {
         return 1;
 
     settings.allow_unlisted_ratios = custom_user_config.get("allow_unlisted_ratios", false).as<bool>();
+    settings.default_unlisted_framerate = custom_user_config.get("default_unlisted_framerate", 30).as<int>();
 
     for(const Json::Value& resolution : custom_user_config.get("resolutions", {})) {
         SupportedTarget target;

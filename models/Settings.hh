@@ -34,6 +34,7 @@ namespace SlimyTube {
         std::vector<SupportedTarget> supported_targets;
         std::set<std::pair<int, int>> supported_ratios;
         bool allow_unlisted_ratios;
+        int default_unlisted_framerate;
 
         static inline Settings& getInstance() {
             static Settings setting = {};

@@ -2,6 +2,28 @@
 #include <models/ResolutionUtility.h>
 #include <models/VideoTypes.h>
 
+std::pair<int, int> SlimyTube::ResolutionUtility::GetRatio(resolution_t res, const Settings& settings) {
+    // find aspect ratio
+    std::pair<int, int> selected_ratio = { 0, 0 };
+    for(const std::pair<int, int>& ratio : settings.supported_ratios) {
+        if(res.w * ratio.second == res.h * ratio.first) {
+            selected_ratio = ratio;
+            break;
+        }
+    }
+    return selected_ratio;
+}
+
+void SlimyTube::ResolutionUtility::CheckLimits(resolution_t res, resolution_t horizontal, const Settings& settings) {
+    // check limits
+    if(res.w > settings.limits.max_input.w)
+        throw video_proc_error(true, "resolution too big");
+    if(res.h > settings.limits.max_input.h)
+        throw video_proc_error(true, "resolution too big");
+    if(static_cast<float>(horizontal.w) / horizontal.h >= settings.limits.aspectRatio)
+        throw video_proc_error(true, "bad aspect ratio");
+}
+
 std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(resolution_t res) {
     const Settings& settings = Settings::getInstance();
 
@@ -12,49 +34,34 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
 
     bool is_horizontal = res.w >= res.h;
 
-    // check limits
-    if(res.w > settings.limits.max_input.w)
-        throw video_proc_error(true, "resolution too big");
-    if(res.h > settings.limits.max_input.h)
-        throw video_proc_error(true, "resolution too big");
-    if(static_cast<float>(horizontal.w) / horizontal.h >= settings.limits.aspectRatio)
-        throw video_proc_error(true, "bad aspect ratio");
+    ResolutionUtility::CheckLimits(res, horizontal, settings);
 
-    // find aspect ratio
-    std::pair<int, int> selected_ratio = { 0, 0 };
-    for(const std::pair<int, int>& ratio : settings.supported_ratios) {
-        if(horizontal.w * ratio.second == horizontal.h * ratio.first) {
-            selected_ratio = ratio;
-            break;
-        }
-    }
+    std::pair<int, int> selected_ratio = ResolutionUtility::GetRatio(horizontal, settings);
 
     std::vector<VideoTarget> result = {};
-    if(res.w <= settings.limits.max_encode.w && res.h <= settings.limits.max_encode.h) {
-        result.emplace_back(res.w, res.h);
-    }
-
     // aspect ratio unsupported
     if(selected_ratio.first == 0) {
         if(!settings.allow_unlisted_ratios)
             throw video_proc_error(true, "bad aspect ratio");
+
+        if(res.w <= settings.limits.max_encode.w && res.h <= settings.limits.max_encode.h) {
+            result.emplace_back(res.w, res.h);
+        }
         return result;
     }
 
+    // aspect ratio supported - find largest (smaller or equal) resolution
     SupportedTarget selected_target = {};
     for(const SupportedTarget& target : settings.supported_targets) {
-        if(target.width >= horizontal.w) {
+        if(horizontal.w >= target.width) {
             selected_target = target;
             break;
         }
     }
 
-    // aspect ratio supported, smaller than the smallest resolution of it
-    if(!selected_target.width) {
-        return result;
-    }
-
-    result.clear();
+    // smaller than the smallest resolution of ratio
+    if(!selected_target.width)
+        return { {res.w, res.h, std::min(settings.default_unlisted_framerate, /* TODO: Replace with video framerate */ settings.default_unlisted_framerate)} };
 
     result.emplace_back(
         selected_target.width,
