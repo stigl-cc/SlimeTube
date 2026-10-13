@@ -114,6 +114,8 @@ int parseSettings(Settings& settings) {
     settings.allow_unlisted_ratios = custom_user_config.get("allow_unlisted_ratios", false).as<bool>();
     settings.default_unlisted_framerate = custom_user_config.get("default_unlisted_framerate", 30).as<int>();
 
+    settings.audio_bitrate = custom_user_config.get("audio_bitrate", 128000).as<int>();
+
     for(const Json::Value& resolution : custom_user_config.get("resolutions", {})) {
         SupportedTarget target;
         try {
@@ -242,7 +244,9 @@ int main() {
         .setMaxConnectionNum(10'000)
         .setMaxConnectionNumPerIP(10);
 
-    //app().run();
+    app().run();
+
+    // test transcode manager
     TranscodeManager transcode_manager;
     transcode_manager.enqueueJob("123456");
     return 0;

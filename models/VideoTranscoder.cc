@@ -30,6 +30,7 @@ void SlimyTube::VideoTranscoder::onAudioFrame(weak_frame_ptr_t weak_frame) {
     frame_ptr_t frame_ptr = weak_frame.lock();
     if(!frame_ptr)
         throw video_proc_error(false, "frame expired");
+
     for(VideoEncoder& encoder : mEncoders)
         encoder.putAudioFrame(frame_ptr);
 }

@@ -115,7 +115,7 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget
         .codec_type = AVMEDIA_TYPE_VIDEO,
         .codec_id = target.videoCodec,
         .format = AVPixelFormat::AV_PIX_FMT_YUV420P,
-        .bit_rate = target.bitrate,
+        .bit_rate = target.v_bitrate,
         .profile = AV_PROFILE_H264_HIGH,
         .width = target.width,
         .height = target.height,
@@ -127,9 +127,11 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget
         .codec_type = AVMEDIA_TYPE_AUDIO,
         .codec_id = target.audioCodec,
         .format = AVSampleFormat::AV_SAMPLE_FMT_FLTP,
+        .bit_rate = target.a_bitrate,
         .profile = AV_PROFILE_AAC_LOW,
         .sample_rate = 48000,
     };
+
     av_channel_layout_default(&audio_params.ch_layout, 2);
     setupCodec(audio_params, mAudioCodec, mAudioCodecContext);
 
@@ -233,8 +235,10 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
         }
 
         output_packet->stream_index = 1;
+        output_packet->pts = av_rescale_q_rnd(output_packet->pts, mAudioSourceTimeBase, mAudioStream->time_base, static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+        output_packet->dts = av_rescale_q_rnd(output_packet->dts, mAudioSourceTimeBase, mAudioStream->time_base, static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+        output_packet->duration = av_rescale_q(output_packet->duration, mAudioSourceTimeBase, mAudioStream->time_base);;
         av_packet_rescale_ts(output_packet, mAudioSourceTimeBase, mAudioStream->time_base);
-
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
             throw video_proc_error(false, "writing packet to encoder");
     }

@@ -84,6 +84,7 @@
 
         "allow_unlisted_ratios" : true,
         "default_unlisted_framerate": 30,
+        "audio_bitrate": 128000,
     },
 
     "ssl": {
