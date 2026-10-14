@@ -1,3 +1,4 @@
+#include "VideoTranscoder.h"
 #include <charconv>
 #include <controllers/ResourceController.h>
 
@@ -207,5 +208,5 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(!is_last_param)
         return;
 
-    // TODO: Add to the queue for ffmpeg glob -> mp4 processing
+    TranscodeManager::getInstance().enqueueJob(id);
 }

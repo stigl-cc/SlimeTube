@@ -3,6 +3,7 @@
 #include "VideoTypes.h"
 #include <drogon/HttpViewData.h>
 #include <filesystem>
+#include <json/value.h>
 #include <set>
 #include <string>
 
@@ -45,11 +46,14 @@ namespace SlimyTube {
             return setting;
         }
 
-        inline drogon::HttpViewData getData() {
+        inline drogon::HttpViewData getData() const {
             drogon::HttpViewData data;
             data.insert("title", title);
             return data;
         }
+
+        void parseLimits(Json::Value config, SlimyTube::Limits& limits);
+        int parse(Json::Value config);
 
         private:
         Settings() = default;

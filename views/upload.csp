@@ -38,7 +38,7 @@
                     <progress value="0" max="100" id="upload-progress"></progress>
                 </div>
 
-                <input id="upload-submit" type="submit" value="upload">
+                <input id="upload-submit" onclick="event.preventDefault(); uploadVideo('[[video_id]]');" type="submit" value="upload">
             </form>
         </div>
         <%view footer %>

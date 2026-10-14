@@ -64,6 +64,6 @@ namespace SlimyTube {
         ~TranscodeManager();
         void enqueueJob(const std::string& id);
 
-        static TranscodeManager& GetInstance();
+        static TranscodeManager& getInstance();
     };
 };

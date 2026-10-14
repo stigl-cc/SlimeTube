@@ -1,6 +1,6 @@
 const upload_progress = document.getElementById("upload-progress");
 const video_upload = document.getElementById("video-upload");
-const chunk_size = 1024;
+const chunk_size = 1024 * 1024;
 
 async function uploadVideo(id) {
     const video_file = video_upload.files[0],
@@ -53,7 +53,7 @@ async function uploadVideo(id) {
                 break chunkLoop;
             }
         } catch(error) {
-            console.error(error.message);
+            console.error("Error message: " + error.message);
         }
 
         upload_progress.setAttribute("value", (offset + 1) / video_size * 100);

@@ -140,7 +140,7 @@ void SlimyTube::TranscodeManager::enqueueJob(const std::string& id) {
     mConditionVariable.notify_one();
 }
 
-SlimyTube::TranscodeManager& SlimyTube::TranscodeManager::GetInstance() {
+SlimyTube::TranscodeManager& SlimyTube::TranscodeManager::getInstance() {
     static TranscodeManager manager;
     return manager;
 }
