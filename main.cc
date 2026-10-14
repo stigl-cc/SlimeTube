@@ -63,9 +63,9 @@ const std::vector<std::pair<std::string, std::string>> static_file_headers {
 };
 
 int main() {
-    Settings& settings = Settings::getInstance();
     app().loadConfigFile("data/config.json");
 
+    Settings& settings = Settings::getInstance();
     if(settings.parse(app().getCustomConfig()) != 0)
         return 1;
 
@@ -118,7 +118,8 @@ int main() {
         ->runEvery(3'600, cleanupVideos);
 
     // Start TranscodeManager thread
-    TranscodeManager::getInstance();
+    app().getLoop()
+        ->runAfter(1, TranscodeManager::getInstance);
 
     app().run();
     return 0;

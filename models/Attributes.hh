@@ -32,6 +32,10 @@ namespace SlimyTube::Query {
     static constexpr std::string_view
         videoTitle = "title",
         videoDescription = "desc";
+
+    static constexpr std::string_view
+        videoQuality = "quality",
+        videoSpeed = "speed";
 };
 
 namespace SlimyTube::Headers {

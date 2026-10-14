@@ -160,12 +160,14 @@ class Videos
 
     /**  For column resolutions  */
     ///Get the value of the column resolutions, returns the default value if the column is null
-    const std::string &getValueOfResolutions() const noexcept;
+    const std::vector<char> &getValueOfResolutions() const noexcept;
+    ///Return the column value by std::string with binary data
+    std::string getValueOfResolutionsAsString() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getResolutions() const noexcept;
+    const std::shared_ptr<std::vector<char>> &getResolutions() const noexcept;
     ///Set the value of the column resolutions
+    void setResolutions(const std::vector<char> &pResolutions) noexcept;
     void setResolutions(const std::string &pResolutions) noexcept;
-    void setResolutions(std::string &&pResolutions) noexcept;
     void setResolutionsToNull() noexcept;
 
     /**  For column state  */
@@ -218,7 +220,7 @@ class Videos
     std::shared_ptr<std::string> description_;
     std::shared_ptr<int64_t> views_;
     std::shared_ptr<int64_t> creationTime_;
-    std::shared_ptr<std::string> resolutions_;
+    std::shared_ptr<std::vector<char>> resolutions_;
     std::shared_ptr<int64_t> state_;
     std::shared_ptr<int64_t> size_;
     struct MetaData

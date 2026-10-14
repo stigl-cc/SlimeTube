@@ -4,6 +4,7 @@
 
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Exception.h>
+#include <endian.h>
 #include <lib/drogon/lib/src/RangeParser.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
@@ -98,12 +99,39 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
 }
 
 void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    std::optional<HttpStatusCode> video_id_check_error = videoIdExists(id);
-    if(video_id_check_error.has_value())
-        return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
+    if(id.empty())
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+
+    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
+    if(!video.has_value() || video.value().getValueOfState() != static_cast<int>(VideoState::Ready))
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+
+    std::string quality_suffix = "-";
+
+    const std::vector<char>& resolutions_str = video.value().getValueOfResolutions();
+    const int resolution_count = resolutions_str.size() / sizeof(int16_t);
+    const int16_t* resolution_shorts = reinterpret_cast<const int16_t*>(resolutions_str.data());
+
+    std::vector<int16_t> resolutions(resolution_count, 0);
+    for(int i =0; i < resolution_count; i++)
+        resolutions[i] = le16toh(resolution_shorts[i]);
+
+    const std::string& quality_param = req->getParameter(Query::videoQuality.data());
+    if(quality_param.empty())
+        quality_suffix.append(std::to_string(resolutions[0]));
+    else {
+        int16_t requested_resolution;
+        std::from_chars_result offset_param_conv = std::from_chars<int16_t>(quality_param.c_str(), quality_param.c_str() + quality_param.size(), requested_resolution);
+        if(offset_param_conv.ec != std::errc()) // quality is not a (valid) number
+            return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+        else if(std::find(resolutions.begin(), resolutions.end(), requested_resolution) == resolutions.end())
+            return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+        else
+            quality_suffix.append(std::to_string(requested_resolution));
+    }
 
     // TODO: Check quality parameter to determine the suffix of the path
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id);
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id + quality_suffix);
 
     shared_lock lk(getMutexForVideo(path));
     HttpResponsePtr res;

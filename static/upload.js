@@ -19,6 +19,7 @@ async function uploadVideo(id) {
                 body: video_chunk,
                 headers: {
                     "X-Offset" : offset,
+                    "X-Last" : (offset >= video_size - chunk_size) ? "true" : "false",
                 }
             });
 

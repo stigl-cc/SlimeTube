@@ -34,7 +34,7 @@ const std::vector<typename Videos::MetaData> Videos::metaData_={
 {"description","std::string","text",0,0,0,0},
 {"views","int64_t","integer",8,0,0,1},
 {"creation_time","int64_t","integer",8,0,0,1},
-{"resolutions","std::string","text",0,0,0,0},
+{"resolutions","std::vector<char>","blob",0,0,0,0},
 {"state","int64_t","integer",8,0,0,1},
 {"size","int64_t","integer",8,0,0,0}
 };
@@ -73,7 +73,7 @@ Videos::Videos(const Row &r, const ssize_t indexOffset) noexcept
         }
         if(!r["resolutions"].isNull())
         {
-            resolutions_=std::make_shared<std::string>(r["resolutions"].as<std::string>());
+            resolutions_=std::make_shared<std::vector<char>>(r["resolutions"].as<std::vector<char>>());
         }
         if(!r["state"].isNull())
         {
@@ -126,7 +126,7 @@ Videos::Videos(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 6;
         if(!r[index].isNull())
         {
-            resolutions_=std::make_shared<std::string>(r[index].as<std::string>());
+            resolutions_=std::make_shared<std::vector<char>>(r[index].as<std::vector<char>>());
         }
         index = offset + 7;
         if(!r[index].isNull())
@@ -202,7 +202,8 @@ Videos::Videos(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            resolutions_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            auto str = pJson[pMasqueradingVector[6]].asString();
+            resolutions_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -278,7 +279,8 @@ Videos::Videos(const Json::Value &pJson) noexcept(false)
         dirtyFlag_[6]=true;
         if(!pJson["resolutions"].isNull())
         {
-            resolutions_=std::make_shared<std::string>(pJson["resolutions"].asString());
+            auto str = pJson["resolutions"].asString();
+            resolutions_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(pJson.isMember("state"))
@@ -359,7 +361,8 @@ void Videos::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[6] = true;
         if(!pJson[pMasqueradingVector[6]].isNull())
         {
-            resolutions_=std::make_shared<std::string>(pJson[pMasqueradingVector[6]].asString());
+            auto str = pJson[pMasqueradingVector[6]].asString();
+            resolutions_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(!pMasqueradingVector[7].empty() && pJson.isMember(pMasqueradingVector[7]))
@@ -434,7 +437,8 @@ void Videos::updateByJson(const Json::Value &pJson) noexcept(false)
         dirtyFlag_[6] = true;
         if(!pJson["resolutions"].isNull())
         {
-            resolutions_=std::make_shared<std::string>(pJson["resolutions"].asString());
+            auto str = pJson["resolutions"].asString();
+            resolutions_=std::make_shared<std::vector<char>>(drogon::utils::base64DecodeToVector(str));
         }
     }
     if(pJson.isMember("state"))
@@ -587,25 +591,32 @@ void Videos::setCreationTime(const int64_t &pCreationTime) noexcept
     dirtyFlag_[5] = true;
 }
 
-const std::string &Videos::getValueOfResolutions() const noexcept
+const std::vector<char> &Videos::getValueOfResolutions() const noexcept
 {
-    static const std::string defaultValue = std::string();
+    static const std::vector<char> defaultValue = std::vector<char>();
     if(resolutions_)
         return *resolutions_;
     return defaultValue;
 }
-const std::shared_ptr<std::string> &Videos::getResolutions() const noexcept
+std::string Videos::getValueOfResolutionsAsString() const noexcept
+{
+    static const std::string defaultValue = std::string();
+    if(resolutions_)
+        return std::string(resolutions_->data(),resolutions_->size());
+    return defaultValue;
+}
+const std::shared_ptr<std::vector<char>> &Videos::getResolutions() const noexcept
 {
     return resolutions_;
 }
-void Videos::setResolutions(const std::string &pResolutions) noexcept
+void Videos::setResolutions(const std::vector<char> &pResolutions) noexcept
 {
-    resolutions_ = std::make_shared<std::string>(pResolutions);
+    resolutions_ = std::make_shared<std::vector<char>>(pResolutions);
     dirtyFlag_[6] = true;
 }
-void Videos::setResolutions(std::string &&pResolutions) noexcept
+void Videos::setResolutions(const std::string &pResolutions) noexcept
 {
-    resolutions_ = std::make_shared<std::string>(std::move(pResolutions));
+    resolutions_ = std::make_shared<std::vector<char>>(pResolutions.c_str(),pResolutions.c_str()+pResolutions.length());
     dirtyFlag_[6] = true;
 }
 void Videos::setResolutionsToNull() noexcept
@@ -973,7 +984,7 @@ Json::Value Videos::toJson() const
     }
     if(getResolutions())
     {
-        ret["resolutions"]=getValueOfResolutions();
+        ret["resolutions"]=drogon::utils::base64Encode((const unsigned char *)getResolutions()->data(),getResolutions()->size());
     }
     else
     {
@@ -1079,7 +1090,7 @@ Json::Value Videos::toMasqueradedJson(
         {
             if(getResolutions())
             {
-                ret[pMasqueradingVector[6]]=getValueOfResolutions();
+                ret[pMasqueradingVector[6]]=drogon::utils::base64Encode((const unsigned char *)getResolutions()->data(),getResolutions()->size());
             }
             else
             {
@@ -1161,7 +1172,7 @@ Json::Value Videos::toMasqueradedJson(
     }
     if(getResolutions())
     {
-        ret["resolutions"]=getValueOfResolutions();
+        ret["resolutions"]=drogon::utils::base64Encode((const unsigned char *)getResolutions()->data(),getResolutions()->size());
     }
     else
     {
