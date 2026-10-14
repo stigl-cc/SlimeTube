@@ -34,7 +34,7 @@ namespace SlimyTube {
 
         // errors: 401 404 403(video.channel != user)
         // success: 202
-        ADD_METHOD_TO(ResourceController::uploadThumbnail, "/rsc/thumbnail/{1}/upload", Put, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(ResourceController::uploadThumbnail, "/rsc/thumbnail/{1}", Put, "SlimyTube::StrictAuthenticator");
 
         // headers: X-Offset
         // r-headers: X-Position

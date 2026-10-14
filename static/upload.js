@@ -1,8 +1,15 @@
 const upload_progress = document.getElementById("upload-progress");
 const video_upload = document.getElementById("video-upload");
+const image_upload = document.getElementById("thumbnail-upload");
 const chunk_size = 1024 * 1024;
 
 async function uploadVideo(id) {
+    const image_file = image_upload.files[0];
+    const result = await fetch(`/rsc/thumbnail/${id}`, {
+        method: "PUT",
+        body: image_file
+    });
+
     const video_file = video_upload.files[0],
           video_size = video_file.size;
 

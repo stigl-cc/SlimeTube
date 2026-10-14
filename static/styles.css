@@ -25,6 +25,10 @@ a {
     text-decoration: none;
 }
 
+img, video {
+    image-rendering: pixelated;
+}
+
 html, body {
     margin: 0;
     padding: 0;
