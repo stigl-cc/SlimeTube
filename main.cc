@@ -245,10 +245,6 @@ int main() {
         .setMaxConnectionNum(10'000)
         .setMaxConnectionNumPerIP(10);
 
-    //    app().run();
-
-    // test transcode manager
-    TranscodeManager transcode_manager;
-    transcode_manager.enqueueJob("123456");
+    app().run();
     return 0;
 }

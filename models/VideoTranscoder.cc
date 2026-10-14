@@ -91,40 +91,56 @@ void SlimyTube::VideoTranscoder::redirectLog(const std::string& path, int logLev
 
 SlimyTube::TranscodeManager::TranscodeManager()
     : mJobs(),
-      worker_thread(std::thread(std::bind(&TranscodeManager::worker, this))) {
+      mWorkerThread(std::thread(std::bind(&TranscodeManager::worker, this))) {
 }
 
 SlimyTube::TranscodeManager::~TranscodeManager() {
-    if(worker_thread.joinable())
-        worker_thread.join();
+    shouldRun = false;
+    mConditionVariable.notify_one();
+    if(mWorkerThread.joinable())
+        mWorkerThread.join();
 }
 
 void SlimyTube::TranscodeManager::worker() {
-    while(mJobs.empty());
+    std::unique_lock<std::mutex> lk(mJobsMutex);
+    do {
+        while(!mJobs.empty()) {
+            const std::string& current_job = mJobs.front();
+            lk.unlock();
+            try {
+                std::string
+                    in_path = Settings::getInstance().blobs_dir / current_job,
+                    out_path = Settings::getInstance().videos_dir / current_job;
 
-    std::lock_guard<std::mutex> lk(mJobsMutex);
-    if(!mJobs.empty()) {
-        std::string current_job = mJobs.front();
-        try {
-            std::string
-                in_path = Settings::getInstance().blobs_dir / current_job,
-                out_path = Settings::getInstance().videos_dir / current_job;
+                VideoTranscoder transcoder(in_path, out_path);
 
-            VideoTranscoder transcoder(in_path, out_path);
+                int width, height, bit_rate;
+                transcoder.getDecoder().getMetaData(width, height, bit_rate);
+                transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}, bit_rate));
 
-            int width, height, bit_rate;
-            transcoder.getDecoder().getMetaData(width, height, bit_rate);
-            transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}, bit_rate));
-
-            transcoder.transcode();
-        } catch(const video_proc_error& err) {
-            printf("%d %s\n", err.isUserCaused, err.what());
+                transcoder.transcode();
+            } catch(const video_proc_error& err) {
+                printf("%d %s\n", err.isUserCaused, err.what());
+            }
+            lk.lock();
+            mJobs.pop_front();
         }
-        mJobs.pop_front();
-    }
+
+        mConditionVariable.wait(lk);
+    } while(shouldRun);
+
+    lk.unlock();
 }
 
 void SlimyTube::TranscodeManager::enqueueJob(const std::string& id) {
-    std::lock_guard<std::mutex> lk(mJobsMutex);
-    mJobs.emplace_back(id);
+    {
+        std::lock_guard<std::mutex> lk(mJobsMutex);
+        mJobs.emplace_back(id);
+    }
+    mConditionVariable.notify_one();
+}
+
+SlimyTube::TranscodeManager& SlimyTube::TranscodeManager::GetInstance() {
+    static TranscodeManager manager;
+    return manager;
 }

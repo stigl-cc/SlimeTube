@@ -1,4 +1,5 @@
 #pragma once
+#include <condition_variable>
 #include <deque>
 #include <fstream>
 #include <models/VideoTypes.h>
@@ -43,14 +44,26 @@ namespace SlimyTube {
 
     class TranscodeManager {
         protected:
-        std::thread worker_thread;
+        std::condition_variable mConditionVariable;
         std::mutex mJobsMutex;
+        std::thread mWorkerThread;
+        bool shouldRun;
+
         std::deque<std::string> mJobs;
         void worker();
 
-        public:
         TranscodeManager();
+
+        public:
+        TranscodeManager(TranscodeManager&&) = delete;
+        TranscodeManager(const TranscodeManager&) = delete;
+
+        TranscodeManager& operator=(TranscodeManager&&) = delete;
+        TranscodeManager& operator=(const TranscodeManager&) = delete;
+
         ~TranscodeManager();
         void enqueueJob(const std::string& id);
+
+        static TranscodeManager& GetInstance();
     };
 };
