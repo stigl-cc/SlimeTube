@@ -1,4 +1,8 @@
+#include <drogon/orm/Criteria.h>
+#include <drogon/orm/Mapper.h>
+#include <endian.h>
 #include <libavutil/error.h>
+#include <models/RecordManager.h>
 #include <models/ResolutionUtility.h>
 #include <models/Settings.hh>
 #include <models/VideoTranscoder.h>
@@ -11,12 +15,16 @@
 #include <format>
 #include <mutex>
 #include <stdexcept>
+#include <string>
 #include <thread>
 
 extern "C" {
 #include <libavutil/log.h>
 #include <libavcodec/codec.h>
 }
+
+using namespace drogon::orm;
+namespace fs = std::filesystem;
 
 void SlimyTube::VideoTranscoder::onVideoFrame(weak_frame_ptr_t weak_frame) {
     frame_ptr_t frame_ptr = weak_frame.lock();
@@ -102,13 +110,17 @@ SlimyTube::TranscodeManager::~TranscodeManager() {
 }
 
 void SlimyTube::TranscodeManager::worker() {
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
+
     std::unique_lock<std::mutex> lk(mJobsMutex);
     do {
         while(!mJobs.empty()) {
             const std::string& current_job = mJobs.front();
             lk.unlock();
+
+            Videos video = video_mapper.findByPrimaryKey(current_job);
             try {
-                std::string
+                fs::path
                     in_path = Settings::getInstance().blobs_dir / current_job,
                     out_path = Settings::getInstance().videos_dir / current_job;
 
@@ -119,9 +131,32 @@ void SlimyTube::TranscodeManager::worker() {
                 transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}, bit_rate));
 
                 transcoder.transcode();
+
+                std::vector<int16_t> resolutions;
+                for(size_t i =0; i < transcoder.mTargets.size(); i++)
+                    resolutions.push_back(htole16(transcoder.mTargets[i].height));
+
+                video_mapper.updateBy(
+                    {Videos::Cols::_state, Videos::Cols::_resolutions},
+                    Criteria(Videos::Cols::_id, CompareOperator::EQ, current_job),
+                    static_cast<int32_t>(VideoState::Ready),
+                    std::string(reinterpret_cast<char*>(resolutions.data()), resolutions.size() * sizeof(resolutions[0]))
+                );
+
+                fs::remove(in_path);
             } catch(const video_proc_error& err) {
-                printf("%d %s\n", err.isUserCaused, err.what());
+                if(err.isUserCaused) {
+                    video_mapper.updateBy(
+                        {Videos::Cols::_state},
+                        Criteria(Videos::Cols::_id, CompareOperator::EQ, current_job),
+                        static_cast<int32_t>(VideoState::Failed)
+                    );
+                } else {
+                    // TODO: Finish error handling here
+                    printf("%s\n", err.what());
+                }
             }
+
             lk.lock();
             mJobs.pop_front();
         }
