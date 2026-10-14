@@ -38,6 +38,7 @@ namespace SlimyTube {
         int default_unlisted_framerate;
 
         int audio_bitrate;
+        int audio_samprate;
 
         static inline Settings& getInstance() {
             static Settings setting = {};

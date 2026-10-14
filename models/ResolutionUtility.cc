@@ -45,7 +45,7 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
             throw video_proc_error(true, "bad aspect ratio");
 
         if(res.w <= settings.limits.max_encode.w && res.h <= settings.limits.max_encode.h) {
-            result.emplace_back(res.w, res.h, std::min(settings.limits.max_unlisted_br, bitrate), settings.audio_bitrate);
+            result.emplace_back(res.w, res.h, std::min(settings.limits.max_unlisted_br, bitrate), settings.audio_bitrate, settings.audio_samprate);
         }
         return result;
     }
@@ -61,7 +61,7 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
 
     // smaller than the smallest resolution of ratio
     if(!selected_target.width) {
-        result.emplace_back(res.w, res.h, std::min(settings.limits.max_unlisted_br, bitrate), settings.audio_bitrate);
+        result.emplace_back(res.w, res.h, std::min(settings.limits.max_unlisted_br, bitrate), settings.audio_bitrate, settings.audio_samprate);
         return result;
     }
 
@@ -69,7 +69,8 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
         selected_target.width,
         selected_target.height,
         std::min(selected_target.max_bitrate, bitrate),
-        settings.audio_bitrate
+        settings.audio_bitrate,
+        settings.audio_samprate
     );
 
     for(size_t also_encode : selected_target.also_encode) {
@@ -78,7 +79,8 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
             also_target.width,
             also_target.height,
             std::min(also_target.max_bitrate, bitrate),
-            settings.audio_bitrate
+            settings.audio_bitrate,
+            settings.audio_samprate
         );
     }
     return result;

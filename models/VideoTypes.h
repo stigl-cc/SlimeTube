@@ -40,6 +40,7 @@ namespace SlimyTube {
             height;
         int v_bitrate;
         int a_bitrate;
+        int a_samprate;
         AVRational rate;
         AVCodecID
             videoCodec = AV_CODEC_ID_H264,

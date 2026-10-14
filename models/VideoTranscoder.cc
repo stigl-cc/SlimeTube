@@ -1,11 +1,12 @@
-#include "ResolutionUtility.h"
-#include "Settings.hh"
-#include <filesystem>
+#include <libavutil/error.h>
+#include <models/ResolutionUtility.h>
+#include <models/Settings.hh>
 #include <models/VideoTranscoder.h>
 #include <models/VideoDecoder.h>
 #include <models/VideoEncoder.h>
 #include <models/VideoTypes.h>
 
+#include <filesystem>
 #include <functional>
 #include <format>
 #include <mutex>
@@ -117,7 +118,7 @@ void SlimyTube::TranscodeManager::worker() {
 
             transcoder.transcode();
         } catch(const video_proc_error& err) {
-
+            printf("%d %s\n", err.isUserCaused, err.what());
         }
         mJobs.pop_front();
     }

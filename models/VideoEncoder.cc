@@ -1,6 +1,5 @@
 #include "VideoEncoder.h"
 #include "VideoTypes.h"
-#include <libavutil/frame.h>
 #include <models/VideoTranscoder.h>
 #include <utility>
 
@@ -23,6 +22,8 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavcodec/codec.h>
 #include <libavcodec/codec_par.h>
+#include <libavutil/frame.h>
+#include <libswresample/swresample.h>
 }
 
 void SlimyTube::VideoEncoder::StreamDeleter::operator()(const AVStream* p) const {
@@ -43,8 +44,60 @@ void SlimyTube::VideoEncoder::ResizeContextDeleter::operator()(SwsContext* p) co
         sws_freeContext(p);
 }
 
+
+void SlimyTube::VideoEncoder::ResampleContextDeleter::operator()(SwrContext* p) const {
+    if(p)
+        swr_free(&p);
+}
+
+
+void SlimyTube::VideoEncoder::ResampleOutputDeleter::operator()(uint8_t* p) const {
+    if(p)
+        av_free(p);
+}
+
+void SlimyTube::VideoEncoder::setupResample(int srcRate, int srcSamples, const AVChannelLayout* srcLayout, AVSampleFormat sampFormat) {
+    SwrContext* cxt = swr_alloc();
+    if(!cxt)
+        throw video_proc_error(false, "allocat swr context");
+
+    int ret;
+
+    const AVSampleFormat output_format = static_cast<AVSampleFormat>(mAudioCodecParams.format);
+    av_opt_set_chlayout(cxt, "in_chlayout", srcLayout, 0);
+    av_opt_set_sample_fmt(cxt, "in_sample_fmt",  sampFormat, 0);
+    av_opt_set_int(cxt, "in_sample_rate", srcRate, 0);
+
+    av_opt_set_chlayout(cxt, "out_chlayout", &mAudioCodecParams.ch_layout, 0);
+    av_opt_set_sample_fmt(cxt, "out_sample_fmt", output_format, 0);
+    av_opt_set_int(cxt, "out_sample_rate",    mAudioCodecParams.sample_rate, 0);
+
+    ret = swr_init(cxt);
+    if(ret < 0) {
+        swr_free(&cxt);
+        throw video_proc_error(false, "init resampler");
+    }
+
+    mResampleContext.reset(cxt);
+
+    int output_samples = swr_get_out_samples(cxt, srcSamples);
+    mResampledFrame.reset(av_frame_alloc());
+
+    mResampledFrame->format = output_format;
+    mResampledFrame->sample_rate = mAudioCodecParams.sample_rate;
+    mResampledFrame->nb_samples = output_samples;
+    av_channel_layout_copy(&mResampledFrame->ch_layout, &mAudioCodecParams.ch_layout);
+
+    ret = av_frame_get_buffer(mResampledFrame.get(), 0);
+
+    if(ret < 0)
+        throw video_proc_error(false, "alloc samples");
+}
+
 void SlimyTube::VideoEncoder::setupResize(int srcW, int srcH, AVPixelFormat fmt) {
-    SwsContext* cxt = sws_getContext(srcW, srcH, fmt, mTarget.width, mTarget.height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, nullptr, nullptr, nullptr);
+    SwsContext* cxt = sws_getContext(srcW, srcH, fmt, mTarget.width, mTarget.height, static_cast<AVPixelFormat>(mVideoCodecParams.format), SWS_BICUBIC, nullptr, nullptr, nullptr);
+    if(!cxt)
+        throw video_proc_error(false, "alloc sws context");
     mResizeContext.reset(cxt);
 
     mScaledFrame.reset(av_frame_alloc());
@@ -111,7 +164,7 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget
     : mAudioSourceTimeBase(audioTimeBase),
       mVideoSourceTimeBase(videoTimeBase),
       mTarget(target) {
-    AVCodecParameters video_params = {
+    mVideoCodecParams = {
         .codec_type = AVMEDIA_TYPE_VIDEO,
         .codec_id = target.videoCodec,
         .format = AVPixelFormat::AV_PIX_FMT_YUV420P,
@@ -121,21 +174,21 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget
         .height = target.height,
         .framerate = target.rate,
     };
-    setupCodec(video_params, mVideoCodec, mVideoCodecContext);
+    setupCodec(mVideoCodecParams, mVideoCodec, mVideoCodecContext);
 
-    AVCodecParameters audio_params = {
+    mAudioCodecParams = {
         .codec_type = AVMEDIA_TYPE_AUDIO,
         .codec_id = target.audioCodec,
         .format = AVSampleFormat::AV_SAMPLE_FMT_FLTP,
         .bit_rate = target.a_bitrate,
         .profile = AV_PROFILE_AAC_LOW,
-        .sample_rate = 48000,
+        .sample_rate = target.a_samprate,
     };
 
-    av_channel_layout_default(&audio_params.ch_layout, 2);
-    setupCodec(audio_params, mAudioCodec, mAudioCodecContext);
+    av_channel_layout_default(&mAudioCodecParams.ch_layout, 2);
+    setupCodec(mAudioCodecParams, mAudioCodec, mAudioCodecContext);
 
-    openOutput(path, video_params, audio_params);
+    openOutput(path, mVideoCodecParams, mAudioCodecParams);
 }
 
 SlimyTube::VideoEncoder::VideoEncoder(VideoEncoder&& other) {
@@ -152,6 +205,15 @@ SlimyTube::VideoEncoder::VideoEncoder(VideoEncoder&& other) {
 
     mAudioSourceTimeBase = other.mAudioSourceTimeBase;
     mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+
+    mScaledFrame = std::move(other.mScaledFrame);
+    mResizeContext = std::move(other.mResizeContext);
+
+    mResampleContext = std::move(other.mResampleContext);
+    mResampledFrame = std::move(other.mResampledFrame);
+
+    mAudioCodecParams = other.mAudioCodecParams;
+    mVideoCodecParams = other.mVideoCodecParams;
 
     mTarget = std::move(other.mTarget);
 }
@@ -173,6 +235,12 @@ SlimyTube::VideoEncoder& SlimyTube::VideoEncoder::operator=(VideoEncoder&& other
 
     mAudioSourceTimeBase = other.mAudioSourceTimeBase;
     mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+
+    mScaledFrame = std::move(other.mScaledFrame);
+    mResizeContext = std::move(other.mResizeContext);
+
+    mResampleContext = std::move(other.mResampleContext);
+    mResampledFrame = std::move(other.mResampledFrame);
 
     mTarget = std::move(other.mTarget);
 
@@ -224,6 +292,14 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
         throw video_proc_error(false, "allocate output packet");
 
     int ret;
+    if(frame) {
+        if(!mResampleContext)
+            setupResample(frame->sample_rate, frame->nb_samples, &frame->ch_layout, static_cast<AVSampleFormat>(frame->format));
+        ret = swr_convert(mResampleContext.get(), mResampledFrame->data, mResampledFrame->nb_samples, frame->data, frame->nb_samples);
+
+        if(ret < 0)
+            throw video_proc_error(false, "resample audio");
+    }
     ret = avcodec_send_frame(mAudioCodecContext.get(), frame.get());
 
     while (ret >= 0) {
