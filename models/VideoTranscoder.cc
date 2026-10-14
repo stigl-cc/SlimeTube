@@ -99,7 +99,8 @@ void SlimyTube::VideoTranscoder::redirectLog(const std::string& path, int logLev
 
 SlimyTube::TranscodeManager::TranscodeManager()
     : mJobs(),
-      mWorkerThread(std::thread(std::bind(&TranscodeManager::worker, this))) {
+      mWorkerThread(std::thread(std::bind(&TranscodeManager::worker, this))),
+      shouldRun(true) {
 }
 
 SlimyTube::TranscodeManager::~TranscodeManager() {
@@ -168,6 +169,7 @@ void SlimyTube::TranscodeManager::worker() {
 }
 
 void SlimyTube::TranscodeManager::enqueueJob(const std::string& id) {
+    LOG_ERROR << "Enquening a video processing job!";
     {
         std::lock_guard<std::mutex> lk(mJobsMutex);
         mJobs.emplace_back(id);

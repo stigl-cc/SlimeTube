@@ -295,7 +295,7 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
     if(frame) {
         if(!mResampleContext)
             setupResample(frame->sample_rate, frame->nb_samples, &frame->ch_layout, static_cast<AVSampleFormat>(frame->format));
-        ret = swr_convert(mResampleContext.get(), mResampledFrame->data, mResampledFrame->nb_samples, frame->data, frame->nb_samples);
+        ret = swr_convert(mResampleContext.get(), mResampledFrame->data, mResampledFrame->nb_samples, const_cast<const uint8_t* const*>(frame->data), frame->nb_samples);
 
         if(ret < 0)
             throw video_proc_error(false, "resample audio");
