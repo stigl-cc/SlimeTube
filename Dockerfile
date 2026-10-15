@@ -17,7 +17,7 @@ WORKDIR /
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories && \
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories && \
-    apk add --no-cache c-ares sqlite jsoncpp openssl zstd zlib libuuid ffmpeg
+    apk add --no-cache c-ares sqlite-dev jsoncpp openssl zstd zlib libuuid ffmpeg
 COPY --from=build /code/install /
 
 EXPOSE 8080
