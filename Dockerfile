@@ -3,6 +3,7 @@ WORKDIR /code/
 
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories && \
+    echo 'https://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories && \
     apk add --no-cache drogon cmake g++ c-ares-dev sqlite-dev jsoncpp-dev brotli-dev openssl-dev zstd-dev util-linux-dev ffmpeg-dev
 COPY . /code
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && \
@@ -16,6 +17,7 @@ WORKDIR /
 RUN
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories && \
+    echo 'https://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories && \
     apk add --no-cache c-ares sqlite jsoncpp openssl zstd libuuid ffmpeg
 COPY --from=build /code/install /
 
