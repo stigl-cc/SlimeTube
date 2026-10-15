@@ -14,11 +14,10 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && \
 FROM alpine:latest AS publish
 WORKDIR /
 
-RUN
-    echo 'https://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
+RUN echo 'https://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories && \
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories && \
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories && \
-    apk add --no-cache c-ares sqlite jsoncpp openssl zstd libuuid ffmpeg
+    apk add --no-cache c-ares sqlite jsoncpp openssl zstd zlib libuuid ffmpeg
 COPY --from=build /code/install /
 
 EXPOSE 8080
