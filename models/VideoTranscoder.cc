@@ -44,7 +44,7 @@ void SlimyTube::VideoTranscoder::onAudioFrame(weak_frame_ptr_t weak_frame) {
         encoder.putAudioFrame(frame_ptr);
 }
 
-SlimyTube::VideoTranscoder::VideoTranscoder(const std::string& inpath, const std::string& outpath, const std::vector<VideoTarget>& targets)
+SlimyTube::VideoTranscoder::VideoTranscoder(const fs::path& inpath, const fs::path& outpath, const std::vector<VideoTarget>& targets)
     : mDecoder(inpath),
       mEncoders(),
       mOutPath(outpath) {
@@ -58,7 +58,7 @@ void SlimyTube::VideoTranscoder::transcode() {
     mDecoder.getTimeBase(video, audio);
 
     for(const VideoTarget& target : mTargets)
-        mEncoders.emplace_back(std::format("{}-{}", mOutPath, target.height), target, video, audio);
+        mEncoders.emplace_back(mOutPath / std::to_string(target.height), target, video, audio);
 
     mDecoder.getFrames(
         std::bind(&VideoTranscoder::onVideoFrame, this, std::placeholders::_1),
@@ -120,12 +120,24 @@ void SlimyTube::TranscodeManager::worker() {
             lk.unlock();
 
             Videos video = video_mapper.findByPrimaryKey(current_job);
+
+            VideoState state = static_cast<VideoState>(video.getValueOfState());
+            if(state != VideoState::Encode) {
+                if(state == VideoState::Deleted) {
+                    RecordManager::deleteVideo(video);
+                    lk.lock();
+                    mJobs.pop_front();
+                    continue;
+                }
+                continue;
+            }
+
             try {
                 fs::path
-                    in_path = Settings::getInstance().blobs_dir / current_job,
-                    out_path = Settings::getInstance().videos_dir / current_job;
+                    path = Settings::getInstance().videos_dir / current_job,
+                    blob = path / "blob";
 
-                VideoTranscoder transcoder(in_path, out_path);
+                VideoTranscoder transcoder(blob, path);
 
                 int width, height, bit_rate;
                 transcoder.getDecoder().getMetaData(width, height, bit_rate);
@@ -144,7 +156,7 @@ void SlimyTube::TranscodeManager::worker() {
                     std::string(reinterpret_cast<char*>(resolutions.data()), resolutions.size() * sizeof(resolutions[0]))
                 );
 
-                fs::remove(in_path);
+                fs::remove(blob);
             } catch(const video_proc_error& err) {
                 if(err.isUserCaused) {
                     video_mapper.updateBy(
@@ -158,6 +170,9 @@ void SlimyTube::TranscodeManager::worker() {
                 }
             }
 
+            if(video.getValueOfState() == static_cast<int64_t>(VideoState::Deleted))
+                RecordManager::deleteVideo(video);
+
             lk.lock();
             mJobs.pop_front();
         }
@@ -169,7 +184,6 @@ void SlimyTube::TranscodeManager::worker() {
 }
 
 void SlimyTube::TranscodeManager::enqueueJob(const std::string& id) {
-    LOG_ERROR << "Enquening a video processing job!";
     {
         std::lock_guard<std::mutex> lk(mJobsMutex);
         mJobs.emplace_back(id);

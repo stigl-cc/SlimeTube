@@ -10,7 +10,7 @@ bool ensureDirectory(fs::path p) {
     std::filesystem::file_status status = fs::status(p, ec);
 
     if (!fs::exists(p)) {
-        fs::create_directory(p, ec);
+        fs::create_directories(p, ec);
         if(ec != std::errc())
             LOG_ERROR << "Failed to create directory " << fs::weakly_canonical(p) << ": " << ec.message();
     } else if (!fs::is_directory(status)) {

@@ -1,6 +1,7 @@
 #pragma once
 #include <condition_variable>
 #include <deque>
+#include <filesystem>
 #include <fstream>
 #include <models/VideoTypes.h>
 #include <models/VideoDecoder.h>
@@ -30,12 +31,12 @@ namespace SlimyTube {
         static std::ofstream logFileStream;
         static void log(void*, int, const char*, va_list);
 
-        std::string mOutPath;
+        std::filesystem::path mOutPath;
 
         public:
         std::vector<VideoTarget> mTargets;
 
-        VideoTranscoder(const std::string& inpath, const std::string& outpath, const std::vector<VideoTarget>& targets = {});
+        VideoTranscoder(const std::filesystem::path& inpath, const std::filesystem::path& outpath, const std::vector<VideoTarget>& targets = {});
         void transcode();
         const VideoDecoder& getDecoder() const;
 

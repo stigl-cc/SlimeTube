@@ -75,7 +75,7 @@ void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, func
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "thumbnail";
     shared_lock lk(getMutexForThumbnail(path));
     return(void) respond(HttpResponse::newFileResponse(path, "", CT_IMAGE_JPG, "", req));
 }
@@ -85,7 +85,7 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().thumbnails_dir)) / fs::path(id);
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "thumbnail";
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
     // TODO: Make sure its an image and convert all to jpeg
@@ -106,7 +106,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
     if(!video.has_value() || video.value().getValueOfState() != static_cast<int>(VideoState::Ready))
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
 
-    std::string quality_suffix = "-";
+    std::string quality_suffix;
 
     const std::vector<char>& resolutions_str = video.value().getValueOfResolutions();
     const int resolution_count = resolutions_str.size() / sizeof(int16_t);
@@ -118,7 +118,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 
     const std::string& quality_param = req->getParameter(Query::videoQuality.data());
     if(quality_param.empty())
-        quality_suffix.append(std::to_string(resolutions[0]));
+        quality_suffix = std::to_string(resolutions[0]);
     else {
         int16_t requested_resolution;
         std::from_chars_result offset_param_conv = std::from_chars<int16_t>(quality_param.c_str(), quality_param.c_str() + quality_param.size(), requested_resolution);
@@ -127,11 +127,11 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
         else if(std::find(resolutions.begin(), resolutions.end(), requested_resolution) == resolutions.end())
             return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
         else
-            quality_suffix.append(std::to_string(requested_resolution));
+            quality_suffix = std::to_string(requested_resolution);
     }
 
     // TODO: Check quality parameter to determine the suffix of the path
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id + quality_suffix);
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / quality_suffix;
 
     shared_lock lk(getMutexForVideo(path));
     HttpResponsePtr res;
@@ -193,8 +193,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(offset_param_conv.ec != std::errc()) // X-Offset is not a (valid) number
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
-    // TODO: Change to the uploads temporary folder for the blobs
-    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().blobs_dir)) / fs::path(id);
+    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "blob";
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
     std::error_code ec;
@@ -236,5 +235,10 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(!is_last_param)
         return;
 
+    RecordManager::getVideosMapper().updateBy(
+        {Videos::Cols::_state},
+        Criteria(Videos::Cols::_id, CompareOperator::EQ, id),
+        static_cast<int32_t>(VideoState::Encode)
+    );
     TranscodeManager::getInstance().enqueueJob(id);
 }
