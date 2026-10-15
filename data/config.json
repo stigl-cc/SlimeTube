@@ -1,7 +1,7 @@
 {
     "listeners": [
         { "address": "0.0.0.0", "port": 8080, "https": false },
-        { "address": "0.0.0.0", "port": 8081, "https": true, "use_old_tls": true },
+        { "address": "0.0.0.0", "port": 8443, "https": true, "use_old_tls": true },
     ],
 
     "db_clients": [
