@@ -18,7 +18,7 @@ jobs:
           version: 1.0
 
       - name: Install deps
-        run: apt-get install libblas-dev liblapack-dev
+        run: sudo apt-get install libblas-dev liblapack-dev
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
