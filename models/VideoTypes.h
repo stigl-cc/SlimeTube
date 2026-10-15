@@ -41,7 +41,6 @@ namespace SlimyTube {
         int v_bitrate;
         int a_bitrate;
         int a_samprate;
-        AVRational rate;
         AVCodecID
             videoCodec = AV_CODEC_ID_H264,
             audioCodec = AV_CODEC_ID_AAC;
@@ -51,9 +50,7 @@ namespace SlimyTube {
         public:
         int ratio_num, ratio_den;
         int width, height;
-        int
-            max_framerate,
-            max_bitrate;
+        int max_bitrate;
         std::vector<size_t> also_encode;
     };
 }

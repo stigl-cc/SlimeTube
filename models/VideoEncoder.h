@@ -5,6 +5,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 #include <libavcodec/codec_par.h>
+#include <libavfilter/avfilter.h>
 }
 
 namespace SlimyTube {
@@ -28,6 +29,12 @@ namespace SlimyTube {
         struct ResampleOutputDeleter { void operator()(uint8_t*) const; };
         typedef std::unique_ptr<uint8_t, ResampleOutputDeleter> resample_out_ptr_t;
 
+        struct FilterGraphDeleter { void operator()(AVFilterGraph*) const; };
+        typedef std::unique_ptr<AVFilterGraph, FilterGraphDeleter> filter_graph_ptr_t;
+
+        struct FilterContextDeleter { void operator()(AVFilterContext*) const; };
+        typedef std::unique_ptr<AVFilterContext, FilterContextDeleter> filter_cxt_ptr_t;
+
         format_cxt_ptr_t mFormatContext;
 
         const AVCodec
@@ -48,19 +55,27 @@ namespace SlimyTube {
         unique_frame_ptr_t mScaledFrame;
         resize_cxt_ptr_t mResizeContext;
 
+        int mResampledSamplesEmitted;
         resample_cxt_ptr_t mResampleContext;
         unique_frame_ptr_t mResampledFrame;
 
         AVCodecParameters mAudioCodecParams;
         AVCodecParameters mVideoCodecParams;
 
+        filter_graph_ptr_t mFilterGraph;
+        filter_cxt_ptr_t mFilterContextSource;
+        filter_cxt_ptr_t mFilterContextSink;
+        filter_cxt_ptr_t mFilterContextFps;
+
         void setupResample(int srcRate, int srcSamples, const AVChannelLayout* srcLayout, AVSampleFormat sampFormat);
         void setupResize(int srcW, int srcH, AVPixelFormat fmt);
         void openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams);
         void setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);
+        void setupFilter(AVRational targetFps);
 
         VideoTarget mTarget;
 
+        void putVideoPacket(AVPacket*, AVFrame* frame);
         void putAudioPacket(AVPacket*, AVFrame* frame);
 
         public:

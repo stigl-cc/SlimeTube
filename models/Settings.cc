@@ -68,8 +68,8 @@ int SlimyTube::Settings::parse(Json::Value config) {
     if(!ensureDirectory(blobs_dir))
         return 1;
 
+    encoder_frame_rate = config.get("default_unlisted_framerate", 30).as<int>();
     allow_unlisted_ratios = config.get("allow_unlisted_ratios", false).as<bool>();
-    default_unlisted_framerate = config.get("default_unlisted_framerate", 30).as<int>();
 
     audio_bitrate = config.get("audio_bitrate", 128000).as<int>();
     audio_samprate = config.get("audio_sample_rate", 48000).as<int>();
@@ -77,8 +77,8 @@ int SlimyTube::Settings::parse(Json::Value config) {
     for(const Json::Value& resolution : config.get("resolutions", {})) {
         SupportedTarget target;
         try {
-            if(resolution.size() < 6)
-                throw Json::LogicError("config resolution format not recognized, please use [[ratio_n, ratio_d], w, h, r, br, also_encode],");
+            if(resolution.size() < 5)
+                throw Json::LogicError("config resolution format not recognized, please use [[ratio_n, ratio_d], w, h, br, also_encode],");
             target.ratio_num = resolution[0][0].asInt();
             target.ratio_den = resolution[0][1].asInt();
 
@@ -87,9 +87,8 @@ int SlimyTube::Settings::parse(Json::Value config) {
             target.width = resolution[1].asInt();
             target.height = resolution[2].asInt();
 
-            target.max_framerate = resolution[3].asInt();
-            target.max_bitrate = resolution[4].asInt();
-            for(const Json::Value& also : resolution[5])
+            target.max_bitrate = resolution[3].asInt();
+            for(const Json::Value& also : resolution[4])
                 target.also_encode.push_back(also.asInt());
             supported_targets.push_back(target);
         } catch(const Json::LogicError& ex) {

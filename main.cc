@@ -3,7 +3,6 @@
 #include <controllers/ResourceController.h>
 
 #include <json/value.h>
-#include <limits>
 #include <models/Settings.hh>
 #include <models/Videos.h>
 #include <models/TimeUtility.h>
@@ -19,10 +18,6 @@
 #include <drogon/drogon.h>
 #include <drogon/utils/coroutine.h>
 
-#include <filesystem>
-#include <system_error>
-
-namespace fs = std::filesystem;
 using namespace SlimyTube;
 using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
