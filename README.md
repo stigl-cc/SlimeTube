@@ -27,14 +27,12 @@ The settings inside "listeners", "db_clients", "app", "ssl" and "plugins" are dr
 The setting "custom_config" contains all settings for this app specifically.  
 
 - `title` - Title of the app (shows up in the website title and server response header)
-- `videos_dir` - directory for uploaded (and encoded) videos
-- `thumbnails_dir` - directory for video thumbnails
-- `blobs_dir` - directory for all videos that have not yet been encoded
+- `videos_dir` - directory for uploaded and encoded videos and thumbnails
 - `salt_length` - length of user password salts(recommended atleast  16)
 - `ffmpeg_log` - directory where the log for ffmpeg output should go
 - `ffmpeg_log_level` - how much ffmpeg should log
 - `limits` - contains various limits on what the users are allowed to do on the platform
-+- `limits` - `max_blob_size` - ~~how large of a file can a user submit to be encoded~~ currently not used
+- `limits` - `max_blob_size` - ~~how large of a file can a user submit to be encoded~~ currently not used
 - `limits` - `total_user_size` - ~~how much space is a user allowed to use~~ currently not used
 - `limits` - `max_get_video_range_size` - maximum amount of video data the server will allow user to download with a http range request
 - `limits` - `max_unlisted_bitrate` - maximum bitrate an uploaded video will be encoded to

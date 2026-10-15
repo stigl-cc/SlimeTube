@@ -1,5 +1,5 @@
 #pragma once
-#include <models/VideoTypes.h>
+#include <models/video/VideoTypes.h>
 
 namespace SlimyTube {
     class VideoDecoder {

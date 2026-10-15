@@ -3,9 +3,9 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
-#include <models/VideoTypes.h>
-#include <models/VideoDecoder.h>
-#include <models/VideoEncoder.h>
+#include <models/video/VideoTypes.h>
+#include <models/video/VideoDecoder.h>
+#include <models/video/VideoEncoder.h>
 #include <mutex>
 #include <thread>
 

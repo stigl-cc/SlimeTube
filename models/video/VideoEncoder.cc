@@ -1,9 +1,9 @@
 #include "VideoEncoder.h"
-#include "VideoTypes.h"
 #include <format>
 #include <libavfilter/avfilter.h>
 #include <libavutil/mem.h>
-#include <models/VideoTranscoder.h>
+#include <models/video/VideoTypes.h>
+#include <models/video/VideoTranscoder.h>
 #include <utility>
 #include <models/Settings.hh>
 

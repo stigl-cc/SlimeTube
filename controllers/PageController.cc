@@ -1,7 +1,7 @@
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
-#include <models/FormatUtility.h>
+#include <models/utils/FormatUtility.h>
 
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>

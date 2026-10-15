@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VideoTypes.h"
+#include <models/video/VideoTypes.h>
 #include <drogon/HttpViewData.h>
 #include <filesystem>
 #include <json/value.h>
@@ -25,10 +25,7 @@ namespace SlimyTube {
     class Settings {
         public:
         std::string title;
-        std::filesystem::path
-            thumbnails_dir,
-            videos_dir,
-            blobs_dir;
+        std::filesystem::path videos_dir;
 
         size_t salt_len;
         Limits limits;

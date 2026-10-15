@@ -1,5 +1,5 @@
 #pragma once
-#include <models/TimeUtility.h>
+#include <models/utils/TimeUtility.h>
 
 #include <utility>
 #include <cstdint>

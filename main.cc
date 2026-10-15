@@ -5,10 +5,10 @@
 #include <json/value.h>
 #include <models/Settings.hh>
 #include <models/Videos.h>
-#include <models/TimeUtility.h>
-#include <models/VideoTranscoder.h>
+#include <models/utils/TimeUtility.h>
+#include <models/video/VideoTranscoder.h>
 #include <models/RecordManager.h>
-#include <models/VideoTypes.h>
+#include <models/video/VideoTypes.h>
 
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>

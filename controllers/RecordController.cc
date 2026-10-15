@@ -11,7 +11,7 @@
 #include <models/Attributes.hh>
 #include <models/Users.h>
 #include <models/Videos.h>
-#include <models/TimeUtility.h>
+#include <models/utils/TimeUtility.h>
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>

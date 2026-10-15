@@ -1,6 +1,5 @@
 #include <algorithm>
-#include <models/ResolutionUtility.h>
-#include <models/VideoTypes.h>
+#include <models/utils/ResolutionUtility.h>
 
 std::pair<int, int> SlimyTube::ResolutionUtility::GetRatio(resolution_t res, const Settings& settings) {
     // find aspect ratio

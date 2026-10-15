@@ -50,6 +50,8 @@ add_executable(${PROJECT_NAME} main.cc)
 aux_source_directory(controllers CTL_SRC)
 aux_source_directory(filters FILTER_SRC)
 aux_source_directory(models MODEL_SRC)
+aux_source_directory(models/utils UTILS_SRC)
+aux_source_directory(models/video VIDEO_SRC)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views ${CMAKE_CURRENT_BINARY_DIR}/views)
 
@@ -60,7 +62,9 @@ target_sources(${PROJECT_NAME}
                ${SRC_DIR}
                ${CTL_SRC}
                ${FILTER_SRC}
-               ${MODEL_SRC})
+               ${MODEL_SRC}
+               ${UTILS_SRC}
+               ${VIDEO_SRC})
 
 target_compile_options(${PROJECT_NAME} PRIVATE -ffunction-sections -fdata-sections)
 target_link_options(${PROJECT_NAME} PRIVATE -Wl,--gc-sections -Wl,--as-needed)

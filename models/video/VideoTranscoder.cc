@@ -3,16 +3,15 @@
 #include <endian.h>
 #include <libavutil/error.h>
 #include <models/RecordManager.h>
-#include <models/ResolutionUtility.h>
+#include <models/utils/ResolutionUtility.h>
 #include <models/Settings.hh>
-#include <models/VideoTranscoder.h>
-#include <models/VideoDecoder.h>
-#include <models/VideoEncoder.h>
-#include <models/VideoTypes.h>
+#include <models/video/VideoTranscoder.h>
+#include <models/video/VideoDecoder.h>
+#include <models/video/VideoEncoder.h>
+#include <models/video/VideoTypes.h>
 
 #include <filesystem>
 #include <functional>
-#include <format>
 #include <mutex>
 #include <stdexcept>
 #include <string>

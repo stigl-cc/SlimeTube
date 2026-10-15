@@ -1,6 +1,6 @@
 #include <models/Settings.hh>
-#include <models/VideoTranscoder.h>
-#include <models/VideoTypes.h>
+#include <models/video/VideoTranscoder.h>
+#include <models/video/VideoTypes.h>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -56,16 +56,8 @@ int SlimyTube::Settings::parse(Json::Value config) {
     title = config.get("title", "SlimyTube").as<std::string>();
     salt_len = config.get("salt_len", 16).as<size_t>();
 
-    thumbnails_dir = config.get("thumbnails_dir", "data/thumbnails").as<std::string>();
-    if(!ensureDirectory(thumbnails_dir))
-        return 1;
-
     videos_dir = config.get("videos_dir", "data/videos").as<std::string>();
     if(!ensureDirectory(videos_dir))
-        return 1;
-
-    blobs_dir = config.get("blobs_dir", "data/blobs").as<std::string>();
-    if(!ensureDirectory(blobs_dir))
         return 1;
 
     encoder_frame_rate = config.get("default_unlisted_framerate", 30).as<int>();

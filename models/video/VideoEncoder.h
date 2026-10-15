@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include <models/VideoTypes.h>
+#include <models/video/VideoTypes.h>
 extern "C" {
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>

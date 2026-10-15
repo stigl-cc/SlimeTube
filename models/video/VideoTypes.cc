@@ -1,4 +1,4 @@
-#include <models/VideoTypes.h>
+#include <models/video/VideoTypes.h>
 
 extern "C" {
 #include <libavutil/frame.h>

@@ -1,6 +1,6 @@
 #include "VideoDecoder.h"
 #include "VideoTypes.h"
-#include <models/VideoTranscoder.h>
+#include <models/video/VideoTranscoder.h>
 
 extern "C" {
 #include <libavutil/frame.h>

@@ -1,5 +1,5 @@
 #include <RecordManager.h>
-#include <models/TimeUtility.h>
+#include <models/utils/TimeUtility.h>
 #include <models/Settings.hh>
 
 #include <drogon/HttpResponse.h>
