@@ -15,6 +15,7 @@ namespace SlimyTube {
         Encode,     // blob undefined, processing/queued for processing
         Ready,
         Failed,
+        Deleted,
     };
 
     class RecordManager {
@@ -27,7 +28,8 @@ namespace SlimyTube {
         static void createHash(const std::string& pass, std::span<const uint8_t> salt, std::span<uint8_t> hash);
         static bool nameExists(const std::string& name, Mapper<Users>& mapper);
 
-        static void deleteVideo(const Videos& id);
+        static std::string createVideo(uint64_t channel, const std::string& title, const std::string& description);
+        static void deleteVideo(const Videos&);
 
         static bool videoExists(const std::string& id);
         static std::optional<Videos> getVideoIfExists(const std::string& id);

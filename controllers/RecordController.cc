@@ -4,9 +4,9 @@
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 #include <drogon/orm/Criteria.h>
-
 #include <drogon/orm/DbClient.h>
 #include <drogon/orm/Mapper.h>
+
 #include <models/RecordManager.h>
 #include <models/Attributes.hh>
 #include <models/Users.h>
@@ -165,22 +165,7 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
     const uint64_t
         channel = req->attributes()->get<userId_t>(Attributes::userId.data());
 
-    std::string id;
-    do {
-        id = RecordManager::generateVideoId();
-    } while(RecordManager::videoExists(id));
-
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
-
-    Videos video;
-    video.setId(id);
-    video.setTitle(title);
-    video.setDescription(desc);
-    video.setChannel(channel);
-    video.setCreationTime(TimeUtil::GetUnixSecond());
-    video.setViews(0);
-    video.setState(static_cast<int32_t>(VideoState::Upload));
-    video_mapper.insert(video);
+    std::string id = RecordManager::createVideo(channel, title, desc);
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
     res->addHeader(Headers::location.data(), "/upload/" + id);

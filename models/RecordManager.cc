@@ -1,21 +1,25 @@
 #include <RecordManager.h>
-#include <Settings.hh>
+#include <models/TimeUtility.h>
+#include <models/Settings.hh>
 
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 #include <drogon/HttpController.h>
 #include <drogon/orm/Criteria.h>
-
 #include <drogon/orm/Exception.h>
-#include <mutex>
+
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+
 #include <optional>
 #include <random>
 #include <stdexcept>
+#include <mutex>
+#include <filesystem>
 
+namespace fs = std::filesystem;
 using namespace drogon::orm;
 
 DbClientPtr SlimyTube::RecordManager::getDbClient() {
@@ -58,10 +62,43 @@ bool SlimyTube::RecordManager::nameExists(const std::string& name, Mapper<Users>
     return mapper.count(Criteria(Users::Cols::_name, CompareOperator::EQ, name)) == 1;
 }
 
+std::string SlimyTube::RecordManager::createVideo(uint64_t channel, const std::string& title, const std::string& description) {
+    Mapper<Videos> video_mapper(getDbClient());
+
+    std::string id;
+    do { id = RecordManager::generateVideoId(); } while(videoExists(id));
+
+    Videos video;
+    video.setId(id);
+    video.setTitle(title);
+    video.setDescription(description);
+    video.setChannel(channel);
+    video.setCreationTime(TimeUtil::GetUnixSecond());
+    video.setViews(0);
+    video.setState(static_cast<int32_t>(VideoState::Upload));
+    video_mapper.insert(video);
+
+    std::error_code ec;
+    fs::create_directory(Settings::getInstance().videos_dir / id, ec);
+    if(ec) throw std::runtime_error("fs::create_directories failed " + ec.message());
+    return id;
+}
+
 void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
-    // TODO: FINISH
-    LOG_ERROR << "Feature not implemented! deleteVideo";
-    getVideosMapper().deleteByPrimaryKey(video.getPrimaryKey());
+    Mapper<Videos> video_mapper = getVideosMapper();
+    if(video.getValueOfState() == static_cast<int64_t>(VideoState::Encode)) {
+        video_mapper.updateBy(
+            {Videos::Cols::_state, Videos::Cols::_resolutions},
+            Criteria(Videos::Cols::_id, CompareOperator::EQ, video.getValueOfId()),
+            static_cast<int32_t>(VideoState::Deleted)
+        );
+        return;
+    }
+    std::error_code ec;
+    fs::remove_all(Settings::getInstance().videos_dir / video.getValueOfId(), ec);
+    if(ec)
+        throw std::runtime_error("fs::remove_all failed " + ec.message());
+    video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
 }
 
 bool SlimyTube::RecordManager::videoExists(const std::string& id) {
