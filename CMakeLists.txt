@@ -72,3 +72,5 @@ add_custom_target(run
   DEPENDS slimytube
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+install(TARGETS slimytube DESTINATION bin)
