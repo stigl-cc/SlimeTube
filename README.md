@@ -1,7 +1,7 @@
 ## SlimeTube
-<sub>(or SlimyTube? I don't know anymore)</sub>
+<sub>(or SlimyTube? SlimeyTube? I don't even know anymore)</sub>
 
-Is a lexible self-hosted C++ video platform for user videos (ok, let's face it, its just a youtube clone).
+Is a flexible self-hosted C++ video platform for user videos (ok, let's face it, its just a youtube clone).
 
 ### How to run
 
@@ -20,3 +20,31 @@ Is a lexible self-hosted C++ video platform for user videos (ok, let's face it, 
 4) `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release`
 5) `cmake --build build --config Release -j<number-of-threads>` (replace the <number-of-threads> with the number of threads your CPU contains - to find out on linux `nproc --all`)
 6) To run: `./build/slimytube`
+
+### Configuration
+For example values, see [data/config.json](./data/config.json)  
+The settings inside "listeners", "db_clients", "app", "ssl" and "plugins" are drogon-specific - see [drogon docs](https://drogonframework.github.io/drogon-docs/#/ENG/ENG-11-Configuration-File) for more details for those.  
+The setting "custom_config" contains all settings for this app specifically.  
+
+- `title` - Title of the app (shows up in the website title and server response header)
+- `videos_dir` - directory for uploaded (and encoded) videos
+- `thumbnails_dir` - directory for video thumbnails
+- `blobs_dir` - directory for all videos that have not yet been encoded
+- `salt_length` - length of user password salts(recommended atleast  16)
+- `ffmpeg_log` - directory where the log for ffmpeg output should go
+- `ffmpeg_log_level` - how much ffmpeg should log
+- `limits` - contains various limits on what the users are allowed to do on the platform
+- `limits` - `max_blob_size` - how large of a file can a user submit to be encoded
+- `limits` - `total_user_size` - how much space is a user allowed to use
+- `limits` - `max_get_video_range_size` - maximum amount of video data the server will allow user to download with a http range request
+- `limits` - `max_unlisted_bitrate` - maximum bitrate an uploaded video will be encoded to
+- `limits` - `max_aspect_ratio` - maximum width/height multiplier for video to be encoded
+- `limits` - `max_input_video_width` - maximum width for a video to be encoded
+- `limits` - `max_input_video_height` - maximum height for a video to be encoded
+- `limits` - `max_encode_video_width` - maximum width for a video to be encoded to
+- `limits` - `max_encode_video_height` - maximum width for a video to be encoded to
+- `resolutions` - list of resolutions natively accepted by the encoder in format: `[[ratio_width, ratio_height], width, height, video_bitrate, [also]]` also: heights of other resolutions with the same ratio (defined below this one) that will also be encoded with this one - example: `[[16, 9], 1920, 1080, 3150000, [720]]` - where 1280x720 must be defined below this line
+- `allow_unlisted_ratios` - whether to allow encoding of ratios not in the `resolutions` list
+- `encoder_frame_rate` - what frame rate to encode all videos into
+- `audio_bitrate` - what bitrate to use for videos
+- `audio_sample_rate` - what sample rate to use for videos

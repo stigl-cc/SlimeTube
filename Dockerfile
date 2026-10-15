@@ -19,6 +19,7 @@ RUN echo 'https://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/reposi
     echo 'https://dl-cdn.alpinelinux.org/alpine/edge/main' >> /etc/apk/repositories && \
     apk add --no-cache c-ares sqlite-dev jsoncpp openssl zstd zlib libuuid ffmpeg
 COPY --from=build /code/install /
+COPY --from=build /code/static /static
 
 EXPOSE 8080
 EXPOSE 8443
