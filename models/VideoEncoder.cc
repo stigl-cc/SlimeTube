@@ -2,6 +2,7 @@
 #include "VideoTypes.h"
 #include <format>
 #include <libavfilter/avfilter.h>
+#include <libavutil/mem.h>
 #include <models/VideoTranscoder.h>
 #include <utility>
 #include <models/Settings.hh>
@@ -154,6 +155,11 @@ void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecP
     AVDictionary* opts = nullptr;
     av_dict_set(&opts, "movflags", "+faststart", 0);
 
+    mAudioStream->codecpar->extradata = reinterpret_cast<uint8_t*>(av_mallocz(2));
+    mAudioStream->codecpar->extradata[0] = 0x11;
+    mAudioStream->codecpar->extradata[1] = 0x90;
+    mAudioStream->codecpar->extradata_size = 2;
+
     if(avformat_write_header(mFormatContext.get(), &opts) < 0)
         throw video_proc_error(false, "write header");
 }
@@ -268,17 +274,23 @@ SlimyTube::VideoEncoder::VideoEncoder(VideoEncoder&& other) {
     mVideoStream = std::move(other.mVideoStream);
     mAudioStream = std::move(other.mAudioStream);
 
-    mAudioSourceTimeBase = other.mAudioSourceTimeBase;
-    mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+    mAudioSourceTimeBase = std::exchange(other.mAudioSourceTimeBase, {});
+    mVideoSourceTimeBase = std::exchange(other.mVideoSourceTimeBase, {});
 
     mScaledFrame = std::move(other.mScaledFrame);
     mResizeContext = std::move(other.mResizeContext);
 
+    mAudioCodecParams = std::exchange(other.mAudioCodecParams, {});
+    mVideoCodecParams = std::exchange(other.mVideoCodecParams, {});
+
+    mResampledSamplesEmitted = std::exchange(other.mResampledSamplesEmitted, 0);;
     mResampleContext = std::move(other.mResampleContext);
     mResampledFrame = std::move(other.mResampledFrame);
 
-    mAudioCodecParams = other.mAudioCodecParams;
-    mVideoCodecParams = other.mVideoCodecParams;
+    mFilterGraph = std::move(other.mFilterGraph);
+    mFilterContextSource = std::move(other.mFilterContextSource);
+    mFilterContextSink = std::move(other.mFilterContextSink);
+    mFilterContextFps = std::move(other.mFilterContextFps);
 
     mTarget = std::move(other.mTarget);
 }
@@ -298,17 +310,25 @@ SlimyTube::VideoEncoder& SlimyTube::VideoEncoder::operator=(VideoEncoder&& other
     mVideoStream = std::move(other.mVideoStream);
     mAudioStream = std::move(other.mAudioStream);
 
-    mAudioSourceTimeBase = other.mAudioSourceTimeBase;
-    mVideoSourceTimeBase = other.mVideoSourceTimeBase;
+    mAudioSourceTimeBase = std::exchange(other.mAudioSourceTimeBase, {});
+    mVideoSourceTimeBase = std::exchange(other.mVideoSourceTimeBase, {});
 
     mScaledFrame = std::move(other.mScaledFrame);
     mResizeContext = std::move(other.mResizeContext);
 
+    mAudioCodecParams = std::exchange(other.mAudioCodecParams, {});
+    mVideoCodecParams = std::exchange(other.mVideoCodecParams, {});
+
+    mResampledSamplesEmitted = std::exchange(other.mResampledSamplesEmitted, 0);
     mResampleContext = std::move(other.mResampleContext);
     mResampledFrame = std::move(other.mResampledFrame);
 
-    mTarget = std::move(other.mTarget);
+    mFilterGraph = std::move(other.mFilterGraph);
+    mFilterContextSource = std::move(other.mFilterContextSource);
+    mFilterContextSink = std::move(other.mFilterContextSink);
+    mFilterContextFps = std::move(other.mFilterContextFps);
 
+    mTarget = std::move(other.mTarget);
     return *this;
 }
 
@@ -348,8 +368,6 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
 
         sws_scale(mResizeContext.get(), frame->data, frame->linesize, 0, frame->height, mScaledFrame->data, mScaledFrame->linesize);
         av_frame_copy_props(mScaledFrame.get(), frame.get());
-        mScaledFrame->pts = av_rescale_q(frame->pts, mVideoSourceTimeBase, mVideoCodecContext->time_base);
-        mScaledFrame->pkt_dts = av_rescale_q(frame->pkt_dts, mVideoSourceTimeBase, mVideoCodecContext->time_base);
 
         ret = av_buffersrc_add_frame_flags(mFilterContextSource.get(), mScaledFrame.get(), AV_BUFFERSRC_FLAG_KEEP_REF);
         if(ret < 0)

@@ -59,13 +59,13 @@ namespace SlimyTube {
         resample_cxt_ptr_t mResampleContext;
         unique_frame_ptr_t mResampledFrame;
 
-        AVCodecParameters mAudioCodecParams;
-        AVCodecParameters mVideoCodecParams;
-
         filter_graph_ptr_t mFilterGraph;
         filter_cxt_ptr_t mFilterContextSource;
         filter_cxt_ptr_t mFilterContextSink;
         filter_cxt_ptr_t mFilterContextFps;
+
+        AVCodecParameters mAudioCodecParams;
+        AVCodecParameters mVideoCodecParams;
 
         void setupResample(int srcRate, int srcSamples, const AVChannelLayout* srcLayout, AVSampleFormat sampFormat);
         void setupResize(int srcW, int srcH, AVPixelFormat fmt);
