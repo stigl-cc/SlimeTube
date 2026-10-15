@@ -61,6 +61,8 @@ namespace SlimyTube {
 
         VideoTarget mTarget;
 
+        void putAudioPacket(AVPacket*, AVFrame* frame);
+
         public:
         VideoEncoder(
             const std::string& path,

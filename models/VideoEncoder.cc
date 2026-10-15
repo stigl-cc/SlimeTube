@@ -113,6 +113,7 @@ void SlimyTube::VideoEncoder::setupResize(int srcW, int srcH, AVPixelFormat fmt)
 void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams) {
     AVFormatContext* fmt_cxt = nullptr;
     avformat_alloc_output_context2(&fmt_cxt, nullptr, format_name.data(), path.c_str());
+
     if(!fmt_cxt)
         throw video_proc_error(false, "open output");
 
@@ -134,7 +135,10 @@ void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecP
         }
     }
 
-    if(avformat_write_header(mFormatContext.get(), nullptr) < 0) {
+    AVDictionary* opts = nullptr;
+    av_dict_set(&opts, "movflags", "+faststart", 0);
+
+    if(avformat_write_header(mFormatContext.get(), &opts) < 0) {
         throw video_proc_error(false, "write header");
     }
 }
@@ -286,22 +290,12 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
     av_packet_free(&output_packet);
 }
 
-void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
-    AVPacket *output_packet = av_packet_alloc();
-    if(!output_packet)
-        throw video_proc_error(false, "allocate output packet");
-
+void SlimyTube::VideoEncoder::putAudioPacket(AVPacket* output_packet, AVFrame* frame) {
     int ret;
-    if(frame) {
-        if(!mResampleContext)
-            setupResample(frame->sample_rate, frame->nb_samples, &frame->ch_layout, static_cast<AVSampleFormat>(frame->format));
-        ret = swr_convert(mResampleContext.get(), mResampledFrame->data, mResampledFrame->nb_samples, const_cast<const uint8_t**>(frame->data), frame->nb_samples);
-
-        if(ret < 0)
-            throw video_proc_error(false, "resample audio");
+    ret = avcodec_send_frame(mAudioCodecContext.get(), frame);
+    if(ret < 0) {
+        throw video_proc_error(false, "send frame to encoder");
     }
-    ret = avcodec_send_frame(mAudioCodecContext.get(), frame.get());
-
     while (ret >= 0) {
         ret = avcodec_receive_packet(mAudioCodecContext.get(), output_packet);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
@@ -317,6 +311,34 @@ void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
         av_packet_rescale_ts(output_packet, mAudioSourceTimeBase, mAudioStream->time_base);
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
             throw video_proc_error(false, "writing packet to encoder");
+    }
+}
+
+void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
+    AVPacket *output_packet = av_packet_alloc();
+    if(!output_packet)
+        throw video_proc_error(false, "allocate output packet");
+
+    int ret;
+    if(frame) {
+        if(!mResampleContext)
+            setupResample(frame->sample_rate, frame->nb_samples, &frame->ch_layout, static_cast<AVSampleFormat>(frame->format));
+        ret = swr_convert(mResampleContext.get(), mResampledFrame->data, mResampledFrame->nb_samples, const_cast<const uint8_t**>(frame->data), frame->nb_samples);
+
+        if(ret < 0)
+            throw video_proc_error(false, "resample audio");
+
+        putAudioPacket(output_packet, mResampledFrame.get());
+    } else if(mResampleContext) {
+        ret = swr_convert(mResampleContext.get(), mResampledFrame->data, mResampledFrame->nb_samples, nullptr, 0);
+
+        if(ret < 0)
+            throw video_proc_error(false, "flush resampled audio");
+
+        putAudioPacket(output_packet, mResampledFrame.get());
+        putAudioPacket(output_packet, frame.get());
+    } else {
+        putAudioPacket(output_packet, frame.get());
     }
 
     av_packet_unref(output_packet);
