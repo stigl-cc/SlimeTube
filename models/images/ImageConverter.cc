@@ -51,6 +51,12 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     if(format_cxt->oformat->flags & AVFMT_GLOBALHEADER)
         format_cxt->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
+    if(!(format_cxt->oformat->flags & AVFMT_NOFILE)) {
+        if(avio_open(&format_cxt->pb, outputPath.c_str(), AVIO_FLAG_WRITE) < 0) {
+            throw image_proc_error(false, "open output file");
+        }
+    }
+
     if(avformat_write_header(format_cxt.get(), nullptr) < 0)
         throw image_proc_error(false, "write header");
 
@@ -116,9 +122,8 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
         //ratio, ratio, ratio, ratio, res_dst.w, res_dst.h
         "scale=640:360"
     );
-    printf("%s\n", args.c_str());
 
-    ret = avfilter_graph_parse_ptr(filter_graph.get(), args.c_str(), &in, &out, nullptr);
+    ret = avfilter_graph_parse_ptr(filter_graph.get(), args.c_str(), &out, &in, nullptr);
     avfilter_inout_free(&in);
     avfilter_inout_free(&out);
     if(ret < 0)
@@ -135,9 +140,6 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     scaled_frame->format = pix_fmt;
     scaled_frame->width = res_dst.w;
     scaled_frame->height = res_dst.h;
-    // ret = av_frame_get_buffer(scaled_frame.get(), 32);
-    // if(ret < 0)
-    //     throw image_proc_error(false, "frame get buffer");
 
     // Encoding itself
     ret = av_buffersrc_add_frame_flags(cxt_in.get(), mFrame.get(), AV_BUFFERSRC_FLAG_KEEP_REF);
