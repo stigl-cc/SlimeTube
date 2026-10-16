@@ -20,7 +20,7 @@ namespace SlimyTube {
         // success: 200
         ADD_METHOD_TO(PageController::main, "/", Get);
 
-        // errors:
+        // errors: 404
         // success: 200
         ADD_METHOD_TO(PageController::watch, "/watch/{1}", Get);
         ADD_METHOD_TO(PageController::watch, "/watch/?v={1}", Get);

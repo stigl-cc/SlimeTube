@@ -77,9 +77,15 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
         mFrame->sample_aspect_ratio.num, mFrame->sample_aspect_ratio.den
     );
 
-    const std::string crop_args = std::format("");
+    const std::string crop_args = std::format(
+        "{}:{}:(in_w-{})/2:(in_h-{})/2",
+        res_src.w, res_src.w * res_dst.w / res_dst.h,
+        res_src.w, res_src.w * res_dst.w / res_dst.h
+    );
 
-    // Allocate and setup the source filter
+    const std::string scale_args = std::format("{}:{}", res_dst.w, res_dst.h);
+
+    // source filter
     filter = avfilter_get_by_name("buffer");
     ret = avfilter_graph_create_filter(&filter_context, filter, "in", in_args.c_str(), nullptr, filter_graph.get());
     cxt_in.reset(filter_context);
@@ -92,15 +98,23 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     cxt_out.reset(filter_context);
     if(!cxt_out) throw video_proc_error(false, "create filter");
 
-    // fps filter
+    // crop filter
     filter_context = nullptr;
     filter = avfilter_get_by_name("crop");
     ret = avfilter_graph_create_filter(&filter_context, filter, "crop", crop_args.c_str(), nullptr, filter_graph.get());
     cxt_crop.reset(filter_context);
     if(!cxt_crop) throw video_proc_error(false, "create filter");
 
-    avfilter_link(mFilterContextSource.get(), 0, mFilterContextFps.get(), 0);
-    avfilter_link(mFilterContextFps.get(), 0, mFilterContextSink.get(), 0);
+    // scale filter
+    filter_context = nullptr;
+    filter = avfilter_get_by_name("scale");
+    ret = avfilter_graph_create_filter(&filter_context, filter, "crop", scale_args.c_str(), nullptr, filter_graph.get());
+    cxt_scale.reset(filter_context);
+    if(!cxt_scale) throw video_proc_error(false, "create filter");
+
+    avfilter_link(cxt_in.get(), 0, cxt_crop.get(), 0);
+    avfilter_link(cxt_crop.get(), 0, cxt_scale.get(), 0);
+    avfilter_link(cxt_scale.get(), 0, cxt_out.get(), 0);
 
     ret = avfilter_graph_config(filter_graph.get(), nullptr);
     if(ret < 0)
@@ -114,7 +128,6 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     scaled_frame->width = res_dst.w;
     scaled_frame->height = res_dst.h;
     av_frame_get_buffer(scaled_frame.get(), 32);
-
 }
 
 SlimyTube::ImageConverter::ImageConverter() {

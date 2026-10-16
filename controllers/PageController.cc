@@ -35,11 +35,9 @@ std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageControl
     Result queriedVideos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
 
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
-    Mapper<Videos> video_mapper = SlimyTube::RecordManager::getVideosMapper();
     std::vector<Videos> videos;
-    for(const Row& video : queriedVideos) {
+    for(const Row& video : queriedVideos)
         videos.emplace_back(video);
-    }
 
     std::vector<std::unordered_map<std::string, std::string>> previews;
     for(const Videos& video : videos) {
