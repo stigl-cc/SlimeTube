@@ -114,6 +114,10 @@ std::optional<Videos> SlimyTube::RecordManager::getVideoIfExists(const std::stri
     }
 }
 
+void SlimyTube::RecordManager::addVideoView(const std::string& id) {
+    getDbClient()->execSqlSync("UPDATE videos SET views = views + 1 WHERE id = $1;", id);
+}
+
 constexpr std::string_view videoIdCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
 std::string SlimyTube::RecordManager::generateVideoId(size_t size) {
     static std::mutex randomMutex = {};
