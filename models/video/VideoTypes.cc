@@ -5,6 +5,28 @@ extern "C" {
 }
 #include <stdexcept>
 
+
+void SlimyTube::ResampleContextDeleter::operator()(SwrContext* p) const {
+    if(p)
+        swr_free(&p);
+}
+
+
+void SlimyTube::ResampleOutputDeleter::operator()(uint8_t* p) const {
+    if(p)
+        av_free(p);
+}
+
+void SlimyTube::FilterGraphDeleter::operator()(AVFilterGraph* p) const {
+    if(p)
+        avfilter_graph_free(&p);
+}
+
+void SlimyTube::FilterContextDeleter::operator()(AVFilterContext* p) const {
+    if(p) {
+    }
+}
+
 void SlimyTube::ResizeContextDeleter::operator()(SwsContext* p) const {
     if(p)
         sws_freeContext(p);

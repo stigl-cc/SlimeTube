@@ -9,6 +9,9 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/rational.h>
+#include <libswresample/swresample.h>
+#include <libavcodec/codec_par.h>
+#include <libavfilter/avfilter.h>
 }
 
 namespace SlimyTube {
@@ -17,6 +20,18 @@ namespace SlimyTube {
         bool isUserCaused;
         video_proc_error(bool isUserCaused, const char* const message) throw();
     };
+
+    struct ResampleContextDeleter { void operator()(SwrContext*) const; };
+    typedef std::unique_ptr<SwrContext, ResampleContextDeleter> resample_cxt_ptr_t;
+
+    struct ResampleOutputDeleter { void operator()(uint8_t*) const; };
+    typedef std::unique_ptr<uint8_t, ResampleOutputDeleter> resample_out_ptr_t;
+
+    struct FilterGraphDeleter { void operator()(AVFilterGraph*) const; };
+    typedef std::unique_ptr<AVFilterGraph, FilterGraphDeleter> filter_graph_ptr_t;
+
+    struct FilterContextDeleter { void operator()(AVFilterContext*) const; };
+    typedef std::unique_ptr<AVFilterContext, FilterContextDeleter> filter_cxt_ptr_t;
 
     struct ResizeContextDeleter { void operator()(SwsContext*) const; };
     typedef std::unique_ptr<SwsContext, ResizeContextDeleter> resize_cxt_ptr_t;

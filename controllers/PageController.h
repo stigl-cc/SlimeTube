@@ -13,7 +13,7 @@ namespace SlimyTube {
 
     class PageController : public drogon::HttpController<PageController> {
         private:
-        std::vector<std::unordered_map<std::string, std::string>> createPreviews(size_t count) const;
+        std::vector<std::unordered_map<std::string, std::string>> createPreviews(const std::string& ignore, size_t count) const;
         public:
     METHOD_LIST_BEGIN
         // errors:
@@ -23,6 +23,7 @@ namespace SlimyTube {
         // errors:
         // success: 200
         ADD_METHOD_TO(PageController::watch, "/watch/{1}", Get);
+        ADD_METHOD_TO(PageController::watch, "/watch/?v={1}", Get);
 
         // errors:
         // success: 200

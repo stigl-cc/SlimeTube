@@ -1,6 +1,7 @@
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
+#include <drogon/orm/DbClient.h>
 #include <models/utils/FormatUtility.h>
 
 #include <drogon/HttpResponse.h>
@@ -26,11 +27,19 @@ using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
 
+constexpr const std::string_view recommended_query = "SELECT * FROM videos WHERE state = $1 AND id != $2 ORDER BY RANDOM() LIMIT $3;";
+
 // TODO: Add some sort of smarter algorithm
-std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageController::createPreviews(size_t amount) const {
+std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageController::createPreviews(const std::string& ignore, size_t amount) const {
+    DbClientPtr db = SlimyTube::RecordManager::getDbClient();
+    Result queriedVideos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
+
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
     Mapper<Videos> video_mapper = SlimyTube::RecordManager::getVideosMapper();
-    std::vector<Videos> videos = video_mapper.limit(amount).findBy(orm::Criteria(Videos::Cols::_state, CompareOperator::EQ, static_cast<int32_t>(VideoState::Ready)));
+    std::vector<Videos> videos;
+    for(const Row& video : queriedVideos) {
+        videos.emplace_back(video);
+    }
 
     std::vector<std::unordered_map<std::string, std::string>> previews;
     for(const Videos& video : videos) {
@@ -50,7 +59,7 @@ std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageControl
 }
 
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(25);
+    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews("", 25);
 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);
@@ -74,7 +83,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
-    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(25);
+    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(video_id, 25);
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);
@@ -92,7 +101,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     return(void) error(std::move(respond), HttpStatusCode::k501NotImplemented, "/");
 
-    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(25);
+    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews("", 25);
 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);

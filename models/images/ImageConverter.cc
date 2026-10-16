@@ -1,17 +1,16 @@
-#include <libavutil/frame.h>
-#include <libswscale/swscale.h>
 #include <models/images/ImageConverter.h>
-
 #include <models/video/VideoTypes.h>
 #include <models/Settings.hh>
-
-#include <libavcodec/avcodec.h>
-#include <libavcodec/codec.h>
+#include <format>
 
 extern "C" {
 #include <libavcodec/codec_par.h>
 #include <libavformat/avformat.h>
 #include <libavutil/pixfmt.h>
+#include <libavcodec/avcodec.h>
+#include <libavcodec/codec.h>
+#include <libavfilter/avfilter.h>
+#include <libavutil/frame.h>
 }
 
 void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) {
@@ -58,14 +57,54 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     const resolution_t& res_dst
         = settings.thumbnail_res;
 
-    int scaled_height = res_src.w * res_dst.h / res_dst.w;
+    filter_graph_ptr_t filter_graph(avfilter_graph_alloc());
+    if(!filter_graph)
+        throw image_proc_error(false, "alloc filter graph");
 
-    int yStart = scaled_height / 2;
-    int yEnd = yStart + scaled_height;
+    int ret;
 
-    resize_cxt_ptr_t resize_ctx(sws_getContext(res_src.w, scaled_height, static_cast<AVPixelFormat>(mFrame->format), res_dst.w, res_dst.h, pix_fmt, SWS_POINT, nullptr, nullptr, nullptr));
-    if(!resize_ctx)
-        throw image_proc_error(false, "alloc sws context");
+    filter_cxt_ptr_t
+        cxt_in, cxt_scale, cxt_crop, cxt_out;
+
+    const AVFilter* filter;
+    AVFilterContext *filter_context = nullptr;
+
+    const std::string in_args = std::format(
+        "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}",
+        res_src.w, res_src.h,
+        static_cast<int32_t>(mFrame->format),
+        0, 0,
+        mFrame->sample_aspect_ratio.num, mFrame->sample_aspect_ratio.den
+    );
+
+    const std::string crop_args = std::format("");
+
+    // Allocate and setup the source filter
+    filter = avfilter_get_by_name("buffer");
+    ret = avfilter_graph_create_filter(&filter_context, filter, "in", in_args.c_str(), nullptr, filter_graph.get());
+    cxt_in.reset(filter_context);
+    if(!cxt_in) throw image_proc_error(false, "create filter");
+
+    // sink filter
+    filter_context = nullptr;
+    filter = avfilter_get_by_name("buffersink");
+    ret = avfilter_graph_create_filter(&filter_context, filter, "out", nullptr, nullptr, filter_graph.get());
+    cxt_out.reset(filter_context);
+    if(!cxt_out) throw video_proc_error(false, "create filter");
+
+    // fps filter
+    filter_context = nullptr;
+    filter = avfilter_get_by_name("crop");
+    ret = avfilter_graph_create_filter(&filter_context, filter, "crop", crop_args.c_str(), nullptr, filter_graph.get());
+    cxt_crop.reset(filter_context);
+    if(!cxt_crop) throw video_proc_error(false, "create filter");
+
+    avfilter_link(mFilterContextSource.get(), 0, mFilterContextFps.get(), 0);
+    avfilter_link(mFilterContextFps.get(), 0, mFilterContextSink.get(), 0);
+
+    ret = avfilter_graph_config(filter_graph.get(), nullptr);
+    if(ret < 0)
+        throw video_proc_error(false, "configure filter graph");
 
     unique_frame_ptr_t scaled_frame(av_frame_alloc());
     if(!scaled_frame)
@@ -76,7 +115,6 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     scaled_frame->height = res_dst.h;
     av_frame_get_buffer(scaled_frame.get(), 32);
 
-    sws_scale(resize_ctx.get(), )
 }
 
 SlimyTube::ImageConverter::ImageConverter() {

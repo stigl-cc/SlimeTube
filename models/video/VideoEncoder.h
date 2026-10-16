@@ -13,18 +13,6 @@ namespace SlimyTube {
         static constexpr const std::string_view
             format_name = "mp4";
 
-        struct ResampleContextDeleter { void operator()(SwrContext*) const; };
-        typedef std::unique_ptr<SwrContext, ResampleContextDeleter> resample_cxt_ptr_t;
-
-        struct ResampleOutputDeleter { void operator()(uint8_t*) const; };
-        typedef std::unique_ptr<uint8_t, ResampleOutputDeleter> resample_out_ptr_t;
-
-        struct FilterGraphDeleter { void operator()(AVFilterGraph*) const; };
-        typedef std::unique_ptr<AVFilterGraph, FilterGraphDeleter> filter_graph_ptr_t;
-
-        struct FilterContextDeleter { void operator()(AVFilterContext*) const; };
-        typedef std::unique_ptr<AVFilterContext, FilterContextDeleter> filter_cxt_ptr_t;
-
         format_cxt_ptr_t mFormatContext;
 
         const AVCodec

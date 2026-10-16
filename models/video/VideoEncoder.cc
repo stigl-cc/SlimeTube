@@ -32,27 +32,6 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
-void SlimyTube::VideoEncoder::ResampleContextDeleter::operator()(SwrContext* p) const {
-    if(p)
-        swr_free(&p);
-}
-
-
-void SlimyTube::VideoEncoder::ResampleOutputDeleter::operator()(uint8_t* p) const {
-    if(p)
-        av_free(p);
-}
-
-void SlimyTube::VideoEncoder::FilterGraphDeleter::operator()(AVFilterGraph* p) const {
-    if(p)
-        avfilter_graph_free(&p);
-}
-
-void SlimyTube::VideoEncoder::FilterContextDeleter::operator()(AVFilterContext* p) const {
-    if(p) {
-    }
-}
-
 void SlimyTube::VideoEncoder::setupResample(int srcRate, int srcSamples, const AVChannelLayout* srcLayout, AVSampleFormat sampFormat) {
     SwrContext* cxt = swr_alloc();
     if(!cxt)
