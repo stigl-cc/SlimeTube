@@ -39,6 +39,8 @@ namespace SlimyTube {
 
         int encoder_frame_rate;
 
+        resolution_t thumbnail_res;
+
         static inline Settings& getInstance() {
             static Settings setting = {};
             return setting;

@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 extern "C" {
+#include <libswscale/swscale.h>
 #include <libavutil/frame.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -17,11 +18,20 @@ namespace SlimyTube {
         video_proc_error(bool isUserCaused, const char* const message) throw();
     };
 
+    struct ResizeContextDeleter { void operator()(SwsContext*) const; };
+    typedef std::unique_ptr<SwsContext, ResizeContextDeleter> resize_cxt_ptr_t;
+
     struct CodecContextDeleter { void operator()(AVCodecContext*) const; };
     typedef std::unique_ptr<AVCodecContext, CodecContextDeleter> codec_cxt_ptr_t;
 
+    struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
+    typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
+
     struct PacketDeleter {void operator()(AVPacket*) const; };
     typedef std::unique_ptr<AVPacket, PacketDeleter> packet_ptr_t;
+
+    struct StreamDeleter { void operator()(const AVStream*) const; };
+    typedef std::unique_ptr<AVStream, StreamDeleter> stream_ptr_t;
 
     struct FrameDeleter { void operator()(AVFrame*) const; };
     typedef std::unique_ptr<AVFrame, FrameDeleter> unique_frame_ptr_t;

@@ -32,25 +32,6 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
-void SlimyTube::VideoEncoder::StreamDeleter::operator()(const AVStream* p) const {
-    if(p) {
-    }
-}
-
-void SlimyTube::VideoEncoder::FormatContextDeleter::operator()(AVFormatContext* p) const {
-    if(p) {
-        if(!(p->oformat->flags & AVFMT_NOFILE))
-            avio_closep(&p->pb);
-        avformat_free_context(p);
-    }
-}
-
-void SlimyTube::VideoEncoder::ResizeContextDeleter::operator()(SwsContext* p) const {
-    if(p)
-        sws_freeContext(p);
-}
-
-
 void SlimyTube::VideoEncoder::ResampleContextDeleter::operator()(SwrContext* p) const {
     if(p)
         swr_free(&p);
@@ -166,6 +147,9 @@ void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecP
 
 void SlimyTube::VideoEncoder::setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext) {
     codec = avcodec_find_encoder(params.codec_id);
+    if(!codec)
+        throw video_proc_error(false, "find codec");
+
     codecContext.reset(avcodec_alloc_context3(codec));
     if(!codecContext.get())
         throw video_proc_error(false, "allocate memory for codec context");

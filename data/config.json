@@ -2,6 +2,8 @@
     "listeners": [
         { "address": "0.0.0.0", "port": 8080, "https": false },
         { "address": "0.0.0.0", "port": 8443, "https": true, "use_old_tls": true },
+        { "address": "::", "port": 8080, "https": false },
+        { "address": "::", "port": 8443, "https": true, "use_old_tls": true },
     ],
 
     "db_clients": [
@@ -82,8 +84,12 @@
             [ [1, 1],  128,  128,   25000, [] ],
         ],
 
+        "thumbnail_width" : 640,
+        "thumbnail_height" : 360,
+
         "allow_unlisted_ratios" : true,
         "encoder_frame_rate": 30,
+
         "audio_bitrate": 128000,
         "audio_sample_rate": 48000,
     },

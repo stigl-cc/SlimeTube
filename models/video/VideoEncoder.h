@@ -2,7 +2,6 @@
 #include <memory>
 #include <models/video/VideoTypes.h>
 extern "C" {
-#include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 #include <libavcodec/codec_par.h>
 #include <libavfilter/avfilter.h>
@@ -13,15 +12,6 @@ namespace SlimyTube {
         private:
         static constexpr const std::string_view
             format_name = "mp4";
-
-        struct FormatContextDeleter { void operator()(AVFormatContext*) const; };
-        typedef std::unique_ptr<AVFormatContext, FormatContextDeleter> format_cxt_ptr_t;
-
-        struct StreamDeleter { void operator()(const AVStream*) const; };
-        typedef std::unique_ptr<AVStream, StreamDeleter> stream_ptr_t;
-
-        struct ResizeContextDeleter { void operator()(SwsContext*) const; };
-        typedef std::unique_ptr<SwsContext, ResizeContextDeleter> resize_cxt_ptr_t;
 
         struct ResampleContextDeleter { void operator()(SwrContext*) const; };
         typedef std::unique_ptr<SwrContext, ResampleContextDeleter> resample_cxt_ptr_t;

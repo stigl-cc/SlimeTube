@@ -66,6 +66,17 @@ int SlimyTube::Settings::parse(Json::Value config) {
     audio_bitrate = config.get("audio_bitrate", 128000).as<int>();
     audio_samprate = config.get("audio_sample_rate", 48000).as<int>();
 
+    thumbnail_res = {
+        config.get("thumbnail_width", 640).as<dimension_t>(),
+        config.get("thumbnail_height", 360).as<dimension_t>(),
+    };
+
+    std::string ffmpeg_log = config.get("ffmpeg_log", "").as<std::string>();
+    int ffmpeg_log_level = config.get("ffmpeg_log_level", 32).as<int>();
+
+    if(!ffmpeg_log.empty())
+        VideoTranscoder::redirectLog(ffmpeg_log, ffmpeg_log_level);
+
     for(const Json::Value& resolution : config.get("resolutions", {})) {
         SupportedTarget target;
         try {
@@ -114,12 +125,6 @@ int SlimyTube::Settings::parse(Json::Value config) {
             return 1;
         }
     }
-
-    std::string ffmpeg_log = config.get("ffmpeg_log", "").as<std::string>();
-    int ffmpeg_log_level = config.get("ffmpeg_log_level", 32).as<int>();
-
-    if(!ffmpeg_log.empty())
-        VideoTranscoder::redirectLog(ffmpeg_log, ffmpeg_log_level);
 
     parseLimits(config, limits);
     return 0;

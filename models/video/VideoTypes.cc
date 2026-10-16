@@ -5,9 +5,28 @@ extern "C" {
 }
 #include <stdexcept>
 
+void SlimyTube::ResizeContextDeleter::operator()(SwsContext* p) const {
+    if(p)
+        sws_freeContext(p);
+}
+
 SlimyTube::video_proc_error::video_proc_error(bool isUserCaused, const char* const message) throw()
     : std::runtime_error(message),
       isUserCaused(isUserCaused) {
+}
+
+
+void SlimyTube::StreamDeleter::operator()(const AVStream* p) const {
+    if(p) {
+    }
+}
+
+void SlimyTube::FormatContextDeleter::operator()(AVFormatContext* p) const {
+    if(p) {
+        if(!(p->oformat->flags & AVFMT_NOFILE))
+            avio_closep(&p->pb);
+        avformat_free_context(p);
+    }
 }
 
 void SlimyTube::FrameDeleter::operator()(AVFrame* p) const {

@@ -85,7 +85,7 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "thumbnail";
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "thumbnail_blob";
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
     // TODO: Make sure its an image and convert all to jpeg
