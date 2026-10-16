@@ -334,11 +334,11 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
 
         ret = av_buffersrc_add_frame_flags(mFilterContextSource.get(), mScaledFrame.get(), AV_BUFFERSRC_FLAG_KEEP_REF);
         if(ret < 0)
-            throw video_proc_error(false, "frame frame to filter");
+            throw video_proc_error(false, "push frame to filter");
     } else {
         ret = av_buffersrc_add_frame_flags(mFilterContextSource.get(), nullptr, AV_BUFFERSRC_FLAG_KEEP_REF);
         if(ret < 0)
-            throw video_proc_error(false, "frame frame to filter");
+            throw video_proc_error(false, "push frame to filter");
     }
 
     AVFrame* filtered_frame = av_frame_alloc();
