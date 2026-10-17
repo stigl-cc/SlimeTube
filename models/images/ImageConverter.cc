@@ -80,12 +80,22 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     const AVFilter* filter;
     AVFilterContext* filter_context;
 
+    const AVRational& pixel_ratio = mFrame->sample_aspect_ratio;
+
     const std::string in_args = std::format(
         "video_size={}x{}:pix_fmt={}:time_base=1/1:pixel_aspect={}/{}",
         res_src.w, res_src.h,
         static_cast<int32_t>(mFrame->format),
-        1, 1//mFrame->sample_aspect_ratio.num, mFrame->sample_aspect_ratio.den
+        (pixel_ratio.num != 0) ? pixel_ratio.num : 1, (pixel_ratio.den != 0) ? pixel_ratio.den : 1
     );
+
+    const std::string ratio = std::format("({}/{})", res_dst.w, res_dst.h);
+
+    const std::string args = std::format(
+        "crop=w='if(gt(iw/ih\\,{})\\,ih*{}\\,iw)':h='if(gt(iw/ih\\,{})\\,ih\\,iw/{})',scale={}:{}",
+        ratio, ratio, ratio, ratio, res_dst.w, res_dst.h
+    );
+
     printf("%s\n", in_args.c_str());
 
     filter_cxt_ptr_t
@@ -102,8 +112,9 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     filter = avfilter_get_by_name("buffersink");
     ret = avfilter_graph_create_filter(&filter_context, filter, "out", nullptr, nullptr, filter_graph.get());
     cxt_out.reset(filter_context);
-    if(!cxt_out) throw video_proc_error(false, "create filter");
+    if(!cxt_out) throw image_proc_error(false, "create filter");
 
+    // filer processing part
     AVFilterInOut
         *in = avfilter_inout_alloc(),
         *out = avfilter_inout_alloc();
@@ -115,13 +126,6 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     out->name = av_strdup("out");
     out->filter_ctx = cxt_out.get();
     out->pad_idx = 0;
-
-    const std::string ratio = std::format("({}/{})", res_dst.w, res_dst.h);
-
-    const std::string args = std::format(
-        "crop=w='if(gt(iw/ih\\,{})\\,ih*{}\\,iw)':h='if(gt(iw/ih\\,{})\\,ih\\,iw/{})',scale={}:{}",
-        ratio, ratio, ratio, ratio, res_dst.w, res_dst.h
-    );
 
     ret = avfilter_graph_parse_ptr(filter_graph.get(), args.c_str(), &out, &in, nullptr);
     avfilter_inout_free(&in);
@@ -144,15 +148,15 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     // Encoding itself
     ret = av_buffersrc_add_frame_flags(cxt_in.get(), mFrame.get(), AV_BUFFERSRC_FLAG_KEEP_REF);
     if(ret < 0)
-        throw video_proc_error(false, "push frame to filter");
+        throw image_proc_error(false, "push frame to filter");
     AVPacket *output_packet = av_packet_alloc();
     if(!output_packet)
-        throw video_proc_error(false, "allocate output packet");
+        throw image_proc_error(false, "allocate output packet");
 
     ret = av_buffersink_get_frame(cxt_out.get(), scaled_frame.get());
     if(ret < 0) {
         av_packet_free(&output_packet);
-        throw video_proc_error(false, "pull frame from filter");
+        throw image_proc_error(false, "pull frame from filter");
     }
 
     ret = avcodec_send_frame(codec_cxt.get(), scaled_frame.get());
@@ -161,19 +165,19 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;
         } else if (ret < 0) {
-            throw video_proc_error(false, "receive packet from encoder");
+            throw image_proc_error(false, "receive packet from encoder");
         }
 
         output_packet->stream_index = 0;
         if(av_interleaved_write_frame(format_cxt.get(), output_packet) < 0)
-            throw video_proc_error(false, "writing packet to encoder");
+            throw image_proc_error(false, "writing packet to encoder");
     }
 
     av_packet_unref(output_packet);
     av_packet_free(&output_packet);
 
     if(av_write_trailer(format_cxt.get()))
-        throw video_proc_error(false, "write trailer");
+        throw image_proc_error(false, "write trailer");
 }
 
 SlimyTube::ImageConverter::ImageConverter() {

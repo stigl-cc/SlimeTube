@@ -30,9 +30,6 @@ namespace SlimyTube {
             mAudioSourceTimeBase,
             mVideoSourceTimeBase;
 
-        unique_frame_ptr_t mScaledFrame;
-        resize_cxt_ptr_t mResizeContext;
-
         int mResampledSamplesEmitted;
         resample_cxt_ptr_t mResampleContext;
         unique_frame_ptr_t mResampledFrame;
@@ -40,13 +37,11 @@ namespace SlimyTube {
         filter_graph_ptr_t mFilterGraph;
         filter_cxt_ptr_t mFilterContextSource;
         filter_cxt_ptr_t mFilterContextSink;
-        filter_cxt_ptr_t mFilterContextFps;
 
         AVCodecParameters mAudioCodecParams;
         AVCodecParameters mVideoCodecParams;
 
         void setupResample(int srcRate, int srcSamples, const AVChannelLayout* srcLayout, AVSampleFormat sampFormat);
-        void setupResize(int srcW, int srcH, AVPixelFormat fmt);
         void openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams);
         void setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);
         void setupFilter(AVRational targetFps);
