@@ -52,6 +52,9 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
     // aspect ratio supported - find largest (smaller or equal) resolution
     SupportedTarget selected_target = {};
     for(const SupportedTarget& target : settings.supported_targets) {
+        if(target.ratio_num != selected_ratio.first || target.ratio_den != selected_ratio.second)
+            continue;
+
         if(horizontal.w >= target.width) {
             selected_target = target;
             break;
