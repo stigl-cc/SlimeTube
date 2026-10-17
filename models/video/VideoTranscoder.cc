@@ -1,7 +1,6 @@
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Mapper.h>
 #include <endian.h>
-#include <libavutil/error.h>
 #include <models/RecordManager.h>
 #include <models/utils/ResolutionUtility.h>
 #include <models/Settings.hh>
@@ -9,6 +8,7 @@
 #include <models/video/VideoDecoder.h>
 #include <models/video/VideoEncoder.h>
 #include <models/video/VideoTypes.h>
+#include <models/images/ImageConverter.h>
 
 #include <filesystem>
 #include <functional>
@@ -20,6 +20,8 @@
 extern "C" {
 #include <libavutil/log.h>
 #include <libavcodec/codec.h>
+#include <libavutil/error.h>
+#include <libavutil/frame.h>
 }
 
 using namespace drogon::orm;
@@ -29,6 +31,14 @@ void SlimyTube::VideoTranscoder::onVideoFrame(weak_frame_ptr_t weak_frame) {
     frame_ptr_t frame_ptr = weak_frame.lock();
     if(!frame_ptr)
         throw video_proc_error(false, "frame expired");
+
+    static int used = false;
+    if(!used) {
+        used = true;
+        ImageConverter ic;
+        ic.mFrame.reset(av_frame_clone(frame_ptr.get()));
+        ic.encode("./test_image");
+    }
 
     for(VideoEncoder& encoder : mEncoders)
         encoder.putVideoFrame(frame_ptr);

@@ -70,22 +70,6 @@ void SlimyTube::VideoEncoder::setupResample(int srcRate, int srcSamples, const A
         throw video_proc_error(false, "alloc samples");
 }
 
-void SlimyTube::VideoEncoder::setupResize(int srcW, int srcH, AVPixelFormat fmt) {
-    SwsContext* cxt = sws_getContext(srcW, srcH, fmt, mTarget.width, mTarget.height, static_cast<AVPixelFormat>(mVideoCodecParams.format), SWS_BICUBIC, nullptr, nullptr, nullptr);
-    if(!cxt)
-        throw video_proc_error(false, "alloc sws context");
-    mResizeContext.reset(cxt);
-
-    mScaledFrame.reset(av_frame_alloc());
-    if(!mScaledFrame)
-        throw video_proc_error(false, "alloc frame");
-
-    mScaledFrame->format = AV_PIX_FMT_YUV420P;
-    mScaledFrame->width = mTarget.width;
-    mScaledFrame->height = mTarget.height;
-    av_frame_get_buffer(mScaledFrame.get(), 32);
-}
-
 void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams) {
     AVFormatContext* fmt_cxt = nullptr;
     avformat_alloc_output_context2(&fmt_cxt, nullptr, format_name.data(), path.c_str());
@@ -163,7 +147,13 @@ void SlimyTube::VideoEncoder::setupFilter(AVRational targetFps) {
         mVideoSourceTimeBase.num, mVideoSourceTimeBase.den
     );
 
-    // Allocate and setup the source filter
+    const std::string args = std::format(
+        "fps={}/{},scale={}:{}",
+        targetFps.num, targetFps.den,
+        mTarget.width, mTarget.height
+    );
+
+    // source filter
     filter = avfilter_get_by_name("buffer");
     ret = avfilter_graph_create_filter(&filter_context, filter, "in", in_args.c_str(), nullptr, mFilterGraph.get());
     mFilterContextSource.reset(filter_context);
@@ -176,15 +166,24 @@ void SlimyTube::VideoEncoder::setupFilter(AVRational targetFps) {
     mFilterContextSink.reset(filter_context);
     if(!mFilterContextSink) throw video_proc_error(false, "create filter");
 
-    // fps filter
-    filter_context = nullptr;
-    filter = avfilter_get_by_name("fps");
-    ret = avfilter_graph_create_filter(&filter_context, filter, "fps", std::format("{}/{}", targetFps.num, targetFps.den).c_str(), nullptr, mFilterGraph.get());
-    mFilterContextFps.reset(filter_context);
-    if(!mFilterContextFps) throw video_proc_error(false, "create filter");
+    // filer processing part
+    AVFilterInOut
+        *in = avfilter_inout_alloc(),
+        *out = avfilter_inout_alloc();
 
-    avfilter_link(mFilterContextSource.get(), 0, mFilterContextFps.get(), 0);
-    avfilter_link(mFilterContextFps.get(), 0, mFilterContextSink.get(), 0);
+    in->name = av_strdup("in");
+    in->filter_ctx = mFilterContextSource.get();
+    in->pad_idx = 0;
+
+    out->name = av_strdup("out");
+    out->filter_ctx = mFilterContextSink.get();
+    out->pad_idx = 0;
+
+    ret = avfilter_graph_parse_ptr(mFilterGraph.get(), args.c_str(), &out, &in, nullptr);
+    avfilter_inout_free(&in);
+    avfilter_inout_free(&out);
+    if(ret < 0)
+        throw video_proc_error(false, "graph parse str");
 
     ret = avfilter_graph_config(mFilterGraph.get(), nullptr);
     if(ret < 0)
@@ -196,8 +195,7 @@ SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget
     AVRational audioTimeBase)
     : mAudioSourceTimeBase(audioTimeBase),
       mVideoSourceTimeBase(videoTimeBase),
-      mTarget(target),
-      mResampledSamplesEmitted(0) {
+      mTarget(target) {
     mVideoCodecParams = {
         .codec_type = AVMEDIA_TYPE_VIDEO,
         .codec_id = target.videoCodec,
@@ -240,20 +238,12 @@ SlimyTube::VideoEncoder::VideoEncoder(VideoEncoder&& other) {
     mAudioSourceTimeBase = std::exchange(other.mAudioSourceTimeBase, {});
     mVideoSourceTimeBase = std::exchange(other.mVideoSourceTimeBase, {});
 
-    mScaledFrame = std::move(other.mScaledFrame);
-    mResizeContext = std::move(other.mResizeContext);
-
     mAudioCodecParams = std::exchange(other.mAudioCodecParams, {});
     mVideoCodecParams = std::exchange(other.mVideoCodecParams, {});
-
-    mResampledSamplesEmitted = std::exchange(other.mResampledSamplesEmitted, 0);;
-    mResampleContext = std::move(other.mResampleContext);
-    mResampledFrame = std::move(other.mResampledFrame);
 
     mFilterGraph = std::move(other.mFilterGraph);
     mFilterContextSource = std::move(other.mFilterContextSource);
     mFilterContextSink = std::move(other.mFilterContextSink);
-    mFilterContextFps = std::move(other.mFilterContextFps);
 
     mTarget = std::move(other.mTarget);
 }
@@ -276,20 +266,12 @@ SlimyTube::VideoEncoder& SlimyTube::VideoEncoder::operator=(VideoEncoder&& other
     mAudioSourceTimeBase = std::exchange(other.mAudioSourceTimeBase, {});
     mVideoSourceTimeBase = std::exchange(other.mVideoSourceTimeBase, {});
 
-    mScaledFrame = std::move(other.mScaledFrame);
-    mResizeContext = std::move(other.mResizeContext);
-
     mAudioCodecParams = std::exchange(other.mAudioCodecParams, {});
     mVideoCodecParams = std::exchange(other.mVideoCodecParams, {});
-
-    mResampledSamplesEmitted = std::exchange(other.mResampledSamplesEmitted, 0);
-    mResampleContext = std::move(other.mResampleContext);
-    mResampledFrame = std::move(other.mResampledFrame);
 
     mFilterGraph = std::move(other.mFilterGraph);
     mFilterContextSource = std::move(other.mFilterContextSource);
     mFilterContextSink = std::move(other.mFilterContextSink);
-    mFilterContextFps = std::move(other.mFilterContextFps);
 
     mTarget = std::move(other.mTarget);
     return *this;
@@ -326,19 +308,14 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
     if(frame) {
         if(!mFilterGraph)
             setupFilter({Settings::getInstance().encoder_frame_rate, 1});
-        if(!mResizeContext)
-            setupResize(frame->width, frame->height, static_cast<AVPixelFormat>(frame->format));
 
-        sws_scale(mResizeContext.get(), frame->data, frame->linesize, 0, frame->height, mScaledFrame->data, mScaledFrame->linesize);
-        av_frame_copy_props(mScaledFrame.get(), frame.get());
-
-        ret = av_buffersrc_add_frame_flags(mFilterContextSource.get(), mScaledFrame.get(), AV_BUFFERSRC_FLAG_KEEP_REF);
+        ret = av_buffersrc_add_frame_flags(mFilterContextSource.get(), frame.get(), AV_BUFFERSRC_FLAG_KEEP_REF);
         if(ret < 0)
-            throw video_proc_error(false, "frame frame to filter");
+            throw video_proc_error(false, "push frame to filter");
     } else {
         ret = av_buffersrc_add_frame_flags(mFilterContextSource.get(), nullptr, AV_BUFFERSRC_FLAG_KEEP_REF);
         if(ret < 0)
-            throw video_proc_error(false, "frame frame to filter");
+            throw video_proc_error(false, "push frame to filter");
     }
 
     AVFrame* filtered_frame = av_frame_alloc();
@@ -367,11 +344,11 @@ void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
 void SlimyTube::VideoEncoder::putAudioPacket(AVPacket* output_packet, AVFrame* frame) {
     int ret;
     ret = avcodec_send_frame(mAudioCodecContext.get(), frame);
-    if(ret < 0)
+    if(ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
         throw video_proc_error(false, "send frame to encoder");
     while (ret >= 0) {
         ret = avcodec_receive_packet(mAudioCodecContext.get(), output_packet);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             break;
         else if (ret < 0)
             throw video_proc_error(false, "receive packet from encoder");
