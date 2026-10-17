@@ -116,11 +116,11 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     out->filter_ctx = cxt_out.get();
     out->pad_idx = 0;
 
-    const std::string ratio = std::format("{}/{}", res_dst.w, res_dst.h);
+    const std::string ratio = std::format("({}/{})", res_dst.w, res_dst.h);
+
     const std::string args = std::format(
-        //"crop=w='if(gt(iw/ih\\,{})\\,ih*{}\\,iw)':h='if(gt(iw/ih\\,{})\\,ih\\,iw*{})',scale={}:{}",
-        //ratio, ratio, ratio, ratio, res_dst.w, res_dst.h
-        "scale=640:360"
+        "crop=w='if(gt(iw/ih\\,{})\\,ih*{}\\,iw)':h='if(gt(iw/ih\\,{})\\,ih\\,iw/{})',scale={}:{}",
+        ratio, ratio, ratio, ratio, res_dst.w, res_dst.h
     );
 
     ret = avfilter_graph_parse_ptr(filter_graph.get(), args.c_str(), &out, &in, nullptr);
