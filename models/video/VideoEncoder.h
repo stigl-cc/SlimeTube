@@ -31,20 +31,22 @@ namespace SlimyTube {
             mVideoSourceTimeBase;
 
         int mResampledSamplesEmitted;
-        resample_cxt_ptr_t mResampleContext;
-        unique_frame_ptr_t mResampledFrame;
 
-        filter_graph_ptr_t mFilterGraph;
-        filter_cxt_ptr_t mFilterContextSource;
-        filter_cxt_ptr_t mFilterContextSink;
+        filter_graph_ptr_t mVideoFilterGraph;
+        filter_cxt_ptr_t mVideoFilterContextSource;
+        filter_cxt_ptr_t mVideoFilterContextSink;
+
+        filter_graph_ptr_t mAudioFilterGraph;
+        filter_cxt_ptr_t mAudioFilterContextSource;
+        filter_cxt_ptr_t mAudioFilterContextSink;
 
         AVCodecParameters mAudioCodecParams;
         AVCodecParameters mVideoCodecParams;
 
-        void setupResample(int srcRate, int srcSamples, const AVChannelLayout* srcLayout, AVSampleFormat sampFormat);
         void openOutput(const std::string& path, const AVCodecParameters& videoParams, const AVCodecParameters& audioParams);
         void setupCodec(AVCodecParameters params, const AVCodec*& codec, codec_cxt_ptr_t& codecContext);
-        void setupFilter(AVRational targetFps);
+        void setupVideoFilter(AVRational targetFps);
+        void setupAudioFilter(int srcRate, AVSampleFormat srcFormat, const AVChannelLayout& srcLayout);
 
         VideoTarget mTarget;
 
