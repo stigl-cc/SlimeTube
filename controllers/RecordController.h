@@ -47,6 +47,17 @@ namespace SlimyTube {
         // errors: 400(!title || !desc) 401
         // success: 303(go to /upload)
         ADD_METHOD_TO(RecordController::videoCreate, "/video", Post, "SlimyTube::StrictAuthenticator");
+
+        // headers: Cookie(for session login method)
+        // errors: 403 401
+        // success: 303
+        ADD_METHOD_TO(RecordController::videoDelete, "/video/{id}", Delete, "SlimyTube::StrictAuthenticator");
+
+        // headers: Cookie(for session login method)
+        // errors: 403 401
+        // success: 200
+        ADD_METHOD_TO(RecordController::videoDelete, "/video/delete/{id}", Get, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::videoDelete, "/video/delete/{id}", Post, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
 
         void userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
@@ -57,5 +68,6 @@ namespace SlimyTube {
         void userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
 
         void videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
+        void videoDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const;
     };
 }

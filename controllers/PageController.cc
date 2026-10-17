@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 
+using SlimyTube::Attributes::userId_t;
 using SlimyTube::Attributes::LoginMethod;
 using namespace drogon;
 using namespace drogon::orm;
@@ -157,9 +158,44 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     if(!video.has_value())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
 
+    userId_t userId = req->attributes()->get<userId_t>(SlimyTube::Attributes::userId.data());
+    if(video.value().getValueOfChannel() != userId) // video doesn't belong to the user
+        return(void) error(std::move(respond), HttpStatusCode::k403Forbidden, "/account");
+
     data.insert("video_id", HttpViewData::htmlTranslate(video.value().getValueOfId()));
     data.insert("video_title", HttpViewData::htmlTranslate(video.value().getValueOfTitle()));
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
+}
+
+void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+    HttpViewData data = Settings::getInstance().getData();
+
+    std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
+    if(!video.has_value())
+        return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
+
+    userId_t userId = req->attributes()->get<userId_t>(SlimyTube::Attributes::userId.data());
+    if(video.value().getValueOfChannel() != userId) // video doesn't belong to the user
+        return(void) error(std::move(respond), HttpStatusCode::k403Forbidden, "/account");
+
+    const Users& channel = video.value().getUser(RecordManager::getDbClient());
+    const std::string
+        viewCountStr = FormatUtil::FormatViewCount(video.value().getValueOfViews()),
+        ageStr = FormatUtil::FormatVideoAge(video.value().getValueOfCreationTime()),
+        title = HttpViewData::htmlTranslate(video.value().getValueOfTitle()),
+        desc = HttpViewData::htmlTranslate(video.value().getValueOfDescription()),
+        user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
+        user_id = std::to_string(channel.getValueOfId());
+
+    data.insert("video_id", video_id);
+
+    data.insert("video_views", viewCountStr);
+    data.insert("video_age", ageStr);
+    data.insert("video_title", title);
+    data.insert("video_description", desc);
+    data.insert("video_channel_name", user_name);
+
+    respond(HttpResponse::newHttpViewResponse("edit.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, HttpStatusCode err, const std::string& back) {

@@ -36,7 +36,8 @@ namespace SlimyTube {
         ADD_METHOD_TO(PageController::create, "/create", Get, "SlimyTube::StrictAuthenticator");
         ADD_METHOD_TO(PageController::create, "/create", Post, "SlimyTube::StrictAuthenticator");
 
-        ADD_METHOD_TO(PageController::upload, "/upload/{1}", Get, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(PageController::upload, "/video/upload/{1}", Get, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(PageController::edit, "/video/edit/{1}", Get, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
         void main(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
         void watch(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
@@ -46,6 +47,7 @@ namespace SlimyTube {
         void create(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
 
         void upload(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
+        void edit(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
         static void error(std::function<void (const HttpResponsePtr &)>&&, drogon::HttpStatusCode err, const std::string& back);
     };
 }

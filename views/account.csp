@@ -46,7 +46,7 @@
                         <col width="30ch">
                         <col width="30ch">
                         <col width="10ch">
-                        <col width="5ch">
+                        <col width="8ch">
                     </colgroup>
                     <tr>
                         <th>id</th>
@@ -55,18 +55,19 @@
                         <th>size</th>
                         <th>edit</th>
                     </tr>
-                    <%c++
-                        for(const auto& video : videos) {%>
+                    <%c++ for(const auto& video : videos) {
+                          std::string action = "delete";
+                          if(video.at("state") == "0") action = "upload";
+                          if(video.at("state") == "2") action = "edit";
+                          %>
                     <tr class="video-table-{%video.at("state")%}">
                         <td>{%video.at("id")%}</td>
                         <td>{%video.at("title")%}</td>
                         <td>{%video.at("description")%}</td>
                         <td>{%video.at("size")%}</td>
-                        <td><a href="/video/{%video.at("id")%}/edit">edit</td>
+                        <td><a href="/video/{%action%}/{%video.at("id")%}">{%action%}</td>
                     </tr>
-                    <%c++ }
-                    } else {
-                    %>
+                    <%c++ } } else { %>
                     <div>User has no videos.</div>
                     <%c++ } %>
                 </table>
