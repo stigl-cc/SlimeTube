@@ -70,6 +70,23 @@
                     <div>User has no videos.</div>
                     <%c++ } %>
                 </table>
+                <%c++ if(!videos.empty()) { %>
+                <label id="videos-table-legend-label" for="videos-table-legend">Color Legend:</label>
+                <table id="videos-table-legend">
+                    <colgroup>
+                        <col width="10ch">
+                        <col width="10ch">
+                        <col width="10ch">
+                        <col width="10ch">
+                    </colgroup>
+                    <tr>
+                        <td class="video-table-0">uploading</td>
+                        <td class="video-table-1">processing</td>
+                        <td class="video-table-2">ready</td>
+                        <td class="video-table-3">failed</td>
+                    </tr>
+                </table>
+                <%c++ } %>
             </div>
         </div>
         <%view footer %>

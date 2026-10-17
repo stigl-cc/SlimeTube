@@ -11,6 +11,7 @@
     <body>
         <%view navbar %>
         <div class="create-upload-container">
+            <div id="js-warning">Warning: This page requires javascript</div><br>
             <form class="create-upload-form">
                 <div class="create-upload-text">Upload assets for video</div>
 

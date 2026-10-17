@@ -83,3 +83,9 @@
 #description-entry {
     font-size: var(--text-size-small);
 }
+
+#js-warning {
+    display: inline-block;
+    background-color: var(--warn-color);
+    width: fit-content;
+}

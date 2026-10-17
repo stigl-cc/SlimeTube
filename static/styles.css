@@ -9,11 +9,19 @@
     --extra-highlighted-color: #444452;
     --semi-highlighted-color: #2a2a42;
 
-    --vertical-separator-color: #2233ee;
+    --video-state-0-color: #222262;
+    --video-state-1-color: #444452;
+    --video-state-2-color: #222232;
+    --video-state-3-color: #b31;
+
+    --vertical-separator-color: #23e;
     --link-color: #add8e6;
-    --success-color: #55aa22;
+    --success-color: #5a2;
+    --success-fill-color: #483;
     --fail-color: #ad3311;
     --fail-color-fill: #bd3532;
+
+    --warn-color: #cc0;
 }
 
 * {
