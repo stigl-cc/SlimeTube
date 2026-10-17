@@ -209,6 +209,9 @@ void SlimyTube::VideoEncoder::setupAudioFilter(int srcRate, AVSampleFormat srcFo
     ret = avfilter_graph_config(mAudioFilterGraph.get(), nullptr);
     if(ret < 0)
         throw video_proc_error(false, "configure filter graph");
+
+    av_buffersink_set_frame_size(mAudioFilterContextSink.get(),
+                                 mAudioCodecContext->frame_size);
 }
 
 SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget& target,
