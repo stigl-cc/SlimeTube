@@ -11,11 +11,14 @@ namespace SlimyTube {
 
     class ImageConverter {
         private:
-        public: unique_frame_ptr_t mFrame;
+        std::filesystem::path mInPath;
+        std::filesystem::path mOutPath;
 
         public:
-        ImageConverter();
-        void decode(const std::filesystem::path& inputPath);
-        void encode(const std::filesystem::path& outputPath);
+        ImageConverter(const std::filesystem::path& in_path, const std::filesystem::path& out_path);
+
+        unique_frame_ptr_t mFrame;
+        void decode();
+        void encode();
     };
 };

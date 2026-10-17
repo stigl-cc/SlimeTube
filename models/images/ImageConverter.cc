@@ -21,7 +21,88 @@ SlimyTube::image_proc_error::image_proc_error(bool isUserCaused, const char* con
       isUserCaused(isUserCaused) {
 }
 
-void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) {
+void SlimyTube::ImageConverter::decode() {
+    if(mFrame) // frame already decoded - ignore
+        return;
+
+    AVFormatContext* fmt_cxt = nullptr;
+    int ret;
+    ret = avformat_open_input(&fmt_cxt, mInPath.c_str(), nullptr, nullptr);
+    if(ret < 0)
+        throw image_proc_error(true, "open input blob");
+
+    format_cxt_ptr_t format_cxt(fmt_cxt);
+    ret = avformat_find_stream_info(format_cxt.get(), nullptr);
+    if(ret < 0)
+        throw image_proc_error(true, "retrieve InputStream info");
+
+    int video_stream_index = -1;
+
+    // Select first or default streams
+    for(int i =0; i < format_cxt->nb_streams; i++) {
+        const AVMediaType& media_type = format_cxt->streams[i]->codecpar->codec_type;
+        bool is_default = format_cxt->streams[i]->disposition & AV_DISPOSITION_DEFAULT;
+        if(media_type == AVMEDIA_TYPE_VIDEO) {
+            if(video_stream_index == -1 || is_default) {
+                video_stream_index = i;
+            }
+        }
+    }
+
+    AVStream* stream = format_cxt->streams[video_stream_index];
+    if(!stream)
+        throw image_proc_error(true, "stream not valid");
+
+    const AVCodec* codec = avcodec_find_decoder(stream->codecpar->codec_id);
+    if(!codec)
+        throw image_proc_error(true, "find codec");
+
+    codec_cxt_ptr_t codec_cxt(avcodec_alloc_context3(codec));
+    if(!codec_cxt.get())
+        throw image_proc_error(false, "allocate memory for codec context");
+
+    if(avcodec_parameters_to_context(codec_cxt.get(), stream->codecpar) < 0)
+        throw image_proc_error(false, "fill codec context");
+
+    if(avcodec_open2(codec_cxt.get(), codec, nullptr) < 0)
+        throw image_proc_error(false, "open codec");
+
+    packet_ptr_t packet(av_packet_alloc());
+    if(!packet.get())
+        throw image_proc_error(false, "allocate AVPacket");
+
+    mFrame.reset(av_frame_alloc());
+    if(!mFrame.get())
+        throw image_proc_error(false, "allocate AVFrame");
+
+    while(av_read_frame(format_cxt.get(), packet.get()) >= 0) {
+        if(packet->stream_index != video_stream_index) {
+            av_packet_unref(packet.get());
+            continue;
+        }
+
+        ret = avcodec_send_packet(codec_cxt.get(), packet.get());
+        if(ret < 0)
+            throw image_proc_error(false, std::string("sending packet to decoder" + std::to_string(ret)).c_str());
+
+        while(ret >= 0) {
+            ret = avcodec_receive_frame(codec_cxt.get(), mFrame.get());
+            if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                break;
+            } else if(ret < 0)
+                throw image_proc_error(false, "receiving frame from decoder");
+
+            if(codec_cxt.get()->codec_type == AVMEDIA_TYPE_VIDEO) {
+                av_packet_unref(packet.get());
+                return;
+            }
+        }
+        av_packet_unref(packet.get());
+    }
+    throw image_proc_error(true, "proper frame not found");
+}
+
+void SlimyTube::ImageConverter::encode() {
     const AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_MJPEG);
     if(!codec)
         throw image_proc_error(false, "find encoder");
@@ -39,7 +120,7 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
         throw image_proc_error(false, "open codec");
 
     AVFormatContext* fmt_cxt = nullptr;
-    avformat_alloc_output_context2(&fmt_cxt, nullptr, "mjpeg", outputPath.c_str());
+    avformat_alloc_output_context2(&fmt_cxt, nullptr, "mjpeg", nullptr);
 
     format_cxt_ptr_t format_cxt(fmt_cxt);
     if(!format_cxt)
@@ -52,7 +133,7 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
         format_cxt->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     if(!(format_cxt->oformat->flags & AVFMT_NOFILE)) {
-        if(avio_open(&format_cxt->pb, outputPath.c_str(), AVIO_FLAG_WRITE) < 0) {
+        if(avio_open(&format_cxt->pb, mOutPath.c_str(), AVIO_FLAG_WRITE) < 0) {
             throw image_proc_error(false, "open output file");
         }
     }
@@ -92,7 +173,7 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     const std::string ratio = std::format("({}/{})", res_dst.w, res_dst.h);
 
     const std::string args = std::format(
-        "crop=w='if(gt(iw/ih\\,{})\\,ih*{}\\,iw)':h='if(gt(iw/ih\\,{})\\,ih\\,iw/{})',scale={}:{}",
+        "crop=w='if(gt(iw/ih\\,{})\\,ih*{}\\,iw)':h='if(gt(iw/ih\\,{})\\,ih\\,iw/{})',scale={}:{}:flags=neighbor:out_range=tv,format=pix_fmts=yuvj420p",
         ratio, ratio, ratio, ratio, res_dst.w, res_dst.h
     );
 
@@ -137,29 +218,26 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
     if(ret < 0)
         throw image_proc_error(false, "graph config");
 
-    unique_frame_ptr_t scaled_frame(av_frame_alloc());
-    if(!scaled_frame)
-        throw image_proc_error(false, "alloc frame");
-
-    scaled_frame->format = pix_fmt;
-    scaled_frame->width = res_dst.w;
-    scaled_frame->height = res_dst.h;
-
     // Encoding itself
     ret = av_buffersrc_add_frame_flags(cxt_in.get(), mFrame.get(), AV_BUFFERSRC_FLAG_KEEP_REF);
     if(ret < 0)
         throw image_proc_error(false, "push frame to filter");
+
+    unique_frame_ptr_t filtered_frame(av_frame_alloc());
+    if(!filtered_frame)
+        throw image_proc_error(false, "alloc frame");
+
     AVPacket *output_packet = av_packet_alloc();
     if(!output_packet)
         throw image_proc_error(false, "allocate output packet");
 
-    ret = av_buffersink_get_frame(cxt_out.get(), scaled_frame.get());
+    ret = av_buffersink_get_frame(cxt_out.get(), filtered_frame.get());
     if(ret < 0) {
         av_packet_free(&output_packet);
         throw image_proc_error(false, "pull frame from filter");
     }
 
-    ret = avcodec_send_frame(codec_cxt.get(), scaled_frame.get());
+    ret = avcodec_send_frame(codec_cxt.get(), filtered_frame.get());
     while (ret >= 0) {
         ret = avcodec_receive_packet(codec_cxt.get(), output_packet);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
@@ -180,6 +258,7 @@ void SlimyTube::ImageConverter::encode(const std::filesystem::path& outputPath) 
         throw image_proc_error(false, "write trailer");
 }
 
-SlimyTube::ImageConverter::ImageConverter() {
-
+SlimyTube::ImageConverter::ImageConverter(const std::filesystem::path& inpath, const std::filesystem::path& outpath)
+    : mInPath(inpath),
+      mOutPath(outpath) {
 }

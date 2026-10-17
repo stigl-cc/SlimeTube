@@ -1,4 +1,4 @@
-#include "VideoEncoder.h"
+#include <models/video/VideoEncoder.h>
 #include <format>
 #include <libavfilter/avfilter.h>
 #include <libavutil/error.h>
@@ -61,10 +61,8 @@ void SlimyTube::VideoEncoder::openOutput(const std::string& path, const AVCodecP
     AVDictionary* opts = nullptr;
     av_dict_set(&opts, "movflags", "+faststart", 0);
 
-    mAudioStream->codecpar->extradata = reinterpret_cast<uint8_t*>(av_mallocz(2));
-    mAudioStream->codecpar->extradata[0] = 0x11;
-    mAudioStream->codecpar->extradata[1] = 0x90;
-    mAudioStream->codecpar->extradata_size = 2;
+    avcodec_parameters_from_context(mVideoStream->codecpar, mVideoCodecContext.get());
+    avcodec_parameters_from_context(mAudioStream->codecpar, mAudioCodecContext.get());
 
     if(avformat_write_header(mFormatContext.get(), &opts) < 0)
         throw video_proc_error(false, "write header");
@@ -316,11 +314,12 @@ void SlimyTube::VideoEncoder::putVideoPacket(AVPacket* output_packet, AVFrame* f
         if(av_interleaved_write_frame(mFormatContext.get(), output_packet) < 0)
             throw video_proc_error(false, "writing packet to encoder");
     }
-    av_frame_unref(frame);
+    if(frame)
+        av_frame_unref(frame);
     av_packet_unref(output_packet);
 }
 
-void SlimyTube::VideoEncoder::putVideoFrame(frame_ptr_t& frame) {
+void SlimyTube::VideoEncoder::putVideoFrame(const frame_ptr_t& frame) {
     if(frame) frame->pict_type = AV_PICTURE_TYPE_NONE;
 
     AVPacket *output_packet = av_packet_alloc();
@@ -384,7 +383,7 @@ void SlimyTube::VideoEncoder::putAudioPacket(AVPacket* output_packet, AVFrame* f
     av_packet_unref(output_packet);
 }
 
-void SlimyTube::VideoEncoder::putAudioFrame(frame_ptr_t& frame) {
+void SlimyTube::VideoEncoder::putAudioFrame(const frame_ptr_t& frame) {
     AVPacket *output_packet = av_packet_alloc();
     if(!output_packet)
         throw video_proc_error(false, "allocate output packet");

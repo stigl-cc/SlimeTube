@@ -1,6 +1,7 @@
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Mapper.h>
 #include <endian.h>
+#include <memory>
 #include <models/RecordManager.h>
 #include <models/utils/ResolutionUtility.h>
 #include <models/Settings.hh>
@@ -32,12 +33,10 @@ void SlimyTube::VideoTranscoder::onVideoFrame(weak_frame_ptr_t weak_frame) {
     if(!frame_ptr)
         throw video_proc_error(false, "frame expired");
 
-    static int used = false;
-    if(!used) {
-        used = true;
-        ImageConverter ic;
-        ic.mFrame.reset(av_frame_clone(frame_ptr.get()));
-        ic.encode("./test_image");
+    if(mIsFirstFrame) {
+        if(mFirstFrameCallback)
+            mFirstFrameCallback(frame_ptr);
+        mIsFirstFrame = false;
     }
 
     for(VideoEncoder& encoder : mEncoders)
@@ -56,7 +55,9 @@ void SlimyTube::VideoTranscoder::onAudioFrame(weak_frame_ptr_t weak_frame) {
 SlimyTube::VideoTranscoder::VideoTranscoder(const fs::path& inpath, const fs::path& outpath, const std::vector<VideoTarget>& targets)
     : mDecoder(inpath),
       mEncoders(),
-      mOutPath(outpath) {
+      mOutPath(outpath),
+      mFirstFrameCallback(nullptr),
+      mIsFirstFrame(true) {
 
     for(const VideoTarget& target : targets)
         mTargets.push_back(target);
@@ -80,6 +81,10 @@ void SlimyTube::VideoTranscoder::transcode() {
 
 const SlimyTube::VideoDecoder& SlimyTube::VideoTranscoder::getDecoder() const {
     return mDecoder;
+}
+
+void SlimyTube::VideoTranscoder::setFirstFrameCallback(std::function<void(const frame_ptr_t)> f) {
+    mFirstFrameCallback = std::move(f);
 }
 
 char SlimyTube::VideoTranscoder::logBuffer[2048] = {};
@@ -144,9 +149,22 @@ void SlimyTube::TranscodeManager::worker() {
             try {
                 fs::path
                     path = Settings::getInstance().videos_dir / current_job,
-                    blob = path / "blob";
+                    blob = path / "blob",
+                    thumbnail_blob = path / "thumbnail_blob";
 
                 VideoTranscoder transcoder(blob, path);
+
+                std::shared_ptr<ImageConverter> thumbnail_converter = std::make_shared<ImageConverter>(thumbnail_blob, path / "thumbnail");
+                if(fs::exists(thumbnail_blob)) {
+                    thumbnail_converter->decode();
+                    fs::remove(thumbnail_blob);
+                    thumbnail_converter->encode();
+                } else {
+                    transcoder.setFirstFrameCallback([&thumbnail_converter](const frame_ptr_t f)-> void {
+                        thumbnail_converter->mFrame.reset(av_frame_clone(f.get()));
+                        thumbnail_converter->encode();
+                    });
+                }
 
                 int width, height, bit_rate;
                 transcoder.getDecoder().getMetaData(width, height, bit_rate);
@@ -175,7 +193,18 @@ void SlimyTube::TranscodeManager::worker() {
                     );
                 } else {
                     // TODO: Finish error handling here
-                    printf("%s\n", err.what());
+                    printf("Video %s\n", err.what());
+                }
+            } catch(const image_proc_error& err) {
+                if(err.isUserCaused) {
+                    video_mapper.updateBy(
+                        {Videos::Cols::_state},
+                        Criteria(Videos::Cols::_id, CompareOperator::EQ, current_job),
+                        static_cast<int32_t>(VideoState::Failed)
+                    );
+                } else {
+                    // TODO: Finish error handling here
+                    printf("Image %s\n", err.what());
                 }
             }
 

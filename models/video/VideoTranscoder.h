@@ -6,6 +6,7 @@
 #include <models/video/VideoTypes.h>
 #include <models/video/VideoDecoder.h>
 #include <models/video/VideoEncoder.h>
+#include <models/images/ImageConverter.h>
 #include <mutex>
 #include <thread>
 
@@ -20,6 +21,9 @@ namespace SlimyTube {
         private:
         VideoDecoder mDecoder;
         std::vector<VideoEncoder> mEncoders;
+
+        bool mIsFirstFrame;
+        std::function<void(const frame_ptr_t)> mFirstFrameCallback;
 
         void onVideoFrame(weak_frame_ptr_t frame);
         void onAudioFrame(weak_frame_ptr_t frame);
@@ -39,6 +43,7 @@ namespace SlimyTube {
         VideoTranscoder(const std::filesystem::path& inpath, const std::filesystem::path& outpath, const std::vector<VideoTarget>& targets = {});
         void transcode();
         const VideoDecoder& getDecoder() const;
+        void setFirstFrameCallback(std::function<void(const frame_ptr_t)> f);
 
         static void redirectLog(const std::string& path, int logLevel);
     };

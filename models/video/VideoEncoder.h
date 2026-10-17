@@ -66,8 +66,8 @@ namespace SlimyTube {
         VideoEncoder& operator=(VideoEncoder&&);
         VideoEncoder& operator=(const VideoEncoder&) = delete;
 
-        void putVideoFrame(frame_ptr_t& frame);
-        void putAudioFrame(frame_ptr_t& frame);
+        void putVideoFrame(const frame_ptr_t& frame);
+        void putAudioFrame(const frame_ptr_t& frame);
 
         const VideoTarget& getTarget();
 
