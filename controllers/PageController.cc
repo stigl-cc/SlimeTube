@@ -45,14 +45,17 @@ std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageControl
         std::string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
         std::string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
 
-        previews.emplace_back(std::unordered_map<std::string, std::string> {
-                {"id", video.getValueOfId()},
-                {"length", "20:23"},
-                {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
-                {"channel",  user_mapper.findByPrimaryKey(video.getValueOfChannel()).getValueOfName()},
-                {"views", viewCountStr },
-                {"age", ageStr },
-            });
+        previews.emplace_back(std::unordered_map<std::string, std::string>{
+            {"id", video.getValueOfId()},
+            {"length", video.getDurationMs() ? FormatUtil::FormatVideoLength(
+                                                   *video.getDurationMs())
+                                             : ""},
+            {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
+            {"channel", user_mapper.findByPrimaryKey(video.getValueOfChannel())
+                            .getValueOfName()},
+            {"views", viewCountStr},
+            {"age", ageStr},
+        });
     }
     return previews;
 }

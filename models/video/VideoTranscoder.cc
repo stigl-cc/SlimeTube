@@ -183,7 +183,7 @@ void SlimyTube::TranscodeManager::worker() {
                       {Videos::Cols::_duration_ms},
                       Criteria(Videos::Cols::_id, CompareOperator::EQ,
                                current_job),
-                      static_cast<int32_t>(VideoState::Ready), *duration);
+                      *duration);
                 }
 
                 video_mapper.updateBy(
