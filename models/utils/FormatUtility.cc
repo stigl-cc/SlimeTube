@@ -62,10 +62,10 @@ std::string SlimyTube::FormatUtil::FormatVideoLength(int64_t durationMs) {
   if (durationMs < 0)
     return "";
 
-  const int64_t totalSeconds = durationMs / 1000;
-  const int64_t hours = totalSeconds / 3600;
-  const int64_t minutes = (totalSeconds / 60) % 60;
-  const int64_t seconds = durationMs % 60;
+  const int64_t totalSeconds = durationMs / TimeConstants::minute;
+  const int64_t hours = totalSeconds / TimeConstants::hour;
+  const int64_t minutes = (totalSeconds / TimeConstants::minute) % TimeConstants::minute;
+  const int64_t seconds = durationMs % TimeConstants::minute;
 
   std::stringstream ss;
 
