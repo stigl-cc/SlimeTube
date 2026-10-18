@@ -1,5 +1,6 @@
 #pragma once
 #include <models/video/VideoTypes.h>
+#include <optional>
 
 namespace SlimyTube {
     class VideoDecoder {
@@ -37,5 +38,6 @@ namespace SlimyTube {
         void getFrames(video_callback_t videoCallback, audio_callback_t audioCallback);
         void getTimeBase(AVRational& video, AVRational& audio) const;
         void getMetaData(int& width, int& height, int& bitRate) const;
+        std::optional<int64_t> getDurationMs() const;
     };
 }
