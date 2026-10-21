@@ -1,3 +1,4 @@
+#include "utils/TimeUtility.h"
 #include <models/utils/FormatUtility.h>
 #include <iomanip>
 #include <charconv>
@@ -51,6 +52,28 @@ namespace SlimyTube {
 
         ss << viewCount / static_cast<float>(used_unit.first);
         if(used_unit.second) ss << used_unit.second;
+
+        return ss.str();
+    }
+
+    std::string FormatUtil::FormatVideoLength(int64_t length) {
+        std::stringstream ss;
+
+        if(length <= 0)
+            return std::string();
+
+        const int32_t
+            seconds = length % TimeConstants::minute,
+            minutes = static_cast<int32_t>(length / TimeConstants::minute),
+            hours = static_cast<int32_t>(length / TimeConstants::hour);
+
+        if(hours)
+            ss << hours << ':';
+
+        ss << std::setw(2)
+           << std::setfill('0')
+           << minutes
+           << ':' << seconds;
 
         return ss.str();
     }

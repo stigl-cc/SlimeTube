@@ -47,7 +47,7 @@ std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageControl
 
         previews.emplace_back(std::unordered_map<std::string, std::string> {
                 {"id", video.getValueOfId()},
-                {"length", "20:23"},
+                {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
                 {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
                 {"channel",  user_mapper.findByPrimaryKey(video.getValueOfChannel()).getValueOfName()},
                 {"views", viewCountStr },
@@ -73,12 +73,13 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     if(!video.has_value())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
 
-    const Users& channel = video.value().getUser(RecordManager::getDbClient());
+    const Videos& video_ref = video.value();
+    const Users& channel = video_ref.getUser(RecordManager::getDbClient());
     const std::string
-        viewCountStr = FormatUtil::FormatViewCount(video.value().getValueOfViews()),
-        ageStr = FormatUtil::FormatVideoAge(video.value().getValueOfCreationTime()),
-        title = HttpViewData::htmlTranslate(video.value().getValueOfTitle()),
-        desc = HttpViewData::htmlTranslate(video.value().getValueOfDescription()),
+        viewCountStr = FormatUtil::FormatViewCount(video_ref.getValueOfViews()),
+        ageStr = FormatUtil::FormatVideoAge(video_ref.getValueOfCreationTime()),
+        title = HttpViewData::htmlTranslate(video_ref.getValueOfTitle()),
+        desc = HttpViewData::htmlTranslate(video_ref.getValueOfDescription()),
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
@@ -158,12 +159,13 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     if(!video.has_value())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
 
+    const Videos& video_ref = video.value();
     userId_t userId = req->attributes()->get<userId_t>(SlimyTube::Attributes::userId.data());
-    if(video.value().getValueOfChannel() != userId) // video doesn't belong to the user
+    if(video_ref.getValueOfChannel() != userId) // video doesn't belong to the user
         return(void) error(std::move(respond), HttpStatusCode::k403Forbidden, "/account");
 
-    data.insert("video_id", HttpViewData::htmlTranslate(video.value().getValueOfId()));
-    data.insert("video_title", HttpViewData::htmlTranslate(video.value().getValueOfTitle()));
+    data.insert("video_id", HttpViewData::htmlTranslate(video_ref.getValueOfId()));
+    data.insert("video_title", HttpViewData::htmlTranslate(video_ref.getValueOfTitle()));
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
@@ -174,16 +176,17 @@ void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<vo
     if(!video.has_value())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
 
+    const Videos& video_ref = video.value();
     userId_t userId = req->attributes()->get<userId_t>(SlimyTube::Attributes::userId.data());
-    if(video.value().getValueOfChannel() != userId) // video doesn't belong to the user
+    if(video_ref.getValueOfChannel() != userId) // video doesn't belong to the user
         return(void) error(std::move(respond), HttpStatusCode::k403Forbidden, "/account");
 
-    const Users& channel = video.value().getUser(RecordManager::getDbClient());
+    const Users& channel = video_ref.getUser(RecordManager::getDbClient());
     const std::string
-        viewCountStr = FormatUtil::FormatViewCount(video.value().getValueOfViews()),
-        ageStr = FormatUtil::FormatVideoAge(video.value().getValueOfCreationTime()),
-        title = HttpViewData::htmlTranslate(video.value().getValueOfTitle()),
-        desc = HttpViewData::htmlTranslate(video.value().getValueOfDescription()),
+        viewCountStr = FormatUtil::FormatViewCount(video_ref.getValueOfViews()),
+        ageStr = FormatUtil::FormatVideoAge(video_ref.getValueOfCreationTime()),
+        title = HttpViewData::htmlTranslate(video_ref.getValueOfTitle()),
+        desc = HttpViewData::htmlTranslate(video_ref.getValueOfDescription()),
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
