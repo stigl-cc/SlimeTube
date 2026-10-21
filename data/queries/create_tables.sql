@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS videos (
     description TEXT,
     views INTEGER NOT NULL,
     creation_time INTEGER NOT NULL,
+
     resolutions BLOB,
+    length INTEGER,
 
     state INTEGER NOT NULL,
     size INTEGER

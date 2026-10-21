@@ -52,6 +52,7 @@ class Videos
         static const std::string _views;
         static const std::string _creation_time;
         static const std::string _resolutions;
+        static const std::string _length;
         static const std::string _state;
         static const std::string _size;
     };
@@ -170,6 +171,15 @@ class Videos
     void setResolutions(const std::string &pResolutions) noexcept;
     void setResolutionsToNull() noexcept;
 
+    /**  For column length  */
+    ///Get the value of the column length, returns the default value if the column is null
+    const int64_t &getValueOfLength() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<int64_t> &getLength() const noexcept;
+    ///Set the value of the column length
+    void setLength(const int64_t &pLength) noexcept;
+    void setLengthToNull() noexcept;
+
     /**  For column state  */
     ///Get the value of the column state, returns the default value if the column is null
     const int64_t &getValueOfState() const noexcept;
@@ -188,7 +198,7 @@ class Videos
     void setSizeToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 9;  }
+    static size_t getColumnNumber() noexcept {  return 10;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -221,6 +231,7 @@ class Videos
     std::shared_ptr<int64_t> views_;
     std::shared_ptr<int64_t> creationTime_;
     std::shared_ptr<std::vector<char>> resolutions_;
+    std::shared_ptr<int64_t> length_;
     std::shared_ptr<int64_t> state_;
     std::shared_ptr<int64_t> size_;
     struct MetaData
@@ -234,7 +245,7 @@ class Videos
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[9]={ false };
+    bool dirtyFlag_[10]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -289,10 +300,15 @@ class Videos
         }
         if(dirtyFlag_[7])
         {
-            sql += "state,";
+            sql += "length,";
             ++parametersCount;
         }
         if(dirtyFlag_[8])
+        {
+            sql += "state,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[9])
         {
             sql += "size,";
             ++parametersCount;
@@ -346,6 +362,11 @@ class Videos
 
         }
         if(dirtyFlag_[8])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[9])
         {
             sql.append("?,");
 
