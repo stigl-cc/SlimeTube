@@ -176,11 +176,15 @@ void SlimyTube::TranscodeManager::worker() {
                 for(size_t i =0; i < transcoder.mTargets.size(); i++)
                     resolutions.push_back(htole16(transcoder.mTargets[i].height));
 
+                int length;
+                transcoder.getDecoder().getLength(length);
+
                 video_mapper.updateBy(
-                    {Videos::Cols::_state, Videos::Cols::_resolutions},
+                    {Videos::Cols::_state, Videos::Cols::_resolutions, Videos::Cols::_length},
                     Criteria(Videos::Cols::_id, CompareOperator::EQ, current_job),
                     static_cast<int32_t>(VideoState::Ready),
-                    std::string(reinterpret_cast<char*>(resolutions.data()), resolutions.size() * sizeof(resolutions[0]))
+                    std::string(reinterpret_cast<char*>(resolutions.data()), resolutions.size() * sizeof(resolutions[0])),
+                    length
                 );
 
                 fs::remove(blob);

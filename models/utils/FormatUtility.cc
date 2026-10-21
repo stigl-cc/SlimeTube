@@ -72,8 +72,9 @@ namespace SlimyTube {
 
         ss << std::setw(2)
            << std::setfill('0')
-           << minutes
-           << ':' << seconds;
+           << minutes << ':'
+           << std::setw(2)
+           << seconds;
 
         return ss.str();
     }

@@ -177,8 +177,6 @@ void SlimyTube::ImageConverter::encode() {
         ratio, ratio, ratio, ratio, res_dst.w, res_dst.h
     );
 
-    printf("%s\n", in_args.c_str());
-
     filter_cxt_ptr_t
         cxt_in, cxt_out;
 

@@ -18,7 +18,9 @@
                 <div class="preview">
                     <div class="preview-image-container">
                         <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
-                        <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                        <%c++ if(!preview.at("length").empty()) {%>
+                            <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                        <%c++ }%>
                     </div>
                     <div class="preview-text preview-title">{%preview.at("title")%}</div>
                     <div class="preview-text preview-channel">{%preview.at("channel")%}</div>

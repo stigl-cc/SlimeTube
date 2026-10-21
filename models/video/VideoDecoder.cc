@@ -1,5 +1,6 @@
 #include "VideoDecoder.h"
 #include "VideoTypes.h"
+#include <libavutil/mathematics.h>
 #include <models/video/VideoTranscoder.h>
 
 extern "C" {
@@ -142,4 +143,12 @@ void SlimyTube::VideoDecoder::getMetaData(int& width, int& height, int& bitRate)
 
     if(!width || !height || !bitRate)
         throw video_proc_error(true, "getting video width/height");
+}
+
+void SlimyTube::VideoDecoder::getLength(int& length) const {
+    const int64_t& duration = mFormatContext->duration;
+    if(duration == AV_NOPTS_VALUE || duration <= 0)
+        length = -1;
+    else
+        length = av_rescale_q_rnd(duration, AVRational{1, AV_TIME_BASE}, AVRational{1, 1}, AV_ROUND_UP);
 }

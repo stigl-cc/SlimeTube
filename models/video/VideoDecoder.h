@@ -37,5 +37,6 @@ namespace SlimyTube {
         void getFrames(video_callback_t videoCallback, audio_callback_t audioCallback);
         void getTimeBase(AVRational& video, AVRational& audio) const;
         void getMetaData(int& width, int& height, int& bitRate) const;
+        void getLength(int& length) const;
     };
 }
