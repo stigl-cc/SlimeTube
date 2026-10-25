@@ -53,7 +53,10 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
     user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
 
     user_mapper.insert(user);
-    respond(HttpResponse::newHttpResponse(HttpStatusCode::k201Created, ContentType::CT_NONE));
+
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+    res->addHeader(Headers::location.data(), "/account?m=Account%20created%20successfully");
+    respond(res);
 }
 
 void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
