@@ -217,11 +217,22 @@
     border-bottom-style: solid;
 }
 
+#login-register {
+    align-self: left;
+    text-align: left;
+}
+
 .login-text-input {
     font-size: var(--small-text-size);
 }
 
 #login-submit {
+    font-size: var(--small-text-size);
+    margin-top: 8px;
+    width: 100%;
+}
+
+#register-btn {
     font-size: var(--small-text-size);
     margin-top: 8px;
     width: 100%;

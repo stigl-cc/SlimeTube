@@ -56,7 +56,8 @@ body {
 }
 
 input,
-textarea {
+textarea,
+button {
     color: var(--text-color);
     background-color: var(--highlighted-color);
     border-style: none;
@@ -64,11 +65,11 @@ textarea {
     margin: 0;
 }
 
-input:disabled, textarea:disabled {
+input:disabled, textarea:disabled, button:disabled {
     background-color: var(--semi-highlighted-color);
 }
 
-input:focus, textarea:focus {
+input:focus, textarea:focus, button:focus {
     outline-style: solid;
     outline-width: 2px;
     outline-color: var(--link-color);

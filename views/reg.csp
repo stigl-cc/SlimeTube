@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[title]] - Log In</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/account.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div id="logged-out-container">
+            <form id="login-form" class="account-container" method="post" action="/register">
+                <div id="login-text">Register</div>
+                <div>
+                    <label for="user">Username:</label><br>
+                    <input class="login-text-input" id="user-input" name="name" type="text" />
+                </div>
+                <br>
+                <div>
+                    <label for="pass">Password:</label><br>
+                    <input class="login-text-input" id="pass-input" name="pass" type="password" /><br>
+                </div>
+
+                <input id="login-submit" type="submit" value="Register" />
+            </form>
+        </div>
+        <%view footer %>
+    </body>
+</html>
