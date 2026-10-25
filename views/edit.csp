@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>Edit [[video_title]] - [[title]]</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/edit.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div id="main-content">
+            <div id="edit-title-text">Edit Video</div>
+
+            <label class="text-input-label" for="video-channel-name">Video Channel:</label><br>
+            <input class="text-input" type="text" id="video-channel-name" value="[[video_channel_name]]" disabled>
+            <br>
+
+            <label class="text-input-label" for="video-id">Video ID:</label><br>
+            <input class="text-input" type="text" id="video-id" value="[[video_id]]" disabled />
+            <br>
+
+            <label class="text-input-label" for="video-title">Title:</label><br>
+            <input class="text-input" type="text" id="video-title" value="[[video_title]]"/>
+            <br>
+
+            <label class="text-input-label" for="video-description">Description:</label><br>
+            <textarea class="text-input" id="video-description">[[video_description]]</textarea>
+            <div ></div>
+
+            <label class="text-input-label" for="video-veiws">Views: </label>
+            <input id="video-views" value="[[video_views]]" disabled>
+            <br>
+
+            <label class="text-input-label" for="video-age">Uploaded: </label>
+            <input id="video-age" value="[[video_age]] age" disabled>
+        </div>
+        <hr>
+        <div id="video-description">[[video_description]]</div>
+        <%view footer %>
+    </body>
+</html>
