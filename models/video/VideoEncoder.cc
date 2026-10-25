@@ -168,7 +168,7 @@ void SlimyTube::VideoEncoder::setupAudioFilter(int srcRate, AVSampleFormat srcFo
 
     av_channel_layout_describe(&mAudioCodecParams.ch_layout, layout_buffer, sizeof(layout_buffer));
     const std::string args = std::format(
-        "aresample={},aformat=sample_fmts={}:channel_layouts={}",
+        "aresample={},asetnsamples=1024,aformat=sample_fmts={}:channel_layouts={}",
         mAudioCodecParams.sample_rate,
         av_get_sample_fmt_name(static_cast<AVSampleFormat>(mAudioCodecParams.format)),
         layout_buffer
