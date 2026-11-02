@@ -25,6 +25,7 @@ namespace SlimyTube {
     class Settings {
         public:
         std::string title;
+        std::string url;
         std::filesystem::path videos_dir;
 
         size_t salt_len;

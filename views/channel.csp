@@ -5,6 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]] - [[channel_name]]</title>
+
+        <meta property="og:type" content="video.other" />
+        <meta property="og:title" content="[[channel_name]]" />
+        <meta property="og:description" content="[[channel_name]]'s channel on [[title]]" />
+        <meta property="og:url" content="[[url]]" />
+        <meta property="og:site_name" content="[[title]]" />
+
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/channel.css">
     </head>

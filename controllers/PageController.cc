@@ -94,6 +94,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     data.insert("video_description", desc);
     data.insert("video_channel_name", user_name);
     data.insert("video_channel_id", user_id);
+    data.insert("url", Settings::getInstance().url);
 
     respond(HttpResponse::newHttpViewResponse("watch.csp", std::move(data)));
     RecordManager::addVideoView(video_id);
@@ -216,6 +217,7 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
             });
     }
 
+    data.insert("url", Settings::getInstance().url);
     data.insert("channel_name", user.getValueOfName());
     data.insert("channel_views", std::to_string(totalViewCount));
     data.insert("previews", previews);

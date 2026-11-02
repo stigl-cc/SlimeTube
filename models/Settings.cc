@@ -54,6 +54,8 @@ void SlimyTube::Settings::parseLimits(Json::Value config, SlimyTube::Limits& lim
 
 int SlimyTube::Settings::parse(Json::Value config) {
     title = config.get("title", "SlimyTube").as<std::string>();
+    url = config.get("url", "").as<std::string>();
+
     salt_len = config.get("salt_len", 16).as<size_t>();
 
     videos_dir = config.get("videos_dir", "data/videos").as<std::string>();

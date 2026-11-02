@@ -27,6 +27,7 @@ The settings inside "listeners", "db_clients", "app", "ssl" and "plugins" are dr
 The setting "custom_config" contains all settings for this app specifically.  
 
 - `title` - Title of the app (shows up in the website title and server response header)
+- `url` - URL of the app (used for opengraph integration)
 - `videos_dir` - directory for uploaded and encoded videos and thumbnails
 - `salt_length` - length of user password salts(recommended atleast  16)
 - `ffmpeg_log` - directory where the log for ffmpeg output should go
