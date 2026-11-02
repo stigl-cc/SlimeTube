@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[title]] - [[channel_name]]</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/channel.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div id="main-content">
+            <div id="channel_title">[[channel_name]]</div>
+            <div id="channel_views">[[channel_views]] total views</div>
+            <br>
+
+            <label for="preview-section">Videos:</label>
+
+            <div id="preview-section">
+                <%c++
+                    auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
+                    for(const auto& preview : previews) {%>
+                <a class="preview-link" href="/watch/{%preview.at("id")%}">
+                    <div class="preview">
+                        <div class="preview-image-container">
+                            <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
+                            <%c++ if(!preview.at("length").empty()) {%>
+                            <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                            <%c++ }%>
+                        </div>
+                        <div class="preview-text preview-title">{%preview.at("title")%}</div>
+                        <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
+                    </div>
+                </a>
+                <%c++ } if(previews.empty()) { %> <div class="centered-message">No videos to show.</div> <%c++ } %>
+            </div>
+        </div>
+        <%view footer %>
+    </body>
+</html>
