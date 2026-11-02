@@ -174,6 +174,55 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
+constexpr const std::string_view channel_viewcount_query = "SELECT SUM(views) FROM videos WHERE channel = $1;";
+
+void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const uint64_t& user_id) const {
+    HttpViewData data = Settings::getInstance().getData();
+
+    DbClientPtr db = drogon::app().getDbClient();
+    Mapper<Users> user_mapper(db);
+    Mapper<Videos> video_mapper(db);
+
+    std::vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_id, CompareOperator::EQ, user_id));
+    if(users.empty())
+        return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
+
+    const Users& user = users[0];
+    std::vector<Videos> videos = video_mapper
+        .orderBy(Videos::Cols::_creation_time, SortOrder::DESC)
+        .findBy(
+            Criteria(Videos::Cols::_channel, CompareOperator::EQ, user_id) &&
+            Criteria(Videos::Cols::_state, CompareOperator::EQ, static_cast<int32_t>(VideoState::Ready)));
+
+    int64_t totalViewCount = 0;
+    Result viewSum = db->execSqlSync(channel_viewcount_query.data(), user_id);
+    if(viewSum.size()) {
+        const Row& r = viewSum[0];
+        if(r.size() && !r[0].isNull())
+            totalViewCount = viewSum[0][0].as<int64_t>();
+    }
+
+    std::vector<std::unordered_map<std::string, std::string>> previews;
+    for(const Videos& video : videos) {
+        std::string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
+        std::string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
+
+        previews.emplace_back(std::unordered_map<std::string, std::string> {
+                {"id", video.getValueOfId()},
+                {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
+                {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
+                {"views", viewCountStr },
+                {"age", ageStr },
+            });
+    }
+
+    data.insert("channel_name", user.getValueOfName());
+    data.insert("channel_views", std::to_string(totalViewCount));
+    data.insert("previews", previews);
+
+    respond(HttpResponse::newHttpViewResponse("channel.csp", std::move(data)));
+}
+
 void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
 

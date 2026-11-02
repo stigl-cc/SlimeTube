@@ -26,7 +26,7 @@ int SlimyTube::Authenticator::passwordCheck(uint32_t& userId, const std::string&
     if(name.empty() || pass.empty()) return 401;
 
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
-    std::vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_name, drogon::orm::CompareOperator::EQ, name));
+    std::vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_name, CompareOperator::EQ, name));
     if(users.empty()) return 401;
 
     std::vector<char>

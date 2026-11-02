@@ -35,9 +35,9 @@
 
             <label class="text-input-label" for="video-age">Uploaded: </label>
             <input id="video-age" value="[[video_age]] age" disabled>
+
+            <button>Delete Video</button>
         </div>
-        <hr>
-        <div id="video-description">[[video_description]]</div>
         <%view footer %>
     </body>
 </html>

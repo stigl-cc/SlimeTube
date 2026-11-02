@@ -56,10 +56,10 @@ function on_keypress(event) {
         }
 
         if(event.code === "ArrowLeft") {
-            video_element.currentTime -= 1.00;
+            video_element.currentTime -= 5.00;
             event.preventDefault();
         } else if(event.code === "ArrowRight") {
-            video_element.currentTime += 1.00;
+            video_element.currentTime += 5.00;
             event.preventDefault();
         }
 
