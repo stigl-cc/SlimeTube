@@ -178,21 +178,15 @@ void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::fu
 void SlimyTube::RecordController::videoDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const {
     const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
     std::optional<Videos> video = RecordManager::getVideoIfExists(id);
-    if(!video.has_value()) {
-        if(req->getMethod() == HttpMethod::Delete)
-            return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, ContentType::CT_NONE));
-        else
-            return(void) PageController::error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
+    if(!video.has_value())
         return ((req->getMethod() == HttpMethod::Delete) ?
             respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, ContentType::CT_NONE)) :
             PageController::error(std::move(respond), HttpStatusCode::k404NotFound, "/account"));
-    }
 
-    if(video.value().getValueOfChannel() != channel) {
+    if(video.value().getValueOfChannel() != channel)
         return ((req->getMethod() == HttpMethod::Delete) ?
             respond(HttpResponse::newHttpResponse(HttpStatusCode::k403Forbidden, ContentType::CT_NONE)) :
             PageController::error(std::move(respond), HttpStatusCode::k403Forbidden, "/account"));
-    }
 
     RecordManager::deleteVideo(video.value());
     if(req->getMethod() == HttpMethod::Delete)
@@ -200,5 +194,43 @@ void SlimyTube::RecordController::videoDelete(const HttpRequestPtr& req, std::fu
 
     HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
     res->addHeader(Headers::location.data(), "/account");
+    respond(res);
+}
+
+void SlimyTube::RecordController::videoChangeTitle(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const {
+    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
+    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
+    if(!video.has_value())
+        return(void) PageController::error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
+
+    if(video.value().getValueOfChannel() != channel)
+        return(void) PageController::error(std::move(respond), HttpStatusCode::k403Forbidden, "/account");
+
+    const std::string& title = req->getParameter(Query::videoTitle.data());
+
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
+    video_mapper.updateBy({ Videos::Cols::_title }, Criteria(Videos::Cols::_id, CompareOperator::EQ, id), title);
+
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+    res->addHeader(Headers::location.data(), "/video/edit/" + id);
+    respond(res);
+}
+
+void SlimyTube::RecordController::videoChangeDescription(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const {
+    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
+    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
+    if(!video.has_value())
+        return(void) PageController::error(std::move(respond), HttpStatusCode::k404NotFound, "/account");
+
+    if(video.value().getValueOfChannel() != channel)
+        return(void) PageController::error(std::move(respond), HttpStatusCode::k403Forbidden, "/account");
+
+    const std::string& description = req->getParameter(Query::videoDescription.data());
+
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
+    video_mapper.updateBy({ Videos::Cols::_description }, Criteria(Videos::Cols::_id, CompareOperator::EQ, id), description);
+
+    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
+    res->addHeader(Headers::location.data(), "/video/edit/" + id);
     respond(res);
 }

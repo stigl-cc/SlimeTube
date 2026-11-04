@@ -30,15 +30,15 @@
                 <label class="text-input-label" for="video-age">Uploaded: </label><br>
                 <input class="text-input" id="video-age" value="[[video_age]] ago" disabled>
 
-                <form id="title-edit-form" method="post">
+                <form id="title-edit-form" method="post" action="/video/title/[[video_id]]">
                     <label class="text-input-label" for="video-title">Title:</label><br>
-                    <input class="text-input" type="text" id="video-title" value="[[video_title]]"/>
+                    <input class="text-input" type="text" id="video-title" name="title" value="[[video_title]]"/>
                     <input class="text-submit" type="submit" value="edit" />
                 </form>
 
-                <form id="description-edit-form" method="post">
+                <form id="description-edit-form" method="post" action="/video/description/[[video_id]]">
                     <label class="text-input-label" for="video-description">Description:</label><br>
-                    <textarea class="text-input" id="video-description" rows="5">[[video_description]]</textarea>
+                    <textarea class="text-input" id="video-description" name="desc" rows="5">[[video_description]]</textarea>
                     <input class="text-submit" type="submit" value="edit" />
                 </form>
 
@@ -53,7 +53,9 @@
                     </div>
                 </form>
 
-                <button id="video-delete" class="text-submit">Delete Video</button>
+                <a href="/video/delete/[[video_id]]">
+                    <button id="video-delete" class="text-submit">Delete Video</button>
+                </a>
             </div>
         </div>
         <%view footer %>

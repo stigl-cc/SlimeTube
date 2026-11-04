@@ -14,6 +14,13 @@ namespace SlimyTube {
     class RecordController : public drogon::HttpController<RecordController> {
         public:
     METHOD_LIST_BEGIN
+        // unless specified otherwise
+        // 400 - headers missing
+        // 401 - authentication not provided
+        // 403 - video not owned by user
+        // 404 - video/user not found
+        // 200 / 303 - success (/successful redirect)
+
         // headers: name, pass
         // errors: 400(name/pass headers missing) 409(name exists) 500(ssl failed)
         // success: 201
@@ -49,15 +56,21 @@ namespace SlimyTube {
         ADD_METHOD_TO(RecordController::videoCreate, "/video", Post, "SlimyTube::StrictAuthenticator");
 
         // headers: Cookie(for session login method)
-        // errors: 403 401
+        // errors: 404 403 401
         // success: 303
         ADD_METHOD_TO(RecordController::videoDelete, "/video/{id}", Delete, "SlimyTube::StrictAuthenticator");
 
         // headers: Cookie(for session login method)
-        // errors: 403 401
+        // errors: 404 403 401
         // success: 200
         ADD_METHOD_TO(RecordController::videoDelete, "/video/delete/{id}", Get, "SlimyTube::StrictAuthenticator");
         ADD_METHOD_TO(RecordController::videoDelete, "/video/delete/{id}", Post, "SlimyTube::StrictAuthenticator");
+
+        // headers: Cookie(for session login method)
+        // errors 404 403 401
+        // success 303
+        ADD_METHOD_TO(RecordController::videoChangeTitle, "/video/title/{id}", Post, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::videoChangeDescription, "/video/description/{id}", Post, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
 
         void userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
@@ -66,6 +79,9 @@ namespace SlimyTube {
         void userLogout(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
+
+        void videoChangeTitle(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const;
+        void videoChangeDescription(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const;
 
         void videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void videoDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const;
