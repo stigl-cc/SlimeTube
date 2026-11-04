@@ -49,39 +49,38 @@ The setting "custom_config" contains all settings for this app specifically.
 - `audio_sample_rate` - what sample rate to use for videos
 
 ### Endpoints
-| URL                                                | Description | Success Codes | Error Codes | Headers     | Authentication Required |
-|----------------------------------------------------|-------------|---------------|-------------|-------------|-------------------------|
-| POST `/api/user/register`                          |             |               | 201         | 400 409 500 | No                      |
-| POST `/api/user/login`                             |             |               | 200         | 429 401     | No                      |
-| POST `/api/user/logout`                            |             |               | 200         | 401 400     | Yes                     |
-| DELETE `/api/user`                                 |             |               | 200         | 401         | Yes                     |
-| POST `/api/user/name`                              |             |               |             |             | Yes                     |
-| POST `/api/user/password`                          |             |               |             |             | Yes                     |
-| POST `/api/video`                                  |             |               |             |             | Yes                     |
-| DELETE `/api/video/<video_id>`                     |             |               |             |             | Yes                     |
-| POST `/api/video/title/<video_id>`                 |             |               |             |             | Yes                     |
-| POST `/api/video/description/<video_id>`           |             |               |             |             | Yes                     |
-| GET `/rsc/thumbnail/<video_id>`                    |             |               |             |             | No                      |
-| GET `/rsc/video/<video_id>`                        |             |               |             |             | No                      |
-| PUT `/rsc/thumbnail/<video_id>`                    |             |               |             |             | Yes                     |
-| PUT `/rsc/video/<video_id>`                        |             |               |             |             | Yes                     |
-| POST `/register`                                   |             |               |             |             | No                      |
-| POST `/login`                                      |             |               |             |             | No                      |
-| POST `/logout`                                     |             |               |             |             | Yes                     |
-| POST `/user/delete`                                |             |               |             |             | Yes                     |
-| POST `/user/name`                                  |             |               |             |             | Yes                     |
-| POST `/user/password`                              |             |               |             |             | Yes                     |
-| POST `/video/create`                               |             |               |             |             | Yes                     |
-| POST `/video/delete/<video_id>`                    |             |               |             |             | Yes                     |
-| POST `/video/title/<video_id>`                     |             |               |             |             | Yes                     |
-| POST `/video/description/<video_id>`               |             |               |             |             | Yes                     |
-| GET `/`                                            |             |               |             |             | No                      |
-| GET `/watch/{video_id}` and `/watch/?v=<video_id>` |             |               |             |             | No                      |
-| GET `/search/?q=<search_term>`                     |             |               |             |             | No                      |
-| GET `/account`                                     |             |               |             |             |                         |
-| GET `/register`                                    |             |               |             |             | No                      |
-| GET `/create`                                      |             |               |             |             | Yes                     |
-| GET `/video/upload/<video_id>`                     |             |               |             |             | Yes                     |
-| GET `/video/edit/<video_id>`                       |             |               |             |             | Yes                     |
-| GET `/channel/<user_id>`                           |             |               |             |             | No                      |
-|----------------------------------------------------|-------------|---------------|-------------|-------------|-------------------------|
+| URL                                                | Description                         | Headers/Query    | Success Codes | Error Codes | Authentication Required |
+|----------------------------------------------------|-------------------------------------|------------------|---------------|-------------|-------------------------|
+| POST `/api/user/register`                          | [API] create User                   | name, pass       | 201           | 400 409 500 | No                      |
+| POST `/api/user/login`                             | [API] authenticate cookie           | name, pass       | 200           | 429         | No                      |
+| POST `/api/user/logout`                            | [API] clear cookie                  |                  | 200           | 400         | Yes - 401 On fail       |
+| DELETE `/api/user`                                 | [API] delete current user           |                  | 200           |             | Yes - 401 On fail       |
+| POST `/api/user/name`                              | [API] change name                   | new_user         | 200           | 400 409     | Yes - 401 On fail       |
+| POST `/api/user/password`                          | [API] change password               | new_pass         | 200           | 400 500     | Yes - 401 On fail       |
+| POST `/api/video`                                  | [API] create video                  | title, desc      | 200           | 400         | Yes - 401 On fail       |
+| DELETE `/api/video/<video_id>`                     | [API] delete video                  |                  | 200           | 403 404     | Yes - 401 On fail       |
+| POST `/api/video/title/<video_id>`                 | [API] change video title            |                  | 200           | 403 404     | Yes - 401 On fail       |
+| POST `/api/video/description/<video_id>`           | [API] change video description      |                  | 200           | 403 404     | Yes - 401 On fail       |
+| GET `/rsc/thumbnail/<video_id>`                    | Get thumbnail image                 |                  | 200           |             | No                      |
+| GET `/rsc/video/<video_id>`                        | Get chunk of video                  | Range            | 200 206       |             | No                      |
+| PUT `/rsc/thumbnail/<video_id>`                    | Upload Thumbnail for processing     |                  |               |             | Yes - 401 On fail       |
+| PUT `/rsc/video/<video_id>`                        | Upload chunk of video               | X-Last, X-Offset |               |             | Yes - 401 On fail       |
+| POST `/register`                                   | create new user                     | name, pass       | 303           | 400 409 500 | No                      |
+| POST `/login`                                      | authenticate cookie                 | name, pass       | 303           | 303 429     | No                      |
+| POST `/logout`                                     | clear cookie                        |                  | 303           | 400 401     | Yes - 401 On fail       |
+| POST `/user/delete`                                | delete user                         |                  | 303           | 401         | Yes - 401 On fail       |
+| POST `/user/name`                                  | change username                     | new_user         | 303           | 400 409     | Yes - 401 On fail       |
+| POST `/user/password`                              | change password                     | new_pass         | 303           | 400 500     | Yes - 401 On fail       |
+| POST `/video/create`                               | create video                        | title, desc      | 303           | 400         | Yes - 401 On fail       |
+| POST `/video/delete/<video_id>`                    | delete video                        |                  | 303           | 403 404     | Yes - 401 On fail       |
+| POST `/video/title/<video_id>`                     | change video title                  | title            | 303           | 403 404     | Yes                     |
+| POST `/video/description/<video_id>`               | change video description            | desc             | 303           | 403 404     | Yes                     |
+| GET `/`                                            | recommendation page                 |                  | 200           |             | No                      |
+| GET `/watch/{video_id}` and `/watch/?v=<video_id>` | watch page                          |                  | 200           | 404         | No                      |
+| GET `/search/?q=<search_term>`                     | page of video search results        | q                |               | 501         | No                      |
+| GET `/account`                                     | login and account managment page    |                  | 200           |             |                         |
+| GET `/register`                                    | page for creating a new user        |                  | 200           |             | No                      |
+| GET `/create`                                      | page for creating a video           |                  | 200           | 401         | Yes                     |
+| GET `/video/upload/<video_id>`                     | upload video and its thumbnail      |                  | 200           | 403 404     | Yes                     |
+| GET `/video/edit/<video_id>`                       | edit video properties               |                  | 200           | 403 404     | Yes                     |
+| GET `/channel/<user_id>`                           | page with all videos made by a user |                  | 200           | 404         | No                      |
