@@ -25,7 +25,7 @@
                 </div>
 
                 <input id="login-submit" type="submit" value="Login" />
-                <a href="register">
+                <a href="/register">
                     <button type="button" id="register-btn">Register</button>
                 </a>
             </form>
