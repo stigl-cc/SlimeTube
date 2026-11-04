@@ -1,3 +1,4 @@
+#include "video/VideoTypes.h"
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
@@ -257,11 +258,15 @@ void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<vo
     respond(HttpResponse::newHttpViewResponse("edit.csp", std::move(data)));
 }
 
-void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, HttpStatusCode err, const std::string& back) {
+HttpResponsePtr SlimyTube::PageController::errorResponse(HttpStatusCode err, const std::string& back) {
     HttpViewData data = Settings::getInstance().getData();
     data.insert("error-text", std::format("{} {}", static_cast<int>(err), drogon::statusCodeToString(err)));
     data.insert("back", back);
     HttpResponsePtr res = HttpResponse::newHttpViewResponse("error.csp", std::move(data));
     res->setStatusCode(err);
-    respond(res);
+    return res;
+}
+
+void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, HttpStatusCode err, const std::string& back) {
+    respond(errorResponse(err, back));
 }

@@ -47,3 +47,44 @@ The setting "custom_config" contains all settings for this app specifically.
 - `encoder_frame_rate` - what frame rate to encode all videos into
 - `audio_bitrate` - what bitrate to use for videos
 - `audio_sample_rate` - what sample rate to use for videos
+
+### API
+api endpoints:
+POST `/api/user/register`
+POST `/api/user/login`
+POST `/api/user/logout`
+DELETE `/api/user`
+POST `/api/user/name`
+POST `/api/user/password`
+POST `/api/video`
+DELETE `/api/video/<video_id>`
+POST `/api/video/title/<video_id>`
+POST `/api/video/description/<video_id>`
+
+GET `/rsc/thumbnail/<video_id>`
+GET `/rsc/video/<video_id>`
+
+PUT `/rsc/thumbnail/<video_id>`
+PUT `/rsc/video/<video_id>`
+
+user facing endpoints:
+POST `/register`
+POST `/login`
+POST `/logout`
+POST `/user/delete`
+POST `/user/name`
+POST `/user/password`
+POST `/video/create`
+POST `/video/delete/<video_id>`
+POST `/video/title/<video_id>`
+POST `/video/description/<video_id>`
+
+GET `/`
+GET `/watch/{video_id}` and `/watch/?v=<video_id>`
+GET `/search/?q=<search_term>`
+GET `/account`
+GET `/register`
+GET `/create`
+GET `/video/upload/<video_id>`
+GET `/video/edit/<video_id>`
+GET `/channel/<user_id>`

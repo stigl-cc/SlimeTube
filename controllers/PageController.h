@@ -38,7 +38,6 @@ namespace SlimyTube {
         ADD_METHOD_TO(PageController::reg, "/register", Get);
 
         ADD_METHOD_TO(PageController::create, "/create", Get, "SlimyTube::StrictAuthenticator");
-        ADD_METHOD_TO(PageController::create, "/create", Post, "SlimyTube::StrictAuthenticator");
 
         ADD_METHOD_TO(PageController::upload, "/video/upload/{1}", Get, "SlimyTube::StrictAuthenticator");
         ADD_METHOD_TO(PageController::edit, "/video/edit/{1}", Get, "SlimyTube::StrictAuthenticator");
@@ -58,5 +57,6 @@ namespace SlimyTube {
 
         void edit(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
         static void error(std::function<void (const HttpResponsePtr &)>&&, drogon::HttpStatusCode err, const std::string& back);
+        static HttpResponsePtr errorResponse(drogon::HttpStatusCode err, const std::string& back);
     };
 }

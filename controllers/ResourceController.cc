@@ -88,8 +88,6 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "thumbnail_blob";
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
-    // TODO: Make sure its an image and convert all to jpeg
-
     std::ofstream ofs(path, std::ios::out | std::ios::binary);
     const std::string_view& body = req->getBody();
     ofs.write(body.data(), body.size());

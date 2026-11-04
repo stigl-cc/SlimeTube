@@ -14,7 +14,7 @@ namespace SlimyTube {
         public:
         virtual ~Authenticator() = default;
         int passwordCheck(uint32_t& userId, const std::string& name, const std::string& pass);
-        void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb, bool strict);
+        void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb, bool strict, bool api);
     };
 
     class StrictAuthenticator : public HttpMiddleware<StrictAuthenticator>, public Authenticator {
@@ -26,6 +26,18 @@ namespace SlimyTube {
     class LaxAuthenticator : public HttpMiddleware<LaxAuthenticator>, public Authenticator {
         public:
         ~LaxAuthenticator() override = default;
+        virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
+    };
+
+    class StrictApiAuthenticator : public HttpMiddleware<StrictAuthenticator>, public Authenticator {
+        public:
+        ~StrictApiAuthenticator() override = default;
+        virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
+    };
+
+    class LaxApiAuthenticator : public HttpMiddleware<LaxAuthenticator>, public Authenticator {
+        public:
+        ~LaxApiAuthenticator() override = default;
         virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
     };
 }

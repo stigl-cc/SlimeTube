@@ -12,7 +12,8 @@ namespace SlimyTube::Attributes {
     typedef uint32_t userId_t;
     constexpr const std::string_view
         userId = "userId",
-        keyLoginMethod = "loginMethod";
+        keyLoginMethod = "loginMethod",
+        apiUsed = "api";
 };
 
 namespace SlimyTube::Session {

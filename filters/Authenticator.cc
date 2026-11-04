@@ -1,3 +1,5 @@
+#include "controllers/PageController.h"
+#include "controllers/RecordController.h"
 #include <filters/Authenticator.h>
 #include <drogon/HttpAppFramework.h>
 #include <drogon/HttpResponse.h>
@@ -47,7 +49,7 @@ int SlimyTube::Authenticator::passwordCheck(uint32_t& userId, const std::string&
     return 0;
 }
 
-void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb, bool strict) {
+void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb, bool strict, bool api) {
     uint32_t userId;
     Attributes::LoginMethod loginMethod;
 
@@ -65,7 +67,10 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
         int http_code = passwordCheck(userId, name, pass);
         if(http_code) { // authentication failed
             if(strict) {
-                mcb(HttpResponse::newHttpResponse(static_cast<HttpStatusCode>(http_code), ContentType::CT_NONE));
+                if(api)
+                    mcb(HttpResponse::newHttpResponse(static_cast<HttpStatusCode>(http_code), ContentType::CT_NONE));
+                else
+                    mcb(PageController::errorResponse(static_cast<HttpStatusCode>(http_code), "/account"));
                 return;
             } else
                 loginMethod = Attributes::LoginMethod::LaxNone;
@@ -74,6 +79,7 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
     }
 
     // pass through attributes
+    req->attributes()->insert(Attributes::apiUsed.data(), api);
     req->attributes()->insert(Attributes::keyLoginMethod.data(), loginMethod);
     if(loginMethod != Attributes::LoginMethod::LaxNone)
         req->attributes()->insert(Attributes::userId.data(), userId);
@@ -82,9 +88,17 @@ void SlimyTube::Authenticator::invoke(const HttpRequestPtr &req, MiddlewareNextC
 }
 
 void SlimyTube::StrictAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
-    return Authenticator::invoke(std::move(req), std::move(nextCb), std::move(mcb), true);
+    return Authenticator::invoke(std::move(req), std::move(nextCb), std::move(mcb), true, false);
 }
 
 void SlimyTube::LaxAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
-    return Authenticator::invoke(std::move(req), std::move(nextCb), std::move(mcb), false);
+    return Authenticator::invoke(std::move(req), std::move(nextCb), std::move(mcb), false, false);
+}
+
+void SlimyTube::StrictApiAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
+    return Authenticator::invoke(std::move(req), std::move(nextCb), std::move(mcb), true, true);
+}
+
+void SlimyTube::LaxApiAuthenticator::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) {
+    return Authenticator::invoke(std::move(req), std::move(nextCb), std::move(mcb), false, true);
 }
