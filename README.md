@@ -48,43 +48,38 @@ The setting "custom_config" contains all settings for this app specifically.
 - `audio_bitrate` - what bitrate to use for videos
 - `audio_sample_rate` - what sample rate to use for videos
 
-### API
-api endpoints:  
-POST `/api/user/register`  
-POST `/api/user/login`  
-POST `/api/user/logout`  
-DELETE `/api/user`  
-POST `/api/user/name`  
-POST `/api/user/password`  
-POST `/api/video`  
-DELETE `/api/video/<video_id>`  
-POST `/api/video/title/<video_id>`  
-POST `/api/video/description/<video_id>`  
-  
-GET `/rsc/thumbnail/<video_id>`  
-GET `/rsc/video/<video_id>`  
-  
-PUT `/rsc/thumbnail/<video_id>`  
-PUT `/rsc/video/<video_id>`  
-  
-user facing endpoints:  
-POST `/register`  
-POST `/login`  
-POST `/logout`  
-POST `/user/delete`  
-POST `/user/name`  
-POST `/user/password`  
-POST `/video/create`  
-POST `/video/delete/<video_id>`  
-POST `/video/title/<video_id>`  
-POST `/video/description/<video_id>`  
-  
-GET `/`  
-GET `/watch/{video_id}` and `/watch/?v=<video_id>`  
-GET `/search/?q=<search_term>`  
-GET `/account`  
-GET `/register`  
-GET `/create`  
-GET `/video/upload/<video_id>`  
-GET `/video/edit/<video_id>`  
-GET `/channel/<user_id>`  
+### Endpoints
+| URL | Description | Success Codes | Error Codes | Headers | Authentication Required |
+| POST `/api/user/register` | | | | | No |
+| POST `/api/user/login` | | | | | No |
+| POST `/api/user/logout` | | | | | Yes |
+| DELETE `/api/user` | | | |  | Yes |
+| POST `/api/user/name` | | | | | Yes |
+| POST `/api/user/password` | | | | | Yes |
+| POST `/api/video` | | | | | Yes |
+| DELETE `/api/video/<video_id>` | | | | | Yes |
+| POST `/api/video/title/<video_id>` | | | | | Yes |
+| POST `/api/video/description/<video_id>` | | | | | Yes |
+| GET `/rsc/thumbnail/<video_id>` | | | | | No |
+| GET `/rsc/video/<video_id>` | | | | | No |
+| PUT `/rsc/thumbnail/<video_id>` | | | | | Yes |
+| PUT `/rsc/video/<video_id>` | | | | | Yes |
+| POST `/register` | | | | | No |
+| POST `/login` | | | | | No |
+| POST `/logout` | | | | | Yes |
+| POST `/user/delete` | | | | | Yes |
+| POST `/user/name` | | | | | Yes |
+| POST `/user/password` | | | | | Yes |
+| POST `/video/create` | | | | | Yes |
+| POST `/video/delete/<video_id>` | | | | | Yes |
+| POST `/video/title/<video_id>` | | | | | Yes |
+| POST `/video/description/<video_id>` | | | | | Yes |
+| GET `/` | | | | | No |
+| GET `/watch/{video_id}` and `/watch/?v=<video_id>` | | | | | No |
+| GET `/search/?q=<search_term>` | | | | | No |
+| GET `/account` | | | | | |
+| GET `/register` | | | | | No |
+| GET `/create` | | | | | Yes |
+| GET `/video/upload/<video_id>` | | | | | Yes |
+| GET `/video/edit/<video_id>` | | | | | Yes |
+| GET `/channel/<user_id>` | | | | | No |
