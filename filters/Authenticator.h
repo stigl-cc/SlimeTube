@@ -29,13 +29,13 @@ namespace SlimyTube {
         virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
     };
 
-    class StrictApiAuthenticator : public HttpMiddleware<StrictAuthenticator>, public Authenticator {
+    class StrictApiAuthenticator : public HttpMiddleware<StrictApiAuthenticator>, public Authenticator {
         public:
         ~StrictApiAuthenticator() override = default;
         virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
     };
 
-    class LaxApiAuthenticator : public HttpMiddleware<LaxAuthenticator>, public Authenticator {
+    class LaxApiAuthenticator : public HttpMiddleware<LaxApiAuthenticator>, public Authenticator {
         public:
         ~LaxApiAuthenticator() override = default;
         virtual void invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&nextCb, MiddlewareCallback &&mcb) override;
