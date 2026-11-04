@@ -11,32 +11,50 @@
     <body>
         <%view navbar %>
         <div id="main-content">
-            <div id="edit-title-text">Edit Video</div>
+            <div id="edit-centered">
+                <div id="edit-title-text">Edit Video</div>
+                <a id="edit-back" href="/account">back</a><br>
 
-            <label class="text-input-label" for="video-channel-name">Video Channel:</label><br>
-            <input class="text-input" type="text" id="video-channel-name" value="[[video_channel_name]]" disabled>
-            <br>
+                <label class="text-input-label" for="video-channel-name">Video Channel:</label><br>
+                <input class="text-input" type="text" id="video-channel-name" value="[[video_channel_name]]" disabled>
+                <br>
 
-            <label class="text-input-label" for="video-id">Video ID:</label><br>
-            <input class="text-input" type="text" id="video-id" value="[[video_id]]" disabled />
-            <br>
+                <label class="text-input-label" for="video-id">Video ID:</label><br>
+                <input class="text-input" type="text" id="video-id" value="[[video_id]]" disabled />
+                <br>
 
-            <label class="text-input-label" for="video-title">Title:</label><br>
-            <input class="text-input" type="text" id="video-title" value="[[video_title]]"/>
-            <br>
+                <label class="text-input-label" for="video-veiws">Views: </label><br>
+                <input class="text-input" id="video-views" value="[[video_views]]" disabled>
+                <br>
 
-            <label class="text-input-label" for="video-description">Description:</label><br>
-            <textarea class="text-input" id="video-description">[[video_description]]</textarea>
-            <div ></div>
+                <label class="text-input-label" for="video-age">Uploaded: </label><br>
+                <input class="text-input" id="video-age" value="[[video_age]] ago" disabled>
 
-            <label class="text-input-label" for="video-veiws">Views: </label>
-            <input id="video-views" value="[[video_views]]" disabled>
-            <br>
+                <form id="title-edit-form" method="post">
+                    <label class="text-input-label" for="video-title">Title:</label><br>
+                    <input class="text-input" type="text" id="video-title" value="[[video_title]]"/>
+                    <input class="text-submit" type="submit" value="edit" />
+                </form>
 
-            <label class="text-input-label" for="video-age">Uploaded: </label>
-            <input id="video-age" value="[[video_age]] age" disabled>
+                <form id="description-edit-form" method="post">
+                    <label class="text-input-label" for="video-description">Description:</label><br>
+                    <textarea class="text-input" id="video-description" rows="5">[[video_description]]</textarea>
+                    <input class="text-submit" type="submit" value="edit" />
+                </form>
 
-            <button>Delete Video</button>
+                <form id="thumnail-edit-form" method="post">
+                    <label class="text-input-label" for="video-thumbnail">Thumbnail:</label><br>
+                    <div id="thumbnail-section">
+                        <img id="edit-thumbnail-preview" src="/rsc/thumbnail/[[video_id]]" />
+                        <div id="edit-thumbnail-edit">
+                            <input id="edit-thumbnail-upload" class="text-input" type="file" accept="image/*" capture="environment">
+                            <input class="text-submit" type="submit" value="edit" />
+                        </div>
+                    </div>
+                </form>
+
+                <button id="video-delete" class="text-submit">Delete Video</button>
+            </div>
         </div>
         <%view footer %>
     </body>
