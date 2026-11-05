@@ -4,7 +4,7 @@
 #include <memory>
 #include <models/RecordManager.h>
 #include <models/utils/ResolutionUtility.h>
-#include <models/Settings.hh>
+#include <models/Settings.h>
 #include <models/video/VideoTranscoder.h>
 #include <models/video/VideoDecoder.h>
 #include <models/video/VideoEncoder.h>

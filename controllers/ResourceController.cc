@@ -19,9 +19,9 @@
 #include <string_view>
 #include <system_error>
 
-#include <models/Attributes.hh>
+#include <models/Attributes.h>
 #include <models/RecordManager.h>
-#include <models/Settings.hh>
+#include <models/Settings.h>
 
 using namespace SlimyTube::Attributes;
 using namespace std::placeholders;

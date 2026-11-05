@@ -9,7 +9,7 @@
 #include <drogon/orm/Mapper.h>
 
 #include <models/RecordManager.h>
-#include <models/Attributes.hh>
+#include <models/Attributes.h>
 #include <models/Users.h>
 #include <models/Videos.h>
 

@@ -6,7 +6,7 @@
 #include <models/video/VideoTypes.h>
 #include <models/video/VideoTranscoder.h>
 #include <utility>
-#include <models/Settings.hh>
+#include <models/Settings.h>
 
 extern "C" {
 #include <libavformat/avformat.h>

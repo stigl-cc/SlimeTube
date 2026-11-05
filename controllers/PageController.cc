@@ -14,8 +14,8 @@
 #include <lib/drogon/lib/src/HttpUtils.h>
 
 #include <models/RecordManager.h>
-#include <models/Attributes.hh>
-#include <models/Settings.hh>
+#include <models/Attributes.h>
+#include <models/Settings.h>
 #include <models/Users.h>
 #include <models/Videos.h>
 

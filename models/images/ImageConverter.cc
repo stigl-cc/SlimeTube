@@ -1,6 +1,6 @@
 #include <models/images/ImageConverter.h>
 #include <models/video/VideoTypes.h>
-#include <models/Settings.hh>
+#include <models/Settings.h>
 #include <format>
 
 extern "C" {

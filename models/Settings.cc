@@ -1,4 +1,4 @@
-#include <models/Settings.hh>
+#include <models/Settings.h>
 #include <models/video/VideoTranscoder.h>
 #include <models/video/VideoTypes.h>
 #include <filesystem>

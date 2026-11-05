@@ -1,6 +1,6 @@
 #include <RecordManager.h>
 #include <models/utils/TimeUtility.h>
-#include <models/Settings.hh>
+#include <models/Settings.h>
 
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>

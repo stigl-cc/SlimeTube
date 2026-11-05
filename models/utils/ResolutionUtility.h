@@ -1,5 +1,5 @@
 #pragma once
-#include <models/Settings.hh>
+#include <models/Settings.h>
 #include <models/video/VideoTypes.h>
 
 namespace SlimyTube {

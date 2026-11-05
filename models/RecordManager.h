@@ -3,7 +3,7 @@
 #include <drogon/orm/Mapper.h>
 #include <models/Users.h>
 #include <models/Videos.h>
-#include <models/Attributes.hh>
+#include <models/Attributes.h>
 
 using namespace drogon_model::SlimyTube;
 using drogon::orm::DbClientPtr,

@@ -3,7 +3,7 @@
 #include <controllers/ResourceController.h>
 
 #include <json/value.h>
-#include <models/Settings.hh>
+#include <models/Settings.h>
 #include <models/Videos.h>
 #include <models/utils/TimeUtility.h>
 #include <models/video/VideoTranscoder.h>
