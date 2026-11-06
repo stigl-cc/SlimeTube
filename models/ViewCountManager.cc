@@ -1,16 +1,18 @@
-#include "Attributes.h"
-#include <drogon/HttpAppFramework.h>
 #include <models/ViewCountManager.h>
 
-#include <drogon/orm/DbClient.h>
-#include <fstream>
-#include <json/reader.h>
-#include <json/value.h>
-#include <mutex>
 #include <models/RecordManager.h>
 #include <models/Videos.h>
+#include <models/Attributes.h>
+
+#include <fstream>
+#include <mutex>
+#include <json/reader.h>
+#include <json/value.h>
+
+#include <drogon/HttpAppFramework.h>
 #include <drogon/orm/Mapper.h>
 #include <drogon/orm/Criteria.h>
+#include <drogon/orm/DbClient.h>
 
 using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
@@ -26,16 +28,23 @@ void SlimyTube::ViewCountManager::addView(const std::string& id, uint32_t amount
     std::lock_guard<std::mutex> lk(stripe.mutex);
     stripe.videos.insert(id);
 
-    mViewQueue[id] += amount;
+    view_queue_t::iterator it = mViewQueue.find(id);
+    if(it != mViewQueue.end())
+        it->second += amount;
+    else {
+        std::lock_guard<std::mutex> lk(mViewQueueMutex);
+        mViewQueue.emplace(id, amount);
+    }
 }
 
 void SlimyTube::ViewCountManager::processViews() {
+    std::lock_guard<std::mutex> lk(mViewQueueMutex);
     DbClientPtr db = RecordManager::getDbClient();
 
     for(Stripe& stripe : videoMutexes) {
         std::lock_guard<std::mutex> lk(stripe.mutex);
         for(const std::string& video : stripe.videos) {
-            db->execSqlSync("UPDATE videos SET views = views + $1 WHERE id = $2;", mViewQueue[video], video);
+            db->execSqlAsyncFuture("UPDATE videos SET views = views + $1 WHERE id = $2;", mViewQueue[video], video);
             mViewQueue.erase(video);
         }
         stripe.videos.clear();
@@ -43,7 +52,7 @@ void SlimyTube::ViewCountManager::processViews() {
 }
 
 void SlimyTube::ViewCountManager::restoreState() {
-    std::ifstream ifs(mCachePath, std::ios_base::in);
+    std::ifstream ifs(mUnwrittenViewsPath, std::ios_base::in);
     if(!ifs.is_open())
         return;
 
@@ -67,10 +76,10 @@ void SlimyTube::ViewCountManager::restoreState() {
 }
 
 void SlimyTube::ViewCountManager::saveState() {
-    if(mCachePath.empty())
+    if(mUnwrittenViewsPath.empty())
         return;
 
-    std::ofstream ofs(mCachePath, std::ios_base::trunc | std::ios_base::out);
+    std::ofstream ofs(mUnwrittenViewsPath, std::ios_base::trunc | std::ios_base::out);
     if(!ofs.is_open())
         return;
 
@@ -86,7 +95,7 @@ void SlimyTube::ViewCountManager::saveState() {
 }
 
 void SlimyTube::ViewCountManager::setCachePath(std::string cachePath) {
-    mCachePath = std::move(cachePath);
+    mUnwrittenViewsPath = std::move(cachePath);
     restoreState();
 }
 

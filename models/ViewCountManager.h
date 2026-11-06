@@ -9,6 +9,7 @@
 namespace SlimyTube {
     class ViewCountManager {
         protected:
+        typedef std::unordered_map<std::string, uint32_t> view_queue_t;
         struct Stripe {
             std::mutex mutex;
             std::set<std::string> videos;
@@ -16,8 +17,10 @@ namespace SlimyTube {
 
         static constexpr size_t mutexCount = 128;
         std::array<Stripe, mutexCount> videoMutexes;
-        std::unordered_map<std::string, uint32_t> mViewQueue;
-        std::string mCachePath;
+
+        std::mutex mViewQueueMutex;
+        view_queue_t mViewQueue;
+        std::string mUnwrittenViewsPath;
 
         void restoreState();
         void saveState();
