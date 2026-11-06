@@ -30,8 +30,9 @@ The setting "custom_config" contains all settings for this app specifically.
 - `url` - URL of the app (used for opengraph integration)
 - `videos_dir` - directory for uploaded and encoded videos and thumbnails
 - `salt_length` - length of user password salts(recommended atleast  16)
-- `ffmpeg_log` - directory where the log for ffmpeg output should go
+- `ffmpeg_log` - file where the log for ffmpeg output should go
 - `ffmpeg_log_level` - how much ffmpeg should log
+- `view_count_cache` - file where views that did not get written to the database get saved for when application is started
 - `limits` - contains various limits on what the users are allowed to do on the platform
 - `limits` - `max_blob_size` - ~~how large of a file can a user submit to be encoded~~ currently not used
 - `limits` - `total_user_size` - ~~how much space is a user allowed to use~~ currently not used

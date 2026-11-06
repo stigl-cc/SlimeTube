@@ -39,6 +39,7 @@
         "thumbnails_dir" : "./data/thumbnails",
         "blobs_dir" : "./data/blobs",
         "salt_length": 16,
+        "view_count_cache": "./data/unwritten_views.json",
         "ffmpeg_log": "data/ffmpeg.log",
         "ffmpeg_log_level": 32,
         "limits" : {

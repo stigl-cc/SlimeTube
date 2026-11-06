@@ -1,3 +1,4 @@
+#include "ViewCountManager.h"
 #include <models/Settings.h>
 #include <models/video/VideoTranscoder.h>
 #include <models/video/VideoTypes.h>
@@ -72,6 +73,9 @@ int SlimyTube::Settings::parse(Json::Value config) {
         config.get("thumbnail_width", 640).as<dimension_t>(),
         config.get("thumbnail_height", 360).as<dimension_t>(),
     };
+
+    std::string unwritten_view_cache = config.get("view_count_cache", "./data/unwritten_views.json").as<std::string>();
+    ViewCountManager::getInstance().setCachePath(std::move(unwritten_view_cache));
 
     std::string ffmpeg_log = config.get("ffmpeg_log", "").as<std::string>();
     int ffmpeg_log_level = config.get("ffmpeg_log_level", 32).as<int>();

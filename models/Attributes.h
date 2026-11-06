@@ -49,3 +49,9 @@ namespace SlimyTube::Headers {
         last = "X-Last",
         offset = "X-Offset";
 };
+
+namespace SlimyTube::ViewCache {
+    static constexpr std::string_view
+        id = "id",
+        count = "count";
+};

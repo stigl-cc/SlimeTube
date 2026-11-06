@@ -22,7 +22,7 @@
             <div id="left-section">
                 <video
                     id="video-element"
-                    preload="none"
+                    preload="metadata"
                     poster="/rsc/thumbnail/[[video_id]]"
                     controls>
 

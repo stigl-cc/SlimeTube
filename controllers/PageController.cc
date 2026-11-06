@@ -1,3 +1,4 @@
+#include "ViewCountManager.h"
 #include "video/VideoTypes.h"
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
@@ -98,7 +99,9 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     data.insert("url", Settings::getInstance().url);
 
     respond(HttpResponse::newHttpViewResponse("watch.csp", std::move(data)));
-    RecordManager::addVideoView(video_id);
+
+    static ViewCountManager& mViewCountManager = ViewCountManager::getInstance();
+    mViewCountManager.addView(video_id);
 }
 
 void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {

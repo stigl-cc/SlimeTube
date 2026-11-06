@@ -9,6 +9,7 @@
 #include <models/video/VideoTranscoder.h>
 #include <models/RecordManager.h>
 #include <models/video/VideoTypes.h>
+#include <models/ViewCountManager.h>
 
 #include <drogon/Cookie.h>
 #include <drogon/HttpRequest.h>
@@ -17,6 +18,8 @@
 #include <drogon/RateLimiter.h>
 #include <drogon/drogon.h>
 #include <drogon/utils/coroutine.h>
+
+#include <functional>
 
 using namespace SlimyTube;
 using namespace drogon::orm;
@@ -109,12 +112,17 @@ int main() {
         .setMaxConnectionNum(10'000)
         .setMaxConnectionNumPerIP(10);
 
+    // Take care of deleted videos every hour
     app().getLoop()
         ->runEvery(3'600, cleanupVideos);
 
     // Start TranscodeManager thread
     app().getLoop()
         ->runAfter(1, TranscodeManager::getInstance);
+
+    ViewCountManager& viewCountManager = ViewCountManager::getInstance();
+    app().getLoop()
+        ->runEvery(120, std::bind(&ViewCountManager::processViews, &viewCountManager));
 
     app().run();
     return 0;
