@@ -3,6 +3,7 @@
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
+#include <functional>
 
 namespace SlimyTube {
     using drogon::HttpMethod::Get,
@@ -10,6 +11,7 @@ namespace SlimyTube {
         drogon::HttpMethod::Delete,
         drogon::HttpRequestPtr,
         drogon::HttpResponsePtr;
+    using namespace std::placeholders;
 
     class RecordController : public drogon::HttpController<RecordController> {
         public:
@@ -24,7 +26,7 @@ namespace SlimyTube {
         // headers: name, pass
         // errors: 400(name/pass headers missing) 409(name exists) 500(ssl failed)
         // success: 303
-        ADD_METHOD_TO(RecordController::userRegister, "/api/user/register", Post, "SlimyTube::RateLimiter");
+        ADD_METHOD_TO(RecordController::userRegisterApi, "/api/user/register", Post, "SlimyTube::RateLimiter");
         ADD_METHOD_TO(RecordController::userRegister, "/register", Post, "SlimyTube::RateLimiter");
 
         // errors: 429 303(wrong password)
@@ -82,6 +84,7 @@ namespace SlimyTube {
     METHOD_LIST_END
 
         void userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
+        void userRegisterApi(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void userLogout(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;

@@ -1,6 +1,7 @@
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
+#include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
 #include <drogon/orm/Criteria.h>
@@ -17,6 +18,7 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <utility>
 
 using namespace drogon;
 using namespace drogon::orm;
@@ -38,7 +40,13 @@ using namespace drogon_model::SlimyTube;
         }                                                               \
     }
 
+void SlimyTube::RecordController::userRegisterApi(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    req->attributes()->insert(Attributes::apiUsed.data(), true);
+    userRegister(std::move(req), std::forward<std::function<void (const HttpResponsePtr &)>>(respond));
+}
+
 void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    const bool& api = req->attributes()->find(Attributes::apiUsed.data());
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
 
     const std::string&
@@ -46,16 +54,12 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         pass = req->getParameter(Query::password.data());
 
     // details not provided
-    if(name.empty() || pass.empty()) {
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE));
-        return;
-    }
+    if(name.empty() || pass.empty())
+        api_ui_error(HttpStatusCode::k400BadRequest, "/register");
 
     // username already taken
-    if(RecordManager::nameExists(name, user_mapper)) {
-        respond(HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, ContentType::CT_NONE));
-        return;
-    }
+    if(RecordManager::nameExists(name, user_mapper))
+        api_ui_error(HttpStatusCode::k409Conflict, "/register");
 
     std::vector<uint8_t> salt = RecordManager::createSalt();
 
@@ -69,9 +73,7 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
 
     user_mapper.insert(user);
 
-    HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k303SeeOther, ContentType::CT_NONE);
-    res->addHeader(Headers::location.data(), "/account?m=Account%20created%20successfully");
-    respond(res);
+    api_redirect_error(HttpStatusCode::k201Created, "/account?m=Account%20created%20successfully");
 }
 
 void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
