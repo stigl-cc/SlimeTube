@@ -65,8 +65,8 @@ void SlimyTube::ViewCountManager::restoreState() {
 
     Json::Value id, value;
     for(Json::Value video : root) {
-        id = video[ViewCache::id];
-        value = video[ViewCache::count];
+        id = video[ViewCache::id.data()];
+        value = video[ViewCache::count.data()];
         if(!id.isNull() && !value.isNull())
             addView(id.asString(), value.asInt());
     }
@@ -86,8 +86,8 @@ void SlimyTube::ViewCountManager::saveState() {
     Json::Value unwritten_views = {};
     for(const std::pair<std::string, uint32_t> videos : mViewQueue) {
         Json::Value video;
-        video[ViewCache::id] = std::move(videos.first);
-        video[ViewCache::count] = videos.second;
+        video[ViewCache::id.data()] = std::move(videos.first);
+        video[ViewCache::count.data()] = videos.second;
         unwritten_views.append(video);
     }
 
