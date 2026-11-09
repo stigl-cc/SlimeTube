@@ -26,7 +26,13 @@
                     poster="/rsc/thumbnail/[[video_id]]"
                     controls>
 
-                    <source src="/rsc/video/[[video_id]]" type="video/mp4" />
+                    <%c++
+                        auto resolution = @@.get<std::string>("resolution");
+                        if(resolution.empty()) { %>
+                    <source src="/rsc/video/[[video_id]]" />
+                    <%c++ } else { %>
+                    <source src="/rsc/video/[[video_id]]?quality={%resolution%}" type="video/mp4" />
+                    <%c++ } %>
                     !the video tag is unsupported on this browser!
                 </video>
 
