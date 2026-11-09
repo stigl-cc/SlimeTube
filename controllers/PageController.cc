@@ -1,5 +1,3 @@
-#include "ViewCountManager.h"
-#include "video/VideoTypes.h"
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
@@ -14,6 +12,9 @@
 #include <drogon/utils/Utilities.h>
 #include <lib/drogon/lib/src/HttpUtils.h>
 
+#include <models/utils/ResolutionUtility.h>
+#include <models/ViewCountManager.h>
+#include <models/video/VideoTypes.h>
 #include <models/RecordManager.h>
 #include <models/Attributes.h>
 #include <models/Settings.h>
@@ -85,6 +86,11 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
+    std::vector<uint16_t> resolutions = ResolutionUtility::GetResolutions(video_ref);
+    std::vector<std::string> resolutions_str;
+    for(uint16_t resolution : resolutions)
+        resolutions_str.emplace_back(std::to_string(resolution));
+
     std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(video_id, 25);
 
     data.insert("video_id", video_id);
@@ -96,6 +102,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     data.insert("video_description", desc);
     data.insert("video_channel_name", user_name);
     data.insert("video_channel_id", user_id);
+    data.insert("resolutions", resolutions_str);
     data.insert("url", Settings::getInstance().url);
 
     respond(HttpResponse::newHttpViewResponse("watch.csp", std::move(data)));

@@ -44,8 +44,10 @@
                 <div id="video-controls">
                     <label for="quality-selector">Quality:</label>
                     <select onchange= "change_playback_quality()" id="quality-selector">
-                        <option value="720">720p</option>
-                        <option value="1080">1080p</option>
+                        <%c++ auto resolutions = @@.get<std::vector<std::string>>("resolutions");
+                              for(const auto& resolutions : resolutions) { %>
+                        <option value="{%resolutions%}">{%resolutions%}p</option>
+                        <%c++ }%>
                     </select>
 
                     <label for="speed-selector">Speed:</label>

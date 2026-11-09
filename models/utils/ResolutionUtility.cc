@@ -87,3 +87,14 @@ std::vector<SlimyTube::VideoTarget> SlimyTube::ResolutionUtility::GetForVideo(re
     }
     return result;
 }
+
+std::vector<uint16_t> SlimyTube::ResolutionUtility::GetResolutions(const Videos& video) {
+    const std::vector<char>& resolutions_str = video.getValueOfResolutions();
+    const int resolution_count = resolutions_str.size() / sizeof(int16_t);
+    const int16_t* resolution_shorts = reinterpret_cast<const int16_t*>(resolutions_str.data());
+
+    std::vector<uint16_t> resolutions(resolution_count, 0);
+    for(int i =0; i < resolution_count; i++)
+        resolutions[i] = le16toh(resolution_shorts[i]);
+    return resolutions;
+}

@@ -19,6 +19,7 @@
 #include <string_view>
 #include <system_error>
 
+#include <models/utils/ResolutionUtility.h>
 #include <models/Attributes.h>
 #include <models/RecordManager.h>
 #include <models/Settings.h>
@@ -106,13 +107,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 
     std::string quality_suffix;
 
-    const std::vector<char>& resolutions_str = video.value().getValueOfResolutions();
-    const int resolution_count = resolutions_str.size() / sizeof(int16_t);
-    const int16_t* resolution_shorts = reinterpret_cast<const int16_t*>(resolutions_str.data());
-
-    std::vector<uint16_t> resolutions(resolution_count, 0);
-    for(int i =0; i < resolution_count; i++)
-        resolutions[i] = le16toh(resolution_shorts[i]);
+    std::vector<uint16_t> resolutions = ResolutionUtility::GetResolutions(video.value());;
 
     const std::string& quality_param = req->getParameter(Query::videoQuality.data());
     if(quality_param.empty())
