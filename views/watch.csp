@@ -38,6 +38,22 @@
 
                 <div id="video-info-section">
                     <div id="video-title">[[video_title]]</div>
+                    <div id="video-controls">
+                        <select onchange= "change_playback_quality()" id="quality-selector">
+                            <%c++ auto resolutions = @@.get<std::vector<std::string>>("resolutions");
+                                  for(const auto& resolutions : resolutions) { %>
+                            <option value="{%resolutions%}">{%resolutions%}p</option>
+                            <%c++ }%>
+                        </select>
+
+                        <select onchange="change_playback_speed()" id="speed-selector">
+                            <option value="0.25">0.25x</option>
+                            <option value="0.50">0.50x</option>
+                            <option selected="selected" value="1.00">1.00x</option>
+                            <option value="1.50">1.50x</option>
+                            <option value="2.00">2.00x</option>
+                        </select>
+                    </div>
                     <div id="video-statline">
                         <div class="video-stat" id="video-views">[[video_views]] views</div>
                         <div class="video-stat" id="video-age">[[video_age]] ago</div>
@@ -45,25 +61,6 @@
                     </div>
                     <hr>
                     <div id="video-description">[[video_description]]</div>
-                </div>
-
-                <div id="video-controls">
-                    <label for="quality-selector">Quality:</label>
-                    <select onchange= "change_playback_quality()" id="quality-selector">
-                        <%c++ auto resolutions = @@.get<std::vector<std::string>>("resolutions");
-                              for(const auto& resolutions : resolutions) { %>
-                        <option value="{%resolutions%}">{%resolutions%}p</option>
-                        <%c++ }%>
-                    </select>
-
-                    <label for="speed-selector">Speed:</label>
-                    <select onchange="change_playback_speed()" id="speed-selector">
-                        <option value="0.25">0.25x</option>
-                        <option value="0.50">0.50x</option>
-                        <option selected="selected" value="1.00">1.00x</option>
-                        <option value="1.50">1.50x</option>
-                        <option value="2.00">2.00x</option>
-                    </select>
                 </div>
             </div>
 
