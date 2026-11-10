@@ -125,11 +125,21 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
 void SlimyTube::PageController::about(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     const Settings& settings = Settings::getInstance();
 
-    if(!settings.use_embeded_about)
+    if(!settings.use_embeded_pages)
         return (void)respond(HttpResponse::newFileResponse("./static/about.html", "", drogon::CT_TEXT_HTML));
 
     HttpViewData data = settings.getData();
     return (void)respond(HttpResponse::newHttpViewResponse("about.csp", std::move(data)));
+}
+
+void SlimyTube::PageController::privacy(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    const Settings& settings = Settings::getInstance();
+
+    if(!settings.use_embeded_pages)
+        return (void)respond(HttpResponse::newFileResponse("./static/privacy.html", "", drogon::CT_TEXT_HTML));
+
+    HttpViewData data = settings.getData();
+    return (void)respond(HttpResponse::newHttpViewResponse("privacy.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {

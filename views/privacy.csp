@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[title]] - Privacy Policy</title>
+
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/privacy.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div id="main-content">
+            <div id="privacy-title-text">[[title]] Privacy Policy</div>
+            <hr>
+            <div id="privacy-text">
+                You do not have privacy here. It is the internet after all.
+                <br />
+                <strong>what is being collected about me?</strong><br>
+                In the access log: Your <strong>IP address, User agent, and any paths you have visited on the website</strong><br>
+                In the server session storage: Your <strong>User Id</strong><br />
+
+                <strong>what about cookies?</strong> <br />
+                <strong>SessionId</strong> - Stores the token so you don't have to type your password on every single page<br />
+
+                That is it.
+            </div>
+        </div>
+        <%view footer %>
+    </body>
+</html>

@@ -34,7 +34,7 @@ namespace SlimyTube {
         std::vector<SupportedTarget> supported_targets;
         std::set<std::pair<int, int>> supported_ratios;
         bool allow_unlisted_ratios;
-        bool use_embeded_about;
+        bool use_embeded_pages;
 
         int audio_bitrate;
         int audio_samprate;

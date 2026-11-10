@@ -172,6 +172,12 @@ input[type=submit]:hover {
     text-transform: lowercase;
 }
 
+#footer-privacy-link {
+    color: var(--link-color);
+    text-decoration: none;
+    text-transform: lowercase;
+}
+
 /* video preview */
 .preview {
     width: 100%;

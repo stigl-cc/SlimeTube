@@ -1,0 +1,11 @@
+#main-content {
+    flex: 1;
+}
+
+#privacy-title-text {
+    font-size: var(--text-size-medium);
+}
+
+#privacy-text {
+    max-width: 100ch;
+}

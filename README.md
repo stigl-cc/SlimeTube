@@ -48,7 +48,7 @@ The setting "custom_config" contains all settings for this app specifically.
 - `encoder_frame_rate` - what frame rate to encode all videos into
 - `audio_bitrate` - what bitrate to use for videos
 - `audio_sample_rate` - what sample rate to use for videos
-- `use_embeded_about_page` - which about page content should be used: 0 - static/about.html, 1 (or anything else) views/about.csp
+- `use_embeded_pages` - which about and privacy page content should be used: 0 - static/about.html(+ privacy.html), 1 (or anything else) views/about.csp(+ privacy.csp)
 
 ### Endpoints
 | URL                                                | Description                         | Headers/Query    | Success Codes | Error Codes | Authentication Required |

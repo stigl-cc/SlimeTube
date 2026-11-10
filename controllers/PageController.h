@@ -26,6 +26,7 @@ namespace SlimyTube {
         // success: 200
         ADD_METHOD_TO(PageController::main, "/", Get);
         ADD_METHOD_TO(PageController::about, "/about", Get);
+        ADD_METHOD_TO(PageController::privacy, "/privacy", Get);
 
         // errors: 404
         // success: 200
@@ -51,6 +52,8 @@ namespace SlimyTube {
     METHOD_LIST_END
         void main(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
         void about(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+        void privacy(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
+
         void watch(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
         void search(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
         void account(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&) const;
