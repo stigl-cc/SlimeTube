@@ -4,32 +4,49 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>[[query]] - [[title]]</title>
+        <title>Searching [[search_query]] - [[title]]</title>
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/search.css">
     </head>
     <body>
         <%view navbar %>
         <div id="main-content">
-            <div>Search results for: [[query]]</div>
+            <div>Found [[result_count]] search results for: "[[search_query]]"</div>
             <div>
-                <%c++
-                    auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
-                    for(const auto& preview : previews) {%>
-                <a class="preview-link" href="/watch/{%preview.at("id")%}">
-                    <div class="preview">
-                        <div class="preview-image-container">
-                            <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
-                            <%c++ if(!preview.at("length").empty()) {%>
+                <label for="channel-results">Channels:</label>
+                <div id="channel-results">
+                    <%c++
+                        auto channels = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("channels");
+                        if(channels.empty()) { %>
+                    No channels found.
+                    <%c++ } for(const auto& channel : channels) { %>
+                    <a href="/channel/{%channel.at("id")%}">{%channel.at("name")%}</a> - {%channel.at("views")%} total views<br>
+                    <%c++ } %>
+                </div>
+                <label for="video-results">Videos:</label>
+                <div id="video-results">
+                    <%c++
+                        auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
+                        if(previews.empty()) { %>
+                    No videos found.
+                    <%c++ } for(const auto& preview : previews) { %>
+                    <a class="preview-link" href="/watch/{%preview.at("id")%}">
+                        <div class="preview">
+                            <div class="preview-image-container">
+                                <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
+                                <%c++ if(!preview.at("length").empty()) {%>
                                 <div class="preview-text preview-length">{%preview.at("length")%}</div>
-                            <%c++ }%>
+                                <%c++ }%>
+                            </div>
+                            <div>
+                                <div class="preview-text preview-title">{%preview.at("title")%}</div>
+                                <div class="preview-text preview-channel">{%preview.at("channel")%}</div>
+                                <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
+                            </div>
                         </div>
-                        <div class="preview-text preview-title">{%preview.at("title")%}</div>
-                        <div class="preview-text preview-channel">{%preview.at("channel")%}</div>
-                        <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
-                    </div>
-                </a>
-                <%c++ }%>
+                    </a>
+                    <%c++ } %>
+                </div>
             </div>
         </div>
         <%view footer %>

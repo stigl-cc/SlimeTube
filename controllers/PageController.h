@@ -16,6 +16,10 @@ namespace SlimyTube {
     class PageController : public drogon::HttpController<PageController> {
         private:
         std::vector<std::unordered_map<std::string, std::string>> createPreviews(const std::string& ignore, size_t count) const;
+        size_t createSearchResults(
+            std::vector<std::unordered_map<std::string, std::string>>& previews,
+            std::vector<std::unordered_map<std::string, std::string>>& channels,
+            const std::string& query, size_t count) const;
         public:
     METHOD_LIST_BEGIN
         // errors:
