@@ -31,24 +31,30 @@ using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::SlimyTube;
 
+using
+    std::vector,
+    std::string,
+    std::unordered_map;
+
+constexpr const std::string_view channel_viewcount_query = "SELECT SUM(views) FROM videos WHERE channel = $1;";
 constexpr const std::string_view recommended_query = "SELECT * FROM videos WHERE state = $1 AND id != $2 ORDER BY RANDOM() LIMIT $3;";
 
 // TODO: Add some sort of smarter algorithm
-std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageController::createPreviews(const std::string& ignore, size_t amount) const {
+vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(const string& ignore, size_t amount) const {
     DbClientPtr db = SlimyTube::RecordManager::getDbClient();
     Result queriedVideos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
 
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
-    std::vector<Videos> videos;
+    vector<Videos> videos;
     for(const Row& video : queriedVideos)
         videos.emplace_back(video);
 
-    std::vector<std::unordered_map<std::string, std::string>> previews;
+    vector<unordered_map<string, string>> previews;
     for(const Videos& video : videos) {
-        std::string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
-        std::string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
+        string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
+        string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
 
-        previews.emplace_back(std::unordered_map<std::string, std::string> {
+        previews.emplace_back(unordered_map<string, string> {
                 {"id", video.getValueOfId()},
                 {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
                 {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
@@ -60,8 +66,55 @@ std::vector<std::unordered_map<std::string, std::string>> SlimyTube::PageControl
     return previews;
 }
 
+size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<string, string>>& previews, vector<unordered_map<string, string>>& channels, const string& query, size_t count) const {
+    const string query_wildcards = '%' + query + '%';
+    DbClientPtr db = RecordManager::getDbClient();
+    Mapper<Videos> video_mapper(db);
+    Mapper<Users> user_mapper(db);
+
+    vector<Videos> videos = video_mapper.limit(count).findBy(
+        Criteria(Videos::Cols::_title, CompareOperator::Like, query_wildcards) ||
+        Criteria(Videos::Cols::_description, CompareOperator::Like, query_wildcards)
+    );
+
+    for(const Videos& video : videos) {
+        string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
+        string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
+
+        previews.emplace_back(unordered_map<string, string> {
+                {"id", video.getValueOfId()},
+                {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
+                {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
+                {"channel",  user_mapper.findByPrimaryKey(video.getValueOfChannel()).getValueOfName()},
+                {"views", viewCountStr },
+                {"age", ageStr },
+            });
+    }
+
+    vector<Users> users = user_mapper.limit(count).findBy(
+        Criteria(Users::Cols::_name, CompareOperator::Like, query_wildcards)
+    );
+    for(const Users& user : users) {
+        int64_t totalViewCount = 0;
+        Result viewSum = db->execSqlSync(channel_viewcount_query.data(), user.getValueOfId());
+        if(viewSum.size()) {
+            const Row& r = viewSum[0];
+            if(r.size() && !r[0].isNull())
+                totalViewCount = viewSum[0][0].as<int64_t>();
+        }
+
+        channels.emplace_back(unordered_map<string, string> {
+                { "id", std::to_string(user.getValueOfId()) },
+                { "name", HttpViewData::htmlTranslate(user.getValueOfName()) },
+                { "views", FormatUtil::FormatViewCount(totalViewCount) }
+            });
+    }
+
+    return videos.size() + users.size();
+}
+
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews("", 25);
+    vector<unordered_map<string, string>> previews = createPreviews("", 25);
 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);
@@ -69,7 +122,7 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
     respond(HttpResponse::newHttpViewResponse("main.csp", std::move(data)));
 }
 
-void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
@@ -78,7 +131,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 
     const Videos& video_ref = video.value();
     const Users& channel = video_ref.getUser(RecordManager::getDbClient());
-    const std::string
+    const string
         viewCountStr = FormatUtil::FormatViewCount(video_ref.getValueOfViews()),
         ageStr = FormatUtil::FormatVideoAge(video_ref.getValueOfCreationTime()),
         title = HttpViewData::htmlTranslate(video_ref.getValueOfTitle()),
@@ -86,12 +139,12 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
-    std::vector<uint16_t> resolutions = ResolutionUtility::GetResolutions(video_ref);
-    std::vector<std::string> resolutions_str;
+    vector<uint16_t> resolutions = ResolutionUtility::GetResolutions(video_ref);
+    vector<string> resolutions_str;
     for(uint16_t resolution : resolutions)
         resolutions_str.emplace_back(std::to_string(resolution));
 
-    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews(video_id, 25);
+    vector<unordered_map<string, string>> previews = createPreviews(video_id, 25);
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);
@@ -113,14 +166,18 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
 }
 
 void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    return(void) error(std::move(respond), HttpStatusCode::k501NotImplemented, "/");
-
-    std::vector<std::unordered_map<std::string, std::string>> previews = createPreviews("", 25);
-
     HttpViewData data = Settings::getInstance().getData();
-    data.insert("previews", previews);
+    vector<unordered_map<string, string>> previews, channels;
 
-    // TODO
+    const string& search_query = req->getParameter("q");
+    size_t search_result_count = createSearchResults(previews, channels, search_query, 50);
+
+    data.insert("result_count", search_result_count);
+    data.insert("search_query", HttpViewData::htmlTranslate(search_query));
+    data.insert("previews", previews);
+    data.insert("channels", channels);
+    data.insert("result_count", std::to_string(search_result_count));
+
     respond(HttpResponse::newHttpViewResponse("search.csp", std::move(data)));
 }
 
@@ -128,7 +185,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     HttpViewData data = Settings::getInstance().getData();
 
     LoginMethod loginMethod = req->attributes()->get<LoginMethod>(Attributes::keyLoginMethod.data());
-    std::vector<std::unordered_map<std::string, std::string>> video_entries;
+    vector<unordered_map<string, string>> video_entries;
 
     if(loginMethod == LoginMethod::LaxNone) {
         data.insert("message", HttpViewData::htmlTranslate(req->getParameter("m")));
@@ -136,15 +193,15 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
         return;
     }
 
-    orm::DbClientPtr db = drogon::app().getDbClient();
-    drogon::orm::Mapper<Users> user_mapper(db);
+    DbClientPtr db = drogon::app().getDbClient();
+    Mapper<Users> user_mapper(db);
 
     Attributes::userId_t userId = req->attributes()->get<Attributes::userId_t>(Attributes::userId.data());
     const Users user = user_mapper.findByPrimaryKey(userId);
-    const std::vector<Videos> videos = user.getVideos(db);
+    const vector<Videos> videos = user.getVideos(db);
 
     for(const Videos& video : videos) {
-        video_entries.emplace_back(std::unordered_map<std::string, std::string>{
+        video_entries.emplace_back(unordered_map<string, string>{
                 { "id", video.getValueOfId() },
                 { "title", HttpViewData::htmlTranslate(video.getValueOfTitle()) },
                 { "description", HttpViewData::htmlTranslate(video.getValueOfDescription()) },
@@ -170,7 +227,7 @@ void SlimyTube::PageController::create(const HttpRequestPtr& req, std::function<
     respond(HttpResponse::newHttpViewResponse("create.csp", std::move(data)));
 }
 
-void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
@@ -187,8 +244,6 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
-constexpr const std::string_view channel_viewcount_query = "SELECT SUM(views) FROM videos WHERE channel = $1;";
-
 void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const uint64_t& user_id) const {
     HttpViewData data = Settings::getInstance().getData();
 
@@ -196,12 +251,12 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
     Mapper<Users> user_mapper(db);
     Mapper<Videos> video_mapper(db);
 
-    std::vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_id, CompareOperator::EQ, user_id));
+    vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_id, CompareOperator::EQ, user_id));
     if(users.empty())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
 
     const Users& user = users[0];
-    std::vector<Videos> videos = video_mapper
+    vector<Videos> videos = video_mapper
         .orderBy(Videos::Cols::_creation_time, SortOrder::DESC)
         .findBy(
             Criteria(Videos::Cols::_channel, CompareOperator::EQ, user_id) &&
@@ -215,12 +270,12 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
             totalViewCount = viewSum[0][0].as<int64_t>();
     }
 
-    std::vector<std::unordered_map<std::string, std::string>> previews;
+    vector<unordered_map<string, string>> previews;
     for(const Videos& video : videos) {
-        std::string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
-        std::string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
+        string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
+        string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
 
-        previews.emplace_back(std::unordered_map<std::string, std::string> {
+        previews.emplace_back(unordered_map<string, string> {
                 {"id", video.getValueOfId()},
                 {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
                 {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
@@ -237,7 +292,7 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
     respond(HttpResponse::newHttpViewResponse("channel.csp", std::move(data)));
 }
 
-void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
@@ -250,7 +305,7 @@ void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<vo
         return(void) error(std::move(respond), HttpStatusCode::k403Forbidden, "/account");
 
     const Users& channel = video_ref.getUser(RecordManager::getDbClient());
-    const std::string
+    const string
         viewCountStr = FormatUtil::FormatViewCount(video_ref.getValueOfViews()),
         ageStr = FormatUtil::FormatVideoAge(video_ref.getValueOfCreationTime()),
         title = HttpViewData::htmlTranslate(video_ref.getValueOfTitle()),
@@ -269,7 +324,7 @@ void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<vo
     respond(HttpResponse::newHttpViewResponse("edit.csp", std::move(data)));
 }
 
-HttpResponsePtr SlimyTube::PageController::errorResponse(HttpStatusCode err, const std::string& back) {
+HttpResponsePtr SlimyTube::PageController::errorResponse(HttpStatusCode err, const string& back) {
     HttpViewData data = Settings::getInstance().getData();
     data.insert("error-text", std::format("{} {}", static_cast<int>(err), drogon::statusCodeToString(err)));
     data.insert("back", back);
@@ -278,6 +333,6 @@ HttpResponsePtr SlimyTube::PageController::errorResponse(HttpStatusCode err, con
     return res;
 }
 
-void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, HttpStatusCode err, const std::string& back) {
+void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, HttpStatusCode err, const string& back) {
     respond(errorResponse(err, back));
 }

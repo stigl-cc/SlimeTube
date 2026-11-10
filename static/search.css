@@ -2,6 +2,18 @@
     flex: 1;
 }
 
+.preview-link {
+    margin-bottom: 5px;
+}
+
 .preview {
-    width: 25% !important;
+    width: 100% !important;
+
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.preview-image-container {
+    max-width: 50%;
 }
