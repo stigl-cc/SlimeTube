@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>About [[title]]</title>
+
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/about.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div id="main-content">
+            <div id="about-title-text">About [[title]]</div>
+            <hr>
+            <div id="about-text">
+                [[title]] is an open-source video platform that is inspired by the old web.
+                It encourages original and creative content instead of blind repetition.
+                [[title]] also supports many resolutions, although 640x480 is highly popular because it looks nice.
+                Since [[title]] uses barley any javascript, you can also run it on old browsers, or environments where JavaScript maybe not be available (e. g. Tor Browser).
+                You will only need javascript when uploading videos, and there is an optional javascript on the watch page if you want to use keyboard shortcuts.
+            </div>
+        </div>
+        <%view footer %>
+    </body>
+</html>

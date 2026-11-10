@@ -103,7 +103,7 @@ int main() {
         .setBrStatic(true)
         .enableGzip(true)
         .enableBrotli(false)
-        .setStaticFilesCacheTime(60)
+        .setStaticFilesCacheTime(600)
         .enableSendfile(true);
 
     app()

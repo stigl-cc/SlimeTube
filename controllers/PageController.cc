@@ -122,6 +122,16 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
     respond(HttpResponse::newHttpViewResponse("main.csp", std::move(data)));
 }
 
+void SlimyTube::PageController::about(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    const Settings& settings = Settings::getInstance();
+
+    if(!settings.use_embeded_about)
+        return (void)respond(HttpResponse::newFileResponse("./static/about.html", "", drogon::CT_TEXT_HTML));
+
+    HttpViewData data = settings.getData();
+    return (void)respond(HttpResponse::newHttpViewResponse("about.csp", std::move(data)));
+}
+
 void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
 

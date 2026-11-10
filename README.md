@@ -48,6 +48,7 @@ The setting "custom_config" contains all settings for this app specifically.
 - `encoder_frame_rate` - what frame rate to encode all videos into
 - `audio_bitrate` - what bitrate to use for videos
 - `audio_sample_rate` - what sample rate to use for videos
+- `use_embeded_about_page` - which about page content should be used: 0 - static/about.html, 1 (or anything else) views/about.csp
 
 ### Endpoints
 | URL                                                | Description                         | Headers/Query    | Success Codes | Error Codes | Authentication Required |
@@ -78,7 +79,7 @@ The setting "custom_config" contains all settings for this app specifically.
 | POST `/video/description/<video_id>`               | change video description            | desc             | 303           | 403 404     | Yes                     |
 | GET `/`                                            | recommendation page                 |                  | 200           |             | No                      |
 | GET `/watch/{video_id}` and `/watch/?v=<video_id>` | watch page                          |                  | 200           | 404         | No                      |
-| GET `/search/?q=<search_term>`                     | page of video search results        | q                |               | 501         | No                      |
+| GET `/search/?q=<search_term>`                     | page of video search results        | q                | 200           |             | No                      |
 | GET `/account`                                     | login and account managment page    |                  | 200           |             |                         |
 | GET `/register`                                    | page for creating a new user        |                  | 200           |             | No                      |
 | GET `/create`                                      | page for creating a video           |                  | 200           | 401         | Yes                     |

@@ -1,0 +1,11 @@
+#main-content {
+    flex: 1;
+}
+
+#about-title-text {
+    font-size: var(--text-size-medium);
+}
+
+#about-text {
+    max-width: 100ch;
+}
