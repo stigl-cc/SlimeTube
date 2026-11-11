@@ -37,7 +37,7 @@ using
     std::unordered_map;
 
 constexpr const std::string_view channel_viewcount_query = "SELECT SUM(views) FROM videos WHERE channel = $1;";
-constexpr const std::string_view recommended_query = "SELECT * FROM videos WHERE state = $1 AND id != $2 ORDER BY RANDOM() LIMIT $3;";
+constexpr const std::string_view recommended_query = "SELECT v.*, u.name AS ch_name FROM videos as v INNER JOIN users as u ON v.channel = u.id WHERE state = $1 AND v.id != $2 ORDER BY RANDOM() LIMIT $3;";
 
 // TODO: Add some sort of smarter algorithm
 vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(const string& ignore, size_t amount) const {
@@ -45,24 +45,18 @@ vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(
     Result queriedVideos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
 
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
-    vector<Videos> videos;
-    for(const Row& video : queriedVideos)
-        videos.emplace_back(video);
-
     vector<unordered_map<string, string>> previews;
-    for(const Videos& video : videos) {
-        string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
-        string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
-
+    for(const Row& video : queriedVideos) {
         previews.emplace_back(unordered_map<string, string> {
-                {"id", video.getValueOfId()},
-                {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
-                {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
-                {"channel",  user_mapper.findByPrimaryKey(video.getValueOfChannel()).getValueOfName()},
-                {"views", viewCountStr },
-                {"age", ageStr },
+                {"id", video[Videos::Cols::_id].as<string>() },
+                {"length", FormatUtil::FormatVideoLength(video[Videos::Cols::_length].as<int64_t>()) },
+                {"title", HttpViewData::htmlTranslate(video[Videos::Cols::_title].as<string>()) },
+                {"channel", video["ch_name"].as<string>() },
+                {"views", FormatUtil::FormatViewCount(video[Videos::Cols::_views].as<int64_t>()) },
+                {"age", FormatUtil::FormatVideoAge(video[Videos::Cols::_creation_time].as<int64_t>()) },
             });
     }
+
     return previews;
 }
 
