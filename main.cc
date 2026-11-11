@@ -109,8 +109,8 @@ int main() {
     app()
         .setClientMaxBodySize(10'485'760)
         .setClientMaxMemoryBodySize(10'485'760)
-        .setMaxConnectionNum(10'000)
-        .setMaxConnectionNumPerIP(10);
+        .setMaxConnectionNum(100'000)
+        .setMaxConnectionNumPerIP(100'000);
 
     // Take care of deleted videos every hour
     app().getLoop()

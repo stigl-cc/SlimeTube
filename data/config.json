@@ -16,7 +16,7 @@
     ],
 
     "app": {
-        "number_of_threads": 4,
+        "number_of_threads": 12,
 
         "run_as_daemon": false,
         "handle_sig_term": true,
