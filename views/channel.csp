@@ -20,6 +20,7 @@
         <div id="main-content">
             <div id="channel_title">[[channel_name]]</div>
             <div id="channel_views">[[channel_views]] total views</div>
+            <div id="channel_views">[[channel_videos]] videos</div>
             <br>
 
             <label for="preview-section">Videos:</label>

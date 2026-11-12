@@ -36,75 +36,60 @@ using
     std::string,
     std::unordered_map;
 
-constexpr const std::string_view channel_viewcount_query = "SELECT SUM(views) FROM videos WHERE channel = $1;";
-constexpr const std::string_view recommended_query = "SELECT v.*, u.name AS ch_name FROM videos as v INNER JOIN users as u ON v.channel = u.id WHERE state = $1 AND v.id != $2 ORDER BY RANDOM() LIMIT $3;";
+constexpr const std::string_view recommended_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE state = $1 AND v.id != $2 ORDER BY RANDOM() LIMIT $3;";
+
+namespace SlimyTube {
+    inline void emplace_preview(const Row& row, vector<unordered_map<string, string>>& previews) {
+        previews.emplace_back(unordered_map<string, string> {
+                {"id", row[Videos::Cols::_id].as<string>() },
+                {"length", FormatUtil::FormatVideoLength(row[Videos::Cols::_length].as<int64_t>()) },
+                {"title", HttpViewData::htmlTranslate(row[Videos::Cols::_title].as<string>()) },
+                {"channel", row["ch_name"].as<string>() },
+                {"views", FormatUtil::FormatViewCount(row[Videos::Cols::_views].as<int64_t>()) },
+                {"age", FormatUtil::FormatVideoAge(row[Videos::Cols::_creation_time].as<int64_t>()) },
+            });
+    }
+
+    inline void emplace_channel(const Row& row, vector<unordered_map<string, string>>& channels) {
+        channels.emplace_back(unordered_map<string, string> {
+                { "id", row[Users::Cols::_id].c_str() },
+                { "name", row[Users::Cols::_name].c_str() },
+                { "views", FormatUtil::FormatViewCount(row["total_views"].isNull() ? 0 : row["total_views"].as<int64_t>()) },
+                { "videos", row["total_videos"].c_str() },
+            });
+    }
+};
 
 // TODO: Add some sort of smarter algorithm
 vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(const string& ignore, size_t amount) const {
     DbClientPtr db = SlimyTube::RecordManager::getDbClient();
-    Result queriedVideos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
+    Result queried_videos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
 
     Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
     vector<unordered_map<string, string>> previews;
-    for(const Row& video : queriedVideos) {
-        previews.emplace_back(unordered_map<string, string> {
-                {"id", video[Videos::Cols::_id].as<string>() },
-                {"length", FormatUtil::FormatVideoLength(video[Videos::Cols::_length].as<int64_t>()) },
-                {"title", HttpViewData::htmlTranslate(video[Videos::Cols::_title].as<string>()) },
-                {"channel", video["ch_name"].as<string>() },
-                {"views", FormatUtil::FormatViewCount(video[Videos::Cols::_views].as<int64_t>()) },
-                {"age", FormatUtil::FormatVideoAge(video[Videos::Cols::_creation_time].as<int64_t>()) },
-            });
-    }
+    for(const Row& video : queried_videos)
+        emplace_preview(video, previews);
 
     return previews;
 }
 
+constexpr const std::string_view
+    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE title LIKE $1 OR description LIKE $1 LIMIT $2;",
+    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel WHERE u.name LIKE $1 GROUP BY u.id LIMIT $2;";
+
 size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<string, string>>& previews, vector<unordered_map<string, string>>& channels, const string& query, size_t count) const {
-    const string query_wildcards = '%' + query + '%';
     DbClientPtr db = RecordManager::getDbClient();
-    Mapper<Videos> video_mapper(db);
-    Mapper<Users> user_mapper(db);
+    const string query_w_wildcards = '%' + query + '%';
 
-    vector<Videos> videos = video_mapper.limit(count).findBy(
-        Criteria(Videos::Cols::_title, CompareOperator::Like, query_wildcards) ||
-        Criteria(Videos::Cols::_description, CompareOperator::Like, query_wildcards)
-    );
+    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, count);
+    for(const Row& video : found_videos)
+        emplace_preview(video, previews);
 
-    for(const Videos& video : videos) {
-        string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
-        string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
+    const Result found_users = db->execSqlSync(search_users_query.data(), query_w_wildcards, count);
+    for(const Row& user : found_users)
+        emplace_channel(user, channels);
 
-        previews.emplace_back(unordered_map<string, string> {
-                {"id", video.getValueOfId()},
-                {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
-                {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
-                {"channel",  user_mapper.findByPrimaryKey(video.getValueOfChannel()).getValueOfName()},
-                {"views", viewCountStr },
-                {"age", ageStr },
-            });
-    }
-
-    vector<Users> users = user_mapper.limit(count).findBy(
-        Criteria(Users::Cols::_name, CompareOperator::Like, query_wildcards)
-    );
-    for(const Users& user : users) {
-        int64_t totalViewCount = 0;
-        Result viewSum = db->execSqlSync(channel_viewcount_query.data(), user.getValueOfId());
-        if(viewSum.size()) {
-            const Row& r = viewSum[0];
-            if(r.size() && !r[0].isNull())
-                totalViewCount = viewSum[0][0].as<int64_t>();
-        }
-
-        channels.emplace_back(unordered_map<string, string> {
-                { "id", std::to_string(user.getValueOfId()) },
-                { "name", HttpViewData::htmlTranslate(user.getValueOfName()) },
-                { "views", FormatUtil::FormatViewCount(totalViewCount) }
-            });
-    }
-
-    return videos.size() + users.size();
+    return found_videos.size() + found_users.size();
 }
 
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
@@ -258,6 +243,8 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
+constexpr const std::string_view get_channel_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel WHERE u.id = $1 GROUP BY u.id;";
+
 void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const uint64_t& user_id) const {
     HttpViewData data = Settings::getInstance().getData();
 
@@ -265,42 +252,31 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
     Mapper<Users> user_mapper(db);
     Mapper<Videos> video_mapper(db);
 
-    vector<Users> users = user_mapper.findBy(orm::Criteria(Users::Cols::_id, CompareOperator::EQ, user_id));
-    if(users.empty())
+    const Result user = db->execSqlSync(get_channel_query.data(), user_id);
+    if(user.empty())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
 
-    const Users& user = users[0];
     vector<Videos> videos = video_mapper
         .orderBy(Videos::Cols::_creation_time, SortOrder::DESC)
         .findBy(
             Criteria(Videos::Cols::_channel, CompareOperator::EQ, user_id) &&
             Criteria(Videos::Cols::_state, CompareOperator::EQ, static_cast<int32_t>(VideoState::Ready)));
 
-    int64_t totalViewCount = 0;
-    Result viewSum = db->execSqlSync(channel_viewcount_query.data(), user_id);
-    if(viewSum.size()) {
-        const Row& r = viewSum[0];
-        if(r.size() && !r[0].isNull())
-            totalViewCount = viewSum[0][0].as<int64_t>();
-    }
-
     vector<unordered_map<string, string>> previews;
     for(const Videos& video : videos) {
-        string viewCountStr = FormatUtil::FormatViewCount(video.getValueOfViews());
-        string ageStr = FormatUtil::FormatVideoAge(video.getValueOfCreationTime());
-
         previews.emplace_back(unordered_map<string, string> {
                 {"id", video.getValueOfId()},
                 {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
                 {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
-                {"views", viewCountStr },
-                {"age", ageStr },
+                {"views", FormatUtil::FormatViewCount(video.getValueOfViews()) },
+                {"age", FormatUtil::FormatVideoAge(video.getValueOfCreationTime()) },
             });
     }
 
     data.insert("url", Settings::getInstance().url);
-    data.insert("channel_name", user.getValueOfName());
-    data.insert("channel_views", std::to_string(totalViewCount));
+    data.insert("channel_name", user[0][Users::Cols::_name].c_str());
+    data.insert("channel_views", user[0]["total_views"].c_str());
+    data.insert("channel_videos", user[0]["total_videos"].c_str());
     data.insert("previews", previews);
 
     respond(HttpResponse::newHttpViewResponse("channel.csp", std::move(data)));

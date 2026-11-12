@@ -20,7 +20,7 @@
                         if(channels.empty()) { %>
                     No channels found.
                     <%c++ } for(const auto& channel : channels) { %>
-                    <a href="/channel/{%channel.at("id")%}">{%channel.at("name")%}</a> - {%channel.at("views")%} total views<br>
+                    <a href="/channel/{%channel.at("id")%}">{%channel.at("name")%}</a> - {%channel.at("views")%} total views - {%channel.at("videos")%} videos<br>
                     <%c++ } %>
                 </div>
                 <label for="video-results">Videos:</label>
