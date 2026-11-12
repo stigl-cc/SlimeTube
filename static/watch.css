@@ -1,6 +1,8 @@
 :root {
     --video-bg-color: #000000;
     --video-description-bg-color: #333344;
+    --video-comment-section-bg-color: #333344;
+    --video-comment-bg-color: #444455;
 }
 
 select {
@@ -43,7 +45,7 @@ hr {
 }
 
 #video-title {
-    font-size: 24px;
+    font-size: var(--text-size-medium);
     padding-right: 150px;
 }
 
@@ -51,7 +53,7 @@ hr {
     position: relative;
     padding: 5px;
     margin: 0px;
-    font-size: 16px;
+    font-size: var(--text-size-small);
     background-color: var(--video-description-bg-color);
 }
 
@@ -105,8 +107,63 @@ hr {
     }
 
     #video-title {
-        font-size: 24px;
         padding-right: unset;
     }
 
+}
+
+#comment-section-label {
+    font-size: var(--text-size-medium);
+}
+
+#comment-section {
+    background-color: var(--video-comment-section-bg-color);
+    font-size: var(--text-size-small);
+
+    position: relative;
+    padding: 5px;
+    margin: 0px;
+    margin-top: 5px;
+}
+
+.comment {
+    background-color: var(--video-comment-bg-color);
+
+    margin-bottom: 5px;
+    padding: 5px;
+}
+
+.comment-author {
+    display: inline;
+}
+
+.comment-age {
+    display: inline;
+}
+
+.comment-text {
+
+}
+
+#post-comment-form {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
+}
+
+#post-comment-text {
+    background-color: var(--video-comment-bg-color);
+    font-size: var(--text-size-small);
+    margin: 0px;
+    flex-grow: 1;
+}
+
+#post-comment-post {
+    background-color: var(--video-comment-bg-color);
+    width: 10%;
+    min-width: 60px;
+    font-size: var(--text-size-small);
+    margin: 0px;
+    margin-left: 10px;
+    padding: 0px;
 }

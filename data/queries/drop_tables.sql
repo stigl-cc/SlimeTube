@@ -1,2 +1,3 @@
-DROP TABLE users;
-DROP TABLE videos;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS videos;
+DROP TABLE IF EXISTS comments;
