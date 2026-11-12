@@ -252,8 +252,9 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
     Mapper<Users> user_mapper(db);
     Mapper<Videos> video_mapper(db);
 
-    const Result user = db->execSqlSync(get_channel_query.data(), user_id);
-    if(user.empty())
+    const Result users = db->execSqlSync(get_channel_query.data(), user_id);
+    const Row& user = users[0];
+    if(users.empty())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
 
     vector<Videos> videos = video_mapper
@@ -274,9 +275,9 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
     }
 
     data.insert("url", Settings::getInstance().url);
-    data.insert("channel_name", user[0][Users::Cols::_name].c_str());
-    data.insert("channel_views", user[0]["total_views"].c_str());
-    data.insert("channel_videos", user[0]["total_videos"].c_str());
+    data.insert("channel_name", user[Users::Cols::_name].c_str());
+    data.insert("channel_views", user["total_views"].isNull() ? "0" : user["total_views"].c_str());
+    data.insert("channel_videos", user["total_videos"].c_str());
     data.insert("previews", previews);
 
     respond(HttpResponse::newHttpViewResponse("channel.csp", std::move(data)));
