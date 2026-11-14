@@ -27,10 +27,17 @@ namespace SlimyTube {
 
         static std::vector<uint8_t> createSalt();
         static void createHash(const std::string& pass, std::span<const uint8_t> salt, std::span<uint8_t> hash);
-        static bool nameExists(const std::string& name, Mapper<Users>& mapper);
+
+        static inline bool nameExists(const std::string& name, Mapper<Users>& mapper) {
+            return mapper.count(drogon::orm::Criteria(Users::Cols::_name, drogon::orm::CompareOperator::EQ, name)) == 1;
+        }
 
         static void registerUser(const std::string& name, const std::string& pass);
-        static void changeUserName(Attributes::userId_t userId, const std::string& newName);
+
+        static void changeUserName(Attributes::userId_t userId, const std::string& newName) {
+            getUserMapper().updateBy({ Users::Cols::_name }, { Users::Cols::_id, drogon::orm::CompareOperator::EQ, userId }, newName);
+        }
+
         static void changeUserPassword(Attributes::userId_t userId, const std::string& newPass);
         static void deleteUser(Attributes::userId_t userId);
 
@@ -40,8 +47,13 @@ namespace SlimyTube {
         static bool videoExists(const std::string& videoId);
         static std::optional<Videos> getVideoIfExists(const std::string& videoId);
 
-        static void changeVideoTitle(const std::string& videoId, const std::string& newTitle);
-        static void changeVideoDescription(const std::string& videoId, const std::string& newDescription);
+        static inline void changeVideoTitle(const std::string& videoId, const std::string& newTitle) {
+            getVideosMapper().updateBy({ Videos::Cols::_title }, drogon::orm::Criteria(Videos::Cols::_id, drogon::orm::CompareOperator::EQ, videoId), newTitle);
+        }
+
+        static inline void changeVideoDescription(const std::string& videoId, const std::string& newDescription) {
+            getVideosMapper().updateBy({ Videos::Cols::_description }, drogon::orm::Criteria(Videos::Cols::_id, drogon::orm::CompareOperator::EQ, videoId), newDescription);
+        }
 
         static std::string generateVideoId(size_t size = 6);
 

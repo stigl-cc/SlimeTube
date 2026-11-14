@@ -65,11 +65,6 @@ void SlimyTube::RecordManager::createHash(const std::string& pass, std::span<con
     }
 }
 
-bool SlimyTube::RecordManager::nameExists(const std::string& name, Mapper<Users>& mapper) {
-    // username already taken
-    return mapper.count(Criteria(Users::Cols::_name, CompareOperator::EQ, name)) == 1;
-}
-
 void SlimyTube::RecordManager::registerUser(const std::string& name, const std::string& pass) {
     std::vector<uint8_t> salt = createSalt();
 
@@ -82,11 +77,6 @@ void SlimyTube::RecordManager::registerUser(const std::string& name, const std::
     user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
 
     getUserMapper().insert(user);
-}
-
-void SlimyTube::RecordManager::changeUserName(userId_t user_id, const std::string& new_name) {
-    const Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, user_id);
-    getUserMapper().updateBy({ Users::Cols::_name }, crit, new_name);
 }
 
 void SlimyTube::RecordManager::changeUserPassword(userId_t user_id, const std::string& new_pass) {
@@ -166,16 +156,6 @@ std::optional<Videos> SlimyTube::RecordManager::getVideoIfExists(const std::stri
     } catch(UnexpectedRows e) {
         return std::nullopt;
     }
-}
-
-void SlimyTube::RecordManager::changeVideoTitle(const std::string& videoId, const std::string& newTitle) {
-    Mapper<Videos> video_mapper = getVideosMapper();
-    video_mapper.updateBy({ Videos::Cols::_title }, Criteria(Videos::Cols::_id, CompareOperator::EQ, videoId), newTitle);
-}
-
-void SlimyTube::RecordManager::changeVideoDescription(const std::string& videoId, const std::string& newDescription) {
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
-    video_mapper.updateBy({ Videos::Cols::_description }, Criteria(Videos::Cols::_id, CompareOperator::EQ, videoId), newDescription);
 }
 
 constexpr std::string_view videoIdCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
