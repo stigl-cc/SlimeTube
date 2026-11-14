@@ -1,3 +1,4 @@
+#include "Attributes.h"
 #include "Comments.h"
 #include <RecordManager.h>
 #include <models/utils/TimeUtility.h>
@@ -22,6 +23,7 @@
 
 namespace fs = std::filesystem;
 using namespace drogon::orm;
+using SlimyTube::Attributes::userId_t;
 
 DbClientPtr SlimyTube::RecordManager::getDbClient() {
     static DbClientPtr db = drogon::app().getDbClient();
@@ -68,15 +70,50 @@ bool SlimyTube::RecordManager::nameExists(const std::string& name, Mapper<Users>
     return mapper.count(Criteria(Users::Cols::_name, CompareOperator::EQ, name)) == 1;
 }
 
-void SlimyTube::RecordManager::createComment(uint64_t channel, const std::string& video, const std::string& text) {
-    Mapper<Comments> comment_mapper(getDbClient());
+void SlimyTube::RecordManager::registerUser(const std::string& name, const std::string& pass) {
+    std::vector<uint8_t> salt = createSalt();
 
-    Comments comment;
-    comment.setChannel(channel);
-    comment.setVideo(video);
-    comment.setCreationTime(TimeUtil::GetUnixSecond());
-    comment.setContent(text);
-    comment_mapper.insert(comment);
+    uint8_t hash[32];
+    RecordManager::createHash(pass, salt, hash);
+
+    Users user;
+    user.setName(name);
+    user.setHash(std::string(reinterpret_cast<char*>(hash), sizeof(hash)));
+    user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
+
+    getUserMapper().insert(user);
+}
+
+void SlimyTube::RecordManager::changeUserName(userId_t user_id, const std::string& new_name) {
+    const Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, user_id);
+    getUserMapper().updateBy({ Users::Cols::_name }, crit, new_name);
+}
+
+void SlimyTube::RecordManager::changeUserPassword(userId_t user_id, const std::string& new_pass) {
+    const std::vector<uint8_t> salt = RecordManager::createSalt();
+
+    uint8_t hash[32];
+    RecordManager::createHash(new_pass, salt, hash);
+
+    Mapper<Users> user_mapper = RecordManager::getUserMapper();
+
+    Users user = user_mapper.findByPrimaryKey(user_id);
+    user.setHash(std::string(reinterpret_cast<const char*>(hash), sizeof(hash)));
+    user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
+    user_mapper.update(user);
+}
+
+void SlimyTube::RecordManager::deleteUser(userId_t user_id) {
+    DbClientPtr db = RecordManager::getDbClient();
+    Mapper<Users> user_mapper(db);
+    Users user = user_mapper.findByPrimaryKey(user_id);
+
+    // Delete all videos made by the account
+    const std::vector<Videos> videos = user.getVideos(db);
+    for(const Videos& video : videos)
+        RecordManager::deleteVideo(video);
+
+    user_mapper.deleteByPrimaryKey(user_id);
 }
 
 std::string SlimyTube::RecordManager::createVideo(uint64_t channel, const std::string& title, const std::string& description) {
@@ -118,17 +155,27 @@ void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
     video_mapper.deleteByPrimaryKey(video.getPrimaryKey());
 }
 
-bool SlimyTube::RecordManager::videoExists(const std::string& id) {
-    return getVideosMapper().count(Criteria(Videos::Cols::_id, CompareOperator::EQ, id)) == 1;
+bool SlimyTube::RecordManager::videoExists(const std::string& videoId) {
+    return getVideosMapper().count(Criteria(Videos::Cols::_id, CompareOperator::EQ, videoId)) == 1;
 }
 
-std::optional<Videos> SlimyTube::RecordManager::getVideoIfExists(const std::string& id) {
+std::optional<Videos> SlimyTube::RecordManager::getVideoIfExists(const std::string& videoId) {
     Mapper<Videos> video_mapper = getVideosMapper();
     try {
-        return video_mapper.findOne(Criteria(Videos::Cols::_id, CompareOperator::EQ, id));
+        return video_mapper.findOne(Criteria(Videos::Cols::_id, CompareOperator::EQ, videoId));
     } catch(UnexpectedRows e) {
         return std::nullopt;
     }
+}
+
+void SlimyTube::RecordManager::changeVideoTitle(const std::string& videoId, const std::string& newTitle) {
+    Mapper<Videos> video_mapper = getVideosMapper();
+    video_mapper.updateBy({ Videos::Cols::_title }, Criteria(Videos::Cols::_id, CompareOperator::EQ, videoId), newTitle);
+}
+
+void SlimyTube::RecordManager::changeVideoDescription(const std::string& videoId, const std::string& newDescription) {
+    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
+    video_mapper.updateBy({ Videos::Cols::_description }, Criteria(Videos::Cols::_id, CompareOperator::EQ, videoId), newDescription);
 }
 
 constexpr std::string_view videoIdCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -145,4 +192,15 @@ std::string SlimyTube::RecordManager::generateVideoId(size_t size) {
     for(int i =0; i < size; i++)
         videoId.push_back(videoIdCharacters[distribution(rng)]);
     return videoId;
+}
+
+void SlimyTube::RecordManager::createComment(uint64_t channel, const std::string& video, const std::string& text) {
+    Mapper<Comments> comment_mapper(getDbClient());
+
+    Comments comment;
+    comment.setChannel(channel);
+    comment.setVideo(video);
+    comment.setCreationTime(TimeUtil::GetUnixSecond());
+    comment.setContent(text);
+    comment_mapper.insert(comment);
 }

@@ -29,14 +29,22 @@ namespace SlimyTube {
         static void createHash(const std::string& pass, std::span<const uint8_t> salt, std::span<uint8_t> hash);
         static bool nameExists(const std::string& name, Mapper<Users>& mapper);
 
+        static void registerUser(const std::string& name, const std::string& pass);
+        static void changeUserName(Attributes::userId_t userId, const std::string& newName);
+        static void changeUserPassword(Attributes::userId_t userId, const std::string& newPass);
+        static void deleteUser(Attributes::userId_t userId);
+
         static std::string createVideo(uint64_t channel, const std::string& title, const std::string& description);
         static void deleteVideo(const Videos&);
 
-        static void createComment(uint64_t channel, const std::string& video, const std::string& text);
+        static bool videoExists(const std::string& videoId);
+        static std::optional<Videos> getVideoIfExists(const std::string& videoId);
 
-        static bool videoExists(const std::string& id);
-        static std::optional<Videos> getVideoIfExists(const std::string& id);
+        static void changeVideoTitle(const std::string& videoId, const std::string& newTitle);
+        static void changeVideoDescription(const std::string& videoId, const std::string& newDescription);
 
         static std::string generateVideoId(size_t size = 6);
+
+        static void createComment(uint64_t channel, const std::string& video, const std::string& text);
     };
 };

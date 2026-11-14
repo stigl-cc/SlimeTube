@@ -62,18 +62,7 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
     if(RecordManager::nameExists(name, user_mapper))
         api_ui_error(HttpStatusCode::k409Conflict, "/register");
 
-    std::vector<uint8_t> salt = RecordManager::createSalt();
-
-    uint8_t hash[32];
-    RecordManager::createHash(pass, salt, hash);
-
-    Users user;
-    user.setName(name);
-    user.setHash(std::string(reinterpret_cast<char*>(hash), sizeof(hash)));
-    user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
-
-    user_mapper.insert(user);
-
+    RecordManager::registerUser(name, pass);
     api_redirect_error(HttpStatusCode::k201Created, "/account?m=Account%20created%20successfully");
 }
 
@@ -86,7 +75,6 @@ void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::func
 
     if(loginMethod != Attributes::LoginMethod::Session)
         req->session()->insert(Session::userId.data(), req->attributes()->get<userId_t>(Attributes::userId.data()));
-
     api_redirect_error(HttpStatusCode::k200OK, "/account");
 }
 
@@ -96,36 +84,23 @@ void SlimyTube::RecordController::userLogout(const HttpRequestPtr& req, std::fun
         api_ui_error(HttpStatusCode::k400BadRequest, "/account");
 
     req->session()->clear();
-
     api_redirect_error(HttpStatusCode::k200OK, "/account?m=Logged%20out%20successfully");
 }
 
 void SlimyTube::RecordController::userDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
-    DbClientPtr db = RecordManager::getDbClient();
-    Mapper<Users> user_mapper = RecordManager::getUserMapper();
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
-
     userId_t userId = req->attributes()->get<userId_t>(Attributes::userId.data());
-    Users user = user_mapper.findByPrimaryKey(userId);
 
-    // Delete all videos made by the account
-    const std::vector<Videos> videos = user.getVideos(db);
-    for(const Videos& video : videos)
-        RecordManager::deleteVideo(video);
-
-    user_mapper.deleteByPrimaryKey(req->attributes()->get<userId_t>(Attributes::userId.data()));
+    RecordManager::deleteUser(userId);
     req->session()->clear();
-
     api_redirect_error(HttpStatusCode::k200OK, "/account?m=Account%20deleted%20successfully");
 }
 
 void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
     Mapper<Users> user_mapper = RecordManager::getUserMapper();
-    const std::string&
-        new_name = req->getParameter(Query::newUsername.data());
 
+    const std::string& new_name = req->getParameter(Query::newUsername.data());
     if(new_name.empty())
         api_ui_error(HttpStatusCode::k400BadRequest, "/account");
 
@@ -133,120 +108,102 @@ void SlimyTube::RecordController::userChangeName(const HttpRequestPtr& req, std:
         api_ui_error(HttpStatusCode::k409Conflict, "/account");
 
     userId_t userId = req->getAttributes()->get<userId_t>(Attributes::userId.data());
-    Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
-    user_mapper.updateBy({ Users::Cols::_name }, crit, new_name);
 
+    RecordManager::changeUserName(userId, new_name);
     api_redirect_error(HttpStatusCode::k200OK, "/account");
 }
 
 void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
-    Mapper<Users> user_mapper = RecordManager::getUserMapper();
-    const std::string&
-        new_pass = req->getParameter(Query::newPassword.data());
 
+    const std::string& new_pass = req->getParameter(Query::newPassword.data());
     if(new_pass.empty())
         api_ui_error(HttpStatusCode::k400BadRequest, "/account");
 
-    std::vector<uint8_t> salt = RecordManager::createSalt();
-
-    uint8_t hash[32];
-    RecordManager::createHash(new_pass, salt, hash);
-
     userId_t userId = req->getAttributes()->get<userId_t>(Attributes::userId.data());
-    Criteria crit = Criteria(Users::Cols::_id, CompareOperator::EQ, userId);
-    Users user = user_mapper.findByPrimaryKey(userId);
-    user.setHash(std::string(reinterpret_cast<const char*>(hash), sizeof(hash)));
-    user.setSalt(std::string(reinterpret_cast<const char*>(salt.data()), salt.size()));
-    user_mapper.update(user);
 
+    RecordManager::changeUserPassword(userId, new_pass);
     req->session()->clear();
-
     api_redirect_error(HttpStatusCode::k200OK, "/account?m=Changed%20password%20successfully")
+}
+
+void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
+
+    const std::string&
+        title = req->getParameter(Query::videoTitle.data()),
+        desc = req->getParameter(Query::videoDescription.data());
+    if(title.empty())
+        api_ui_error(HttpStatusCode::k400BadRequest, "/account");
+
+    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
+
+    const std::string id = RecordManager::createVideo(channel, title, desc);
+    api_redirect_error(HttpStatusCode::k200OK, "/video/upload/" + id)
+}
+
+void SlimyTube::RecordController::videoDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
+
+    std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
+    if(!video.has_value())
+        api_ui_error(HttpStatusCode::k404NotFound, "/account");
+
+    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
+    if(video.value().getValueOfChannel() != channel)
+        api_ui_error(HttpStatusCode::k403Forbidden, "/account");
+
+    RecordManager::deleteVideo(video.value());
+    api_redirect_error(HttpStatusCode::k200OK, "/account");
+}
+
+void SlimyTube::RecordController::videoChangeTitle(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
+
+    const std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
+    if(!video.has_value())
+        api_ui_error(HttpStatusCode::k404NotFound, "/account");
+
+    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
+    if(video.value().getValueOfChannel() != channel)
+        api_ui_error(HttpStatusCode::k403Forbidden, "/account");
+
+    const std::string& new_title = req->getParameter(Query::videoTitle.data());
+    if(new_title.empty())
+        api_ui_error(HttpStatusCode::k400BadRequest, "/video/edit/" + video_id);
+
+    RecordManager::changeVideoTitle(video_id, new_title);
+    api_redirect_error(HttpStatusCode::k200OK, "/video/edit/" + video_id);
+}
+
+void SlimyTube::RecordController::videoChangeDescription(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& video_id) const {
+    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
+
+    const std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
+    if(!video.has_value())
+        api_ui_error(HttpStatusCode::k404NotFound, "/account");
+
+    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
+    if(video.value().getValueOfChannel() != channel)
+        api_ui_error(HttpStatusCode::k403Forbidden, "/account");
+
+    const std::string& new_description = req->getParameter(Query::videoDescription.data());
+
+    RecordManager::changeVideoDescription(video_id, new_description);
+    api_redirect_error(HttpStatusCode::k200OK, "/video/edit/" + video_id);
 }
 
 void SlimyTube::RecordController::commentCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
-    const std::string&
-        video = req->getParameter(Query::videoId.data()),
-        content = req->getParameter(Query::commentContent.data());
 
+    const std::string& video = req->getParameter(Query::videoId.data());
     if(video.empty())
         api_ui_error(HttpStatusCode::k400BadRequest, "/");
 
+    const std::string& content = req->getParameter(Query::commentContent.data());
     if(content.empty())
         api_ui_error(HttpStatusCode::k400BadRequest, "/watch/" + video);
 
     RecordManager::createComment(req->getAttributes()->get<userId_t>(Attributes::userId.data()), video, content);
     api_redirect_error(HttpStatusCode::k200OK, "/watch/" + video);
-}
-
-void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
-    const std::string&
-        title = req->getParameter(Query::videoTitle.data()),
-        desc = req->getParameter(Query::videoDescription.data());
-
-    if(title.empty())
-        api_ui_error(HttpStatusCode::k400BadRequest, "/account");
-
-    const userId_t
-        channel = req->attributes()->get<userId_t>(Attributes::userId.data());
-
-    std::string id = RecordManager::createVideo(channel, title, desc);
-
-    api_redirect_error(HttpStatusCode::k200OK, "/video/upload/" + id)
-}
-
-void SlimyTube::RecordController::videoDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const {
-    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
-    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
-    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
-    if(!video.has_value())
-        api_ui_error(HttpStatusCode::k404NotFound, "/account");
-
-    if(video.value().getValueOfChannel() != channel)
-        api_ui_error(HttpStatusCode::k403Forbidden, "/account");
-
-    RecordManager::deleteVideo(video.value());
-
-    api_redirect_error(HttpStatusCode::k200OK, "/account");
-}
-
-void SlimyTube::RecordController::videoChangeTitle(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const {
-    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
-    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
-    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
-    if(!video.has_value())
-        api_ui_error(HttpStatusCode::k404NotFound, "/account");
-
-    if(video.value().getValueOfChannel() != channel)
-        api_ui_error(HttpStatusCode::k403Forbidden, "/account");
-
-    const std::string& title = req->getParameter(Query::videoTitle.data());
-    if(title.empty())
-        api_ui_error(HttpStatusCode::k400BadRequest, "/video/edit/" + id);
-
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
-    video_mapper.updateBy({ Videos::Cols::_title }, Criteria(Videos::Cols::_id, CompareOperator::EQ, id), title);
-
-    api_redirect_error(HttpStatusCode::k200OK, "/video/edit/" + id);
-}
-
-void SlimyTube::RecordController::videoChangeDescription(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const {
-    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
-    const userId_t channel = req->attributes()->get<userId_t>(Attributes::userId.data());
-    std::optional<Videos> video = RecordManager::getVideoIfExists(id);
-    if(!video.has_value())
-        api_ui_error(HttpStatusCode::k404NotFound, "/account");
-
-    if(video.value().getValueOfChannel() != channel)
-        api_ui_error(HttpStatusCode::k403Forbidden, "/account");
-
-    const std::string& description = req->getParameter(Query::videoDescription.data());
-
-    Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
-    video_mapper.updateBy({ Videos::Cols::_description }, Criteria(Videos::Cols::_id, CompareOperator::EQ, id), description);
-
-    api_redirect_error(HttpStatusCode::k200OK, "/video/edit/" + id);
 }
