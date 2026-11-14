@@ -78,8 +78,8 @@ vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(
 }
 
 constexpr const std::string_view
-    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 LIMIT $3;",
-    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id LIMIT $3;";
+    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 LIMIT $3 ORDER BY creation_time DESC;",
+    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id LIMIT $3 ORDER BY name;";
 
 size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<string, string>>& previews, vector<unordered_map<string, string>>& channels, const string& query, size_t count) const {
     DbClientPtr db = RecordManager::getDbClient();
@@ -126,7 +126,7 @@ void SlimyTube::PageController::privacy(const HttpRequestPtr& req, std::function
 }
 
 constexpr const std::string_view
-    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c INNER JOIN users AS u ON c.channel = u.id WHERE c.video = $1;";
+    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c INNER JOIN users AS u ON c.channel = u.id WHERE c.video = $1 ORDER BY creation_time DESC;";
 
 namespace SlimyTube {
     inline void emplace_comment(const Row& row, vector<unordered_map<string, string>>& comments) {
