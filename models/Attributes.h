@@ -31,12 +31,16 @@ namespace SlimyTube::Query {
         newUsername = "new_user";
 
     static constexpr std::string_view
+        videoId = "video",
         videoTitle = "title",
         videoDescription = "desc";
 
     static constexpr std::string_view
         videoQuality = "quality",
         videoSpeed = "speed";
+
+    static constexpr std::string_view
+        commentContent = "content";
 };
 
 namespace SlimyTube::Headers {

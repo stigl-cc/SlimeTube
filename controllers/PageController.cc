@@ -1,6 +1,8 @@
+#include "Comments.h"
 #include <controllers/RecordController.h>
 #include <controllers/PageController.h>
 
+#include <cstdint>
 #include <drogon/orm/DbClient.h>
 #include <models/utils/FormatUtility.h>
 
@@ -46,7 +48,7 @@ namespace SlimyTube {
                 {"title", HttpViewData::htmlTranslate(row[Videos::Cols::_title].as<string>()) },
                 {"channel", row["ch_name"].as<string>() },
                 {"views", FormatUtil::FormatViewCount(row[Videos::Cols::_views].as<int64_t>()) },
-                {"age", FormatUtil::FormatVideoAge(row[Videos::Cols::_creation_time].as<int64_t>()) },
+                {"age", FormatUtil::FormatAge(row[Videos::Cols::_creation_time].as<int64_t>()) },
             });
     }
 
@@ -58,6 +60,8 @@ namespace SlimyTube {
                 { "videos", row["total_videos"].c_str() },
             });
     }
+
+
 };
 
 // TODO: Add some sort of smarter algorithm
@@ -74,18 +78,18 @@ vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(
 }
 
 constexpr const std::string_view
-    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE title LIKE $1 OR description LIKE $1 LIMIT $2;",
-    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel WHERE u.name LIKE $1 GROUP BY u.id LIMIT $2;";
+    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 LIMIT $3;",
+    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id LIMIT $3;";
 
 size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<string, string>>& previews, vector<unordered_map<string, string>>& channels, const string& query, size_t count) const {
     DbClientPtr db = RecordManager::getDbClient();
     const string query_w_wildcards = '%' + query + '%';
 
-    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, count);
+    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, static_cast<int32_t>(VideoState::Ready), count);
     for(const Row& video : found_videos)
         emplace_preview(video, previews);
 
-    const Result found_users = db->execSqlSync(search_users_query.data(), query_w_wildcards, count);
+    const Result found_users = db->execSqlSync(search_users_query.data(), static_cast<int32_t>(VideoState::Ready), query_w_wildcards, count);
     for(const Row& user : found_users)
         emplace_channel(user, channels);
 
@@ -121,6 +125,20 @@ void SlimyTube::PageController::privacy(const HttpRequestPtr& req, std::function
     return (void)respond(HttpResponse::newHttpViewResponse("privacy.csp", std::move(data)));
 }
 
+constexpr const std::string_view
+    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c INNER JOIN users AS u ON c.channel = u.id WHERE c.video = $1;";
+
+namespace SlimyTube {
+    inline void emplace_comment(const Row& row, vector<unordered_map<string, string>>& comments) {
+        comments.emplace_back(unordered_map<string, string> {
+                { "channel_id", row[Comments::Cols::_channel].c_str() },
+                { "channel_name", row["ch_name"].c_str() },
+                { "age", FormatUtil::FormatAge(row[Comments::Cols::_creation_time].as<int64_t>()) },
+                { "text", HttpViewData::htmlTranslate(row[Comments::Cols::_content].c_str()) }
+            });
+    }
+};
+
 void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
 
@@ -132,21 +150,29 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     const Users& channel = video_ref.getUser(RecordManager::getDbClient());
     const string
         viewCountStr = FormatUtil::FormatViewCount(video_ref.getValueOfViews()),
-        ageStr = FormatUtil::FormatVideoAge(video_ref.getValueOfCreationTime()),
+        ageStr = FormatUtil::FormatAge(video_ref.getValueOfCreationTime()),
         title = HttpViewData::htmlTranslate(video_ref.getValueOfTitle()),
         desc = HttpViewData::htmlTranslate(video_ref.getValueOfDescription()),
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),
         user_id = std::to_string(channel.getValueOfId());
 
+    // find available resolution
     vector<uint16_t> resolutions = ResolutionUtility::GetResolutions(video_ref);
     vector<string> resolutions_str;
     for(uint16_t resolution : resolutions)
         resolutions_str.emplace_back(std::to_string(resolution));
 
+    vector<unordered_map<string, string>> comments;
+    DbClientPtr db = RecordManager::getDbClient();
+    const Result found_comments = db->execSqlSync(get_comments_query.data(), video_id);
+    for(const Row& comment : found_comments)
+        emplace_comment(comment, comments);
+
     vector<unordered_map<string, string>> previews = createPreviews(video_id, 25);
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);
+    data.insert("comments", comments);
     data.insert("resolution", req->getParameter("quality"));
     data.insert("resolutions", resolutions_str);
 
@@ -243,7 +269,7 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
-constexpr const std::string_view get_channel_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel WHERE u.id = $1 GROUP BY u.id;";
+constexpr const std::string_view get_channel_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.id = $2 GROUP BY u.id;";
 
 void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const uint64_t& user_id) const {
     HttpViewData data = Settings::getInstance().getData();
@@ -252,7 +278,7 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
     Mapper<Users> user_mapper(db);
     Mapper<Videos> video_mapper(db);
 
-    const Result users = db->execSqlSync(get_channel_query.data(), user_id);
+    const Result users = db->execSqlSync(get_channel_query.data(), static_cast<int32_t>(VideoState::Ready), user_id);
     const Row& user = users[0];
     if(users.empty())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
@@ -270,7 +296,7 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
                 {"length", FormatUtil::FormatVideoLength(video.getValueOfLength())},
                 {"title", HttpViewData::htmlTranslate(video.getValueOfTitle())},
                 {"views", FormatUtil::FormatViewCount(video.getValueOfViews()) },
-                {"age", FormatUtil::FormatVideoAge(video.getValueOfCreationTime()) },
+                {"age", FormatUtil::FormatAge(video.getValueOfCreationTime()) },
             });
     }
 
@@ -298,7 +324,7 @@ void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<vo
     const Users& channel = video_ref.getUser(RecordManager::getDbClient());
     const string
         viewCountStr = FormatUtil::FormatViewCount(video_ref.getValueOfViews()),
-        ageStr = FormatUtil::FormatVideoAge(video_ref.getValueOfCreationTime()),
+        ageStr = FormatUtil::FormatAge(video_ref.getValueOfCreationTime()),
         title = HttpViewData::htmlTranslate(video_ref.getValueOfTitle()),
         desc = HttpViewData::htmlTranslate(video_ref.getValueOfDescription()),
         user_name = HttpViewData::htmlTranslate(channel.getValueOfName()),

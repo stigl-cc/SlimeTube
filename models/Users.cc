@@ -6,6 +6,7 @@
  */
 
 #include "Users.h"
+#include "Comments.h"
 #include "Videos.h"
 #include <drogon/utils/Utilities.h>
 #include <string>
@@ -865,6 +866,42 @@ void Users::getVideos(const DbClientPtr &clientPtr,
                    for (auto const &row : r)
                    {
                        ret.emplace_back(Videos(row));
+                   }
+                   rcb(ret);
+               }
+               >> ecb;
+}
+std::vector<Comments> Users::getComment(const DbClientPtr &clientPtr) const {
+    static const std::string sql = "select * from comments where channel = ?";
+    Result r(nullptr);
+    {
+        auto binder = *clientPtr << sql;
+        binder << *id_ << Mode::Blocking >>
+            [&r](const Result &result) { r = result; };
+        binder.exec();
+    }
+    std::vector<Comments> ret;
+    ret.reserve(r.size());
+    for (auto const &row : r)
+    {
+        ret.emplace_back(Comments(row));
+    }
+    return ret;
+}
+
+void Users::getComment(const DbClientPtr &clientPtr,
+                       const std::function<void(std::vector<Comments>)> &rcb,
+                       const ExceptionCallback &ecb) const
+{
+    static const std::string sql = "select * from comments where channel = ?";
+    *clientPtr << sql
+               << *id_
+               >> [rcb = std::move(rcb)](const Result &r){
+                   std::vector<Comments> ret;
+                   ret.reserve(r.size());
+                   for (auto const &row : r)
+                   {
+                       ret.emplace_back(Comments(row));
                    }
                    rcb(ret);
                }
