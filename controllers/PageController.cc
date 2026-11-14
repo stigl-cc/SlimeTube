@@ -78,8 +78,8 @@ vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(
 }
 
 constexpr const std::string_view
-    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 LIMIT $3 ORDER BY creation_time DESC;",
-    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id LIMIT $3 ORDER BY name;";
+    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 ORDER BY creation_time DESC LIMIT $3;",
+    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id ORDER BY name LIMIT $3;";
 
 size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<string, string>>& previews, vector<unordered_map<string, string>>& channels, const string& query, size_t count) const {
     DbClientPtr db = RecordManager::getDbClient();
