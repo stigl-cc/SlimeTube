@@ -5,6 +5,7 @@
     "tables": [
         "users",
         "videos",
+        "comments",
     ],
     "relationships": {
         "enabled": true,
@@ -16,6 +17,16 @@
                 "original_key": "id",
                 "target_table_name": "videos",
                 "target_table_alias": "videos",
+                "target_key": "channel",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "users",
+                "original_table_alias": "user",
+                "original_key": "id",
+                "target_table_name": "comments",
+                "target_table_alias": "comment",
                 "target_key": "channel",
                 "enable_reverse": true
             }

@@ -12,6 +12,7 @@
 #include <models/Attributes.h>
 #include <models/Users.h>
 #include <models/Videos.h>
+#include <models/Comments.h>
 #include <models/utils/TimeUtility.h>
 
 #include <openssl/crypto.h>
@@ -162,6 +163,22 @@ void SlimyTube::RecordController::userChangePass(const HttpRequestPtr& req, std:
     req->session()->clear();
 
     api_redirect_error(HttpStatusCode::k200OK, "/account?m=Changed%20password%20successfully")
+}
+
+void SlimyTube::RecordController::commentCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    const bool& api = req->attributes()->get<bool>(Attributes::apiUsed.data());
+    const std::string&
+        video = req->getParameter(Query::videoId.data()),
+        content = req->getParameter(Query::commentContent.data());
+
+    if(video.empty())
+        api_ui_error(HttpStatusCode::k400BadRequest, "/");
+
+    if(content.empty())
+        api_ui_error(HttpStatusCode::k400BadRequest, "/watch/" + video);
+
+    RecordManager::createComment(req->getAttributes()->get<userId_t>(Attributes::userId.data()), video, content);
+    api_redirect_error(HttpStatusCode::k200OK, "/watch/" + video);
 }
 
 void SlimyTube::RecordController::videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {

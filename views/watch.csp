@@ -67,29 +67,23 @@
                     <label id="comment-section-label" for="comment-section">Comments:</label>
                     <hr>
 
-                    <form id="post-comment-form">
-                        <input id="post-comment-text" name="text" type="search" placeholder="write a comment...">
+                    <form id="post-comment-form" method="post" action="/comment/create?video=[[video_id]]">
+                        <input id="post-comment-text" name="content" type="search" placeholder="write a comment...">
                         <input id="post-comment-post" type="submit" value="post">
                     </form>
 
+                    <%c++
+                        auto comments = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("comments");
+                        for(const auto& comment : comments) { %>
+                    <div class="comment">
+                        <a class="comment-author" href="/channel/{%comment.at("channel_id")%}">{%comment.at("channel_name")%}</a>
+                        <div class="comment-age">{%comment.at("age")%}</div>
+                        <div class="comment-text">{%comment.at("text")%}</div>
+                    </div>
+                    <%c++ } if(comments.empty()) {%>
                     There are no comments on video.
+                    <%c++ } %>
 
-                    <div class="comment">
-                        <a class="comment-author">username</a>
-                        <div class="comment-age">2y ago</div>
-                        <div class="comment-text">What a nice video indeed</div>
-                    </div>
-
-                    <div class="comment">
-                        <a class="comment-author">username</a>
-                        <div class="comment-age">2w ago</div>
-                        <div class="comment-text">New contributions and modifications of this code are also considered
-                            as belongings "of the people", and are a property of the nation and
-                            heritage of the people. However, if the author of modification wishes
-                            they may retain copyright, since clause 3 does not limit any ability
-                            to work with the licensed subject as a property of the people.
-                        </div>
-                    </div>
                 </div>
             </div>
 

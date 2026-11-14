@@ -32,7 +32,7 @@ namespace SlimyTube {
             }};
 
         public:
-        static std::string FormatVideoAge(int64_t uploadTime);
+        static std::string FormatAge(int64_t uploadTime);
         static std::string FormatViewCount(int64_t viewCount);
         static std::string FormatVideoLength(int64_t length);
     };

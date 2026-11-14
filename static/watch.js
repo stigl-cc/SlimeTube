@@ -3,6 +3,8 @@ const quality_select = document.getElementById("quality-selector");
 
 const searchParams = new URLSearchParams(window.location.search);
 
+const comment_input = document.getElementById("post-comment-text");
+
 if(searchParams.has("quality")) {
     const quality = searchParams.get("quality");
     for(let i =0; i < quality_select.length; ++i)
@@ -42,6 +44,9 @@ function change_playback_quality() {
 
 function on_keypress(event) {
     if (event.altKey || event.ctrlKey || event.shiftKey || event.metaKey)
+        return;
+
+    if(comment_input == document.activeElement)
         return;
 
     const video_element = document.getElementById('video-element');

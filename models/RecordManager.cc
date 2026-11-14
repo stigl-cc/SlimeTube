@@ -1,3 +1,4 @@
+#include "Comments.h"
 #include <RecordManager.h>
 #include <models/utils/TimeUtility.h>
 #include <models/Settings.h>
@@ -37,6 +38,11 @@ Mapper<Videos> SlimyTube::RecordManager::getVideosMapper() {
     return video_mapper;
 }
 
+Mapper<Comments> SlimyTube::RecordManager::getCommentMapper() {
+    static Mapper<Comments> comment_mapper(getDbClient());
+    return comment_mapper;
+}
+
 std::vector<uint8_t> SlimyTube::RecordManager::createSalt() {
     std::vector<uint8_t> salt(SlimyTube::Settings::getInstance().salt_len);
     if(!RAND_bytes(salt.data(), salt.size())) {
@@ -60,6 +66,17 @@ void SlimyTube::RecordManager::createHash(const std::string& pass, std::span<con
 bool SlimyTube::RecordManager::nameExists(const std::string& name, Mapper<Users>& mapper) {
     // username already taken
     return mapper.count(Criteria(Users::Cols::_name, CompareOperator::EQ, name)) == 1;
+}
+
+void SlimyTube::RecordManager::createComment(uint64_t channel, const std::string& video, const std::string& text) {
+    Mapper<Comments> comment_mapper(getDbClient());
+
+    Comments comment;
+    comment.setChannel(channel);
+    comment.setVideo(video);
+    comment.setCreationTime(TimeUtil::GetUnixSecond());
+    comment.setContent(text);
+    comment_mapper.insert(comment);
 }
 
 std::string SlimyTube::RecordManager::createVideo(uint64_t channel, const std::string& title, const std::string& description) {

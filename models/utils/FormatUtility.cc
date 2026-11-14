@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 namespace SlimyTube {
-    std::string FormatUtil::FormatVideoAge(int64_t uploadTime) {
+    std::string FormatUtil::FormatAge(int64_t uploadTime) {
         const int64_t
             current_time = TimeUtil::GetUnixSecond(),
             video_age = current_time - uploadTime;
