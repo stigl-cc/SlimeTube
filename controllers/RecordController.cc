@@ -47,6 +47,9 @@ using namespace drogon_model::SlimyTube;
 #define api_used() req->attributes()->get<bool>(Attributes::apiUsed.data())
 #define define_api_used() const bool& api = api_used()
 
+#define login_method() req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data())
+#define define_login_method() const Attributes::LoginMethod& loginMethod = login_method()
+
 void SlimyTube::RecordController::userRegisterApi(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     req->attributes()->insert(Attributes::apiUsed.data(), true);
     userRegister(req, std::forward<std::function<void (const HttpResponsePtr &)>>(respond));
@@ -74,7 +77,7 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
 
 void SlimyTube::RecordController::userLogin(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     define_api_used();
-    const Attributes::LoginMethod& loginMethod = req->attributes()->get<Attributes::LoginMethod>(Attributes::keyLoginMethod.data());
+    define_login_method();
 
     if(loginMethod == Attributes::LoginMethod::LaxNone)
         api_redirect_error(HttpStatusCode::k401Unauthorized, "/account?m=Wrong%20name%20or%20password");
