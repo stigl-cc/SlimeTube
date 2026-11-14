@@ -15,7 +15,8 @@ namespace SlimyTube {
 
     class PageController : public drogon::HttpController<PageController> {
         private:
-        std::vector<std::unordered_map<std::string, std::string>> createPreviews(const std::string& ignore, size_t count) const;
+        size_t getCommentsForVideo(const std::string& videoId, std::vector<std::unordered_map<std::string, std::string>>& comments);
+        size_t createPreviews(const std::string& ignore, size_t count, std::vector<std::unordered_map<std::string, std::string>>& previews) const;
         size_t createSearchResults(
             std::vector<std::unordered_map<std::string, std::string>>& previews,
             std::vector<std::unordered_map<std::string, std::string>>& channels,

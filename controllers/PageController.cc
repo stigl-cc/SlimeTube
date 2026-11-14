@@ -61,20 +61,25 @@ namespace SlimyTube {
             });
     }
 
-
+    inline void emplace_comment(const Row& row, vector<unordered_map<string, string>>& comments) {
+        comments.emplace_back(unordered_map<string, string> {
+                { "channel_id", row[Comments::Cols::_channel].c_str() },
+                { "channel_name", row["ch_name"].c_str() },
+                { "age", FormatUtil::FormatAge(row[Comments::Cols::_creation_time].as<int64_t>()) },
+                { "text", HttpViewData::htmlTranslate(row[Comments::Cols::_content].c_str()) }
+            });
+    }
 };
 
 // TODO: Add some sort of smarter algorithm
-vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(const string& ignore, size_t amount) const {
+size_t SlimyTube::PageController::createPreviews(const string& ignore, size_t amount, vector<unordered_map<string, string>>& previews) const {
     DbClientPtr db = SlimyTube::RecordManager::getDbClient();
     Result queried_videos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
 
-    Mapper<Users> user_mapper = SlimyTube::RecordManager::getUserMapper();
-    vector<unordered_map<string, string>> previews;
     for(const Row& video : queried_videos)
         emplace_preview(video, previews);
 
-    return previews;
+    return queried_videos.size();
 }
 
 constexpr const std::string_view
@@ -96,8 +101,22 @@ size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<strin
     return found_videos.size() + found_users.size();
 }
 
+constexpr const std::string_view
+    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c INNER JOIN users AS u ON c.channel = u.id WHERE c.video = $1 ORDER BY creation_time DESC;";
+
+size_t SlimyTube::PageController::getCommentsForVideo(const std::string& videoId, vector<unordered_map<string, string>>& comments) {
+    DbClientPtr db = RecordManager::getDbClient();
+
+    const Result found_comments = db->execSqlSync(get_comments_query.data(), videoId);
+    for(const Row& comment : found_comments)
+        emplace_comment(comment, comments);
+
+    return found_comments.size();
+}
+
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    vector<unordered_map<string, string>> previews = createPreviews("", 25);
+    vector<unordered_map<string, string>> previews;
+    createPreviews("", 25, previews);
 
     HttpViewData data = Settings::getInstance().getData();
     data.insert("previews", previews);
@@ -124,20 +143,6 @@ void SlimyTube::PageController::privacy(const HttpRequestPtr& req, std::function
     HttpViewData data = settings.getData();
     return (void)respond(HttpResponse::newHttpViewResponse("privacy.csp", std::move(data)));
 }
-
-constexpr const std::string_view
-    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c INNER JOIN users AS u ON c.channel = u.id WHERE c.video = $1 ORDER BY creation_time DESC;";
-
-namespace SlimyTube {
-    inline void emplace_comment(const Row& row, vector<unordered_map<string, string>>& comments) {
-        comments.emplace_back(unordered_map<string, string> {
-                { "channel_id", row[Comments::Cols::_channel].c_str() },
-                { "channel_name", row["ch_name"].c_str() },
-                { "age", FormatUtil::FormatAge(row[Comments::Cols::_creation_time].as<int64_t>()) },
-                { "text", HttpViewData::htmlTranslate(row[Comments::Cols::_content].c_str()) }
-            });
-    }
-};
 
 void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
     HttpViewData data = Settings::getInstance().getData();
@@ -168,7 +173,8 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     for(const Row& comment : found_comments)
         emplace_comment(comment, comments);
 
-    vector<unordered_map<string, string>> previews = createPreviews(video_id, 25);
+    vector<unordered_map<string, string>> previews;
+    createPreviews(video_id, 25, previews);
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);

@@ -53,9 +53,9 @@
                     </div>
                 </form>
 
-                <a href="/video/delete/[[video_id]]">
-                    <button id="video-delete" class="text-submit">Delete Video</button>
-                </a>
+                <form id="thumnail-edit-form" method="post" action="/video/delete/[[video_id]]">
+                    <input type="submit" id="video-delete" class="text-submit" value="Delete Video" />
+                </form>
             </div>
         </div>
         <%view footer %>
