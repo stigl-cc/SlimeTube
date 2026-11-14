@@ -78,18 +78,18 @@ vector<unordered_map<string, string>> SlimyTube::PageController::createPreviews(
 }
 
 constexpr const std::string_view
-    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE title LIKE $1 OR description LIKE $1 LIMIT $2;",
-    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel WHERE u.name LIKE $1 GROUP BY u.id LIMIT $2;";
+    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 LIMIT $3;",
+    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id LIMIT $3;";
 
 size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<string, string>>& previews, vector<unordered_map<string, string>>& channels, const string& query, size_t count) const {
     DbClientPtr db = RecordManager::getDbClient();
     const string query_w_wildcards = '%' + query + '%';
 
-    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, count);
+    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, static_cast<int32_t>(VideoState::Ready), count);
     for(const Row& video : found_videos)
         emplace_preview(video, previews);
 
-    const Result found_users = db->execSqlSync(search_users_query.data(), query_w_wildcards, count);
+    const Result found_users = db->execSqlSync(search_users_query.data(), static_cast<int32_t>(VideoState::Ready), query_w_wildcards, count);
     for(const Row& user : found_users)
         emplace_channel(user, channels);
 
@@ -269,7 +269,7 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
     respond(HttpResponse::newHttpViewResponse("upload.csp", std::move(data)));
 }
 
-constexpr const std::string_view get_channel_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel WHERE u.id = $1 GROUP BY u.id;";
+constexpr const std::string_view get_channel_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.id = $2 GROUP BY u.id;";
 
 void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const uint64_t& user_id) const {
     HttpViewData data = Settings::getInstance().getData();
@@ -278,7 +278,7 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
     Mapper<Users> user_mapper(db);
     Mapper<Videos> video_mapper(db);
 
-    const Result users = db->execSqlSync(get_channel_query.data(), user_id);
+    const Result users = db->execSqlSync(get_channel_query.data(), static_cast<int32_t>(VideoState::Ready), user_id);
     const Row& user = users[0];
     if(users.empty())
         return(void) error(std::move(respond), HttpStatusCode::k404NotFound, "/");
