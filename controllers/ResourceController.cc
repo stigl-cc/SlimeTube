@@ -209,7 +209,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    if(video.getValueOfState() != static_cast<int32_t>(VideoState::Ready))
+    if(video.getValueOfState() != static_cast<int32_t>(VideoState::Upload))
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
 
     // Parse the X-Offset header
