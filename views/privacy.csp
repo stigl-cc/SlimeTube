@@ -13,18 +13,33 @@
         <%view navbar %>
         <div id="main-content">
             <div id="privacy-title-text">[[title]] Privacy Policy</div>
-            <hr>
             <div id="privacy-text">
                 You do not have privacy here. It is the internet after all.
                 <br />
-                <strong>what is being collected about me?</strong><br>
-                In the access log: Your <strong>IP address, User agent, and any paths you have visited on the website</strong><br>
-                In the server session storage: Your <strong>User Id</strong><br />
+                But if you're curious, <strong>what is being collected about you?</strong><br />
+                <dl>
+                    <dt>In the access log:</dt>
+                    <dd>Your IP address</dd>
+                    <dd>User agent</dd>
+                    <dd>Any paths you have visited on the website</dd>
 
-                <strong>what about cookies?</strong> <br />
+                    <dt>In the server session storage:</dt>
+                    <dd>Your user's ID</dd>
+
+                    <dt>In the rate limiter:</dt>
+                    <dd>Your IP address</dd>
+
+                    <dt>In the database:</dt>
+                    <dd>Anything you submit(when editing/creating a user/comment/video) to the website</dd>
+                </dl>
+
+                <strong>Alright, what about cookies?</strong> <br />
                 <strong>SessionId</strong> - Stores the token so you don't have to type your password on every single page<br />
 
-                That is it.
+                That is it. <br /> <br />
+
+                <strong>Is this website GDPR compliant?</strong> <br />
+                No. This website violates all online privacy laws that I know about. If that offends you, please leave. <br />
             </div>
         </div>
         <%view footer %>
