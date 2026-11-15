@@ -13,7 +13,7 @@
         <%view navbar %>
         <div id="main-content">
             <div id="about-title-text">About [[title]]</div>
-            <hr>
+
             <div id="about-text">
                 [[title]] is an open-source video platform that is inspired by the old web.
                 It encourages original and creative content instead of blind repetition.
