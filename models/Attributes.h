@@ -59,3 +59,10 @@ namespace SlimyTube::ViewCache {
         id = "id",
         count = "count";
 };
+
+namespace SlimyTube::Paths {
+    static constexpr std::string_view
+        thumbnail_blob = "thumbnail_blob",
+        thumbnail = "thumbnail",
+        video_blob = "blob";
+};

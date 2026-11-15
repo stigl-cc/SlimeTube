@@ -1,4 +1,5 @@
 #pragma once
+#include <models/Videos.h>
 #include <drogon/HttpController.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/RequestStream.h>
@@ -21,7 +22,7 @@ namespace SlimyTube {
         std::shared_mutex& getMutexForVideo(const std::string& key);
 
         std::optional<drogon::HttpStatusCode> videoIdExists(const std::string& id) const;
-        std::optional<drogon::HttpStatusCode> videoIdWritableAndExists(const std::string& id, const HttpRequestPtr& req) const;
+        std::optional<drogon::HttpStatusCode> videoIdWritableAndExists(const std::string& id, const HttpRequestPtr& req, drogon_model::SlimyTube::Videos& video_ref) const;
         public:
     METHOD_LIST_BEGIN
         // errors: 404
@@ -36,16 +37,19 @@ namespace SlimyTube {
         // success: 202
         ADD_METHOD_TO(ResourceController::uploadThumbnail, "/rsc/thumbnail/{1}", Put, "SlimyTube::StrictAuthenticator");
 
+        ADD_METHOD_TO(ResourceController::editThumbnail, "/rsc/thumbnail/{1}", Post, "SlimyTube::StrictAuthenticator");
+
         // headers: X-Offset
         // r-headers: X-Position
         // errors: 401 404 403(video.channel != user) 409(X-Offset too small) 424(X-Offset too big)
         // success: 202
         ADD_METHOD_TO(ResourceController::uploadVideo, "/rsc/video/{1}", Put, "SlimyTube::StrictAuthenticator");
     METHOD_LIST_END
-        void getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
-        void getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
+        void getThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
+        void getVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
 
-        void uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
-        void uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, std::string id);
+        void editThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
+        void uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
+        void uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
     };
 }

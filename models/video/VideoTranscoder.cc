@@ -1,3 +1,4 @@
+#include "Attributes.h"
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Mapper.h>
 #include <endian.h>
@@ -124,7 +125,40 @@ SlimyTube::TranscodeManager::~TranscodeManager() {
         mWorkerThread.join();
 }
 
+inline std::vector<char> encodeHeights(const std::vector<SlimyTube::VideoTarget>& targets) {
+    std::vector<uint16_t> resolutions {};
+    for(size_t i =0; i < targets.size(); i++)
+        resolutions.push_back(htole16(targets[i].height));
+
+    return std::vector<char>(
+        reinterpret_cast<char*>(resolutions.data()),
+        reinterpret_cast<char*>(resolutions.data()) + resolutions.size() * sizeof(uint16_t)
+    );
+}
+
+void SlimyTube::TranscodeManager::editThumbnail(const fs::path& thumbnail_blob, const fs::path& thumbnail) {
+    if(!fs::exists(thumbnail_blob))
+        return;
+    try {
+        std::shared_ptr<ImageConverter> thumbnail_converter = std::make_shared<ImageConverter>(thumbnail_blob, thumbnail);
+        if(fs::exists(thumbnail_blob)) {
+            thumbnail_converter->decode();
+            fs::remove(thumbnail_blob);
+            thumbnail_converter->encode();
+        }
+    } catch(const image_proc_error& err) {
+        if(err.isUserCaused) {
+            printf("Image %s\n", err.what());
+            return;
+        } else {
+            // TODO: Finish error handling here
+            printf("Image %s\n", err.what());
+        }
+    }
+}
+
 void SlimyTube::TranscodeManager::worker() {
+    const Settings& settings = Settings::getInstance();
     Mapper<Videos> video_mapper = RecordManager::getVideosMapper();
 
     std::unique_lock<std::mutex> lk(mJobsMutex);
@@ -133,8 +167,12 @@ void SlimyTube::TranscodeManager::worker() {
             const std::string& current_job = mJobs.front();
             lk.unlock();
 
-            Videos video = video_mapper.findByPrimaryKey(current_job);
+            const fs::path
+                path = settings.videos_dir / current_job,
+                thumbnail_blob = path / Paths::thumbnail_blob,
+                thumbnail = path / Paths::thumbnail;
 
+            Videos video = video_mapper.findByPrimaryKey(current_job);
             VideoState state = static_cast<VideoState>(video.getValueOfState());
             if(state != VideoState::Encode) {
                 if(state == VideoState::Deleted) {
@@ -143,18 +181,21 @@ void SlimyTube::TranscodeManager::worker() {
                     mJobs.pop_front();
                     continue;
                 }
+                if(state == VideoState::Ready) {
+                    editThumbnail(thumbnail_blob, thumbnail);
+                    lk.lock();
+                    mJobs.pop_front();
+                }
                 continue;
             }
 
             try {
-                fs::path
-                    path = Settings::getInstance().videos_dir / current_job,
-                    blob = path / "blob",
-                    thumbnail_blob = path / "thumbnail_blob";
+                const fs::path
+                    blob = path / Paths::video_blob;
 
                 VideoTranscoder transcoder(blob, path);
 
-                std::shared_ptr<ImageConverter> thumbnail_converter = std::make_shared<ImageConverter>(thumbnail_blob, path / "thumbnail");
+                std::shared_ptr<ImageConverter> thumbnail_converter = std::make_shared<ImageConverter>(thumbnail_blob, thumbnail);
                 if(fs::exists(thumbnail_blob)) {
                     thumbnail_converter->decode();
                     fs::remove(thumbnail_blob);
@@ -168,24 +209,16 @@ void SlimyTube::TranscodeManager::worker() {
 
                 int width, height, bit_rate;
                 transcoder.getDecoder().getMetaData(width, height, bit_rate);
-                transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}, bit_rate));
 
+                transcoder.mTargets = std::move(ResolutionUtility::GetForVideo({width, height}, bit_rate));
                 transcoder.transcode();
 
-                std::vector<uint16_t> resolutions;
-                for(size_t i =0; i < transcoder.mTargets.size(); i++)
-                    resolutions.push_back(htole16(transcoder.mTargets[i].height));
-
-                int length;
-                transcoder.getDecoder().getLength(length);
-
-                std::vector<char> blob_vec(reinterpret_cast<char*>(resolutions.data()), reinterpret_cast<char*>(resolutions.data()) + resolutions.size() * sizeof(uint16_t));
                 video_mapper.updateBy(
                     {Videos::Cols::_state, Videos::Cols::_resolutions, Videos::Cols::_length},
                     Criteria(Videos::Cols::_id, CompareOperator::EQ, current_job),
                     static_cast<int32_t>(VideoState::Ready),
-                    blob_vec,
-                    length
+                    encodeHeights(transcoder.mTargets),
+                    transcoder.getDecoder().getLength()
                 );
 
                 fs::remove(blob);

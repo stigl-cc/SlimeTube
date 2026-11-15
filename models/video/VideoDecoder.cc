@@ -145,10 +145,9 @@ void SlimyTube::VideoDecoder::getMetaData(int& width, int& height, int& bitRate)
         throw video_proc_error(true, "getting video width/height");
 }
 
-void SlimyTube::VideoDecoder::getLength(int& length) const {
+int SlimyTube::VideoDecoder::getLength() const {
     const int64_t& duration = mFormatContext->duration;
-    if(duration == AV_NOPTS_VALUE || duration <= 0)
-        length = -1;
-    else
-        length = av_rescale_q_rnd(duration, AVRational{1, AV_TIME_BASE}, AVRational{1, 1}, AV_ROUND_UP);
+    return (duration == AV_NOPTS_VALUE || duration <= 0)
+        ? -1
+        : av_rescale_q_rnd(duration, AVRational{1, AV_TIME_BASE}, AVRational{1, 1}, AV_ROUND_UP);
 }

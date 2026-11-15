@@ -1,3 +1,4 @@
+#include "controllers/RecordController.h"
 #include <models/video/VideoTranscoder.h>
 #include <charconv>
 #include <controllers/ResourceController.h>
@@ -57,7 +58,7 @@ std::optional<drogon::HttpStatusCode> SlimyTube::ResourceController::videoIdExis
     return std::nullopt;
 }
 
-std::optional<drogon::HttpStatusCode> SlimyTube::ResourceController::videoIdWritableAndExists(const std::string& id, const HttpRequestPtr& req) const {
+std::optional<drogon::HttpStatusCode> SlimyTube::ResourceController::videoIdWritableAndExists(const std::string& id, const HttpRequestPtr& req, Videos& video_ref) const {
     if(id.empty())
         return k400BadRequest;
 
@@ -65,28 +66,57 @@ std::optional<drogon::HttpStatusCode> SlimyTube::ResourceController::videoIdWrit
     if(!video.has_value()) // video not found
         return k404NotFound;
 
+    video_ref = video.value();
+
     userId_t userId = req->attributes()->get<userId_t>(SlimyTube::Attributes::userId.data());
     if(video.value().getValueOfChannel() != userId) // video doesn't belong to the user
         return k403Forbidden;
     return std::nullopt;
 }
 
-void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
+void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, const string& id) {
     std::optional<HttpStatusCode> video_id_check_error = videoIdExists(id);
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "thumbnail";
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::thumbnail;
     shared_lock lk(getMutexForThumbnail(path));
     return(void) respond(HttpResponse::newFileResponse(path, "", CT_IMAGE_JPG, "", req));
 }
 
-void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    std::optional<HttpStatusCode> video_id_check_error = videoIdWritableAndExists(id, req);
+void SlimyTube::ResourceController::editThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) {
+    Videos video;
+    std::optional<HttpStatusCode> video_id_check_error = videoIdWritableAndExists(id, req, video);
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "thumbnail_blob";
+    if(video.getValueOfState() != static_cast<int32_t>(VideoState::Ready))
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::thumbnail_blob;
+    unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
+
+    std::ofstream ofs(path, std::ios::out | std::ios::binary);
+    const std::string_view& body = req->getBody();
+    ofs.write(body.data(), body.size());
+    ofs.close();
+
+    respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
+
+    // let TranscodeManager figure out we're editing the thumbnail here
+    TranscodeManager::getInstance().enqueueJob(id);
+}
+
+void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, const string& id) {
+    Videos video;
+    std::optional<HttpStatusCode> video_id_check_error = videoIdWritableAndExists(id, req, video);
+    if(video_id_check_error.has_value())
+        return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
+
+    if(video.getValueOfState() != static_cast<int32_t>(VideoState::Upload))
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+
+    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::thumbnail_blob;
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
     std::ofstream ofs(path, std::ios::out | std::ios::binary);
@@ -97,13 +127,13 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
 }
 
-void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
+void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, const string& id) {
     if(id.empty())
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(id);
     if(!video.has_value() || video.value().getValueOfState() != static_cast<int>(VideoState::Ready))
-        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
     std::string quality_suffix;
 
@@ -173,10 +203,14 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
     }
 }
 
-void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, string id) {
-    std::optional<HttpStatusCode> video_id_check_error = videoIdWritableAndExists(id, req);
+void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, function<void (const HttpResponsePtr &)> &&respond, const string& id) {
+    Videos video;
+    std::optional<HttpStatusCode> video_id_check_error = videoIdWritableAndExists(id, req, video);
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
+
+    if(video.getValueOfState() != static_cast<int32_t>(VideoState::Ready))
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k404NotFound, CT_NONE));
 
     // Parse the X-Offset header
     const std::string& offset_param = req->getHeader(Headers::offset.data());
@@ -186,7 +220,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(offset_param_conv.ec != std::errc()) // X-Offset is not a (valid) number
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
-    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / "blob";
+    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::video_blob;
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
     std::error_code ec;

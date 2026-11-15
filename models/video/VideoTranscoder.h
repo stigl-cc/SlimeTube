@@ -57,6 +57,7 @@ namespace SlimyTube {
 
         std::deque<std::string> mJobs;
         void worker();
+        void editThumbnail(const std::filesystem::path& thumbnail_blob, const std::filesystem::path& thumbnail);
 
         TranscodeManager();
 

@@ -42,12 +42,12 @@
                     <input class="text-submit" type="submit" value="edit" />
                 </form>
 
-                <form id="thumnail-edit-form" method="post">
+                <form id="thumnail-edit-form" method="post" action="/rsc/thumbnail/[[video_id]]" enctype="multipart/form-data">
                     <label class="text-input-label" for="video-thumbnail">Thumbnail:</label><br>
                     <div id="thumbnail-section">
                         <img id="edit-thumbnail-preview" src="/rsc/thumbnail/[[video_id]]" />
                         <div id="edit-thumbnail-edit">
-                            <input id="edit-thumbnail-upload" class="text-input" type="file" accept="image/*" capture="environment">
+                            <input id="edit-thumbnail-upload" class="text-input" name="thumbnail" type="file" accept="image/*" capture="environment">
                             <input class="text-submit" type="submit" value="edit" />
                         </div>
                     </div>
