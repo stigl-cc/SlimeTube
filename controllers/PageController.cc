@@ -83,12 +83,20 @@ size_t SlimyTube::PageController::createPreviews(const string& ignore, size_t am
 }
 
 constexpr const std::string_view
-    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 ORDER BY creation_time DESC LIMIT $3;",
-    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id ORDER BY name LIMIT $3;";
+    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 ESCAPE '\\' OR v.description LIKE $1 ESCAPE '\\') AND v.state = $2 ORDER BY creation_time DESC LIMIT $3;",
+    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 ESCAPE '\\' GROUP BY u.id ORDER BY name LIMIT $3;";
 
 size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<string, string>>& previews, vector<unordered_map<string, string>>& channels, const string& query, size_t count) const {
     DbClientPtr db = RecordManager::getDbClient();
-    const string query_w_wildcards = '%' + query + '%';
+    // escape LIKE wildcards so user input is matched literally (queries use ESCAPE '\\')
+    string escaped_query;
+    escaped_query.reserve(query.size());
+    for(const char c : query) {
+        if(c == '%' || c == '_' || c == '\\')
+            escaped_query += '\\';
+        escaped_query += c;
+    }
+    const string query_w_wildcards = '%' + escaped_query + '%';
 
     const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, static_cast<int32_t>(VideoState::Ready), count);
     for(const Row& video : found_videos)
