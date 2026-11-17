@@ -1,7 +1,3 @@
-#main-content {
-    flex: 1;
-}
-
 #edit-centered {
     outline-color: var(--vertical-separator-color);
     outline-style: solid;

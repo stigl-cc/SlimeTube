@@ -252,3 +252,7 @@ input[type=submit]:hover {
 .preview-stats {
     font-size: 15px;
 }
+
+#main-content {
+    flex: 1;
+}
