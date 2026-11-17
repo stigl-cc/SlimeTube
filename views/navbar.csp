@@ -1,10 +1,13 @@
 <div id="navbar">
-     <div id="navbar-links">
-         <a href="/" id="navbar-platform-title">[[title]]</a>
-         <form id="search-bar" method="get" action="/search" >
-             <input id="search-bar-query" name="q" type="search" placeholder="search for videos..." value="[[search_query]]">
-             <input id="search-bar-submit" type="submit" value="search">
-         </form>
-          <a href="/account" id="navbar-account-link">account</a>
-     </div>
+    <div id="navbar-links">
+        <a href="/" id="navbar-platform-title">
+            <img src="/favicon.ico" id="navbar-icon" />
+            [[title]]
+        </a>
+        <form id="search-bar" method="get" action="/search" >
+            <input id="search-bar-query" name="q" type="search" placeholder="search for videos..." value="[[search_query]]">
+            <input id="search-bar-submit" type="submit" value="search">
+        </form>
+        <a href="/account" id="navbar-account-link">account</a>
+    </div>
 </div>

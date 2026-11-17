@@ -109,6 +109,16 @@ input[type=submit]:hover {
     justify-content: space-between;
 }
 
+#navbar-icon {
+    width: 1em;
+    height: 1em;
+    margin: 0px;
+    padding: 0px;
+    margin-right: 3px;
+    margin-bottom: 0.25em;
+    vertical-align: middle;
+}
+
 #search-bar {
     display: inline-flex;
     flex-direction: row;
