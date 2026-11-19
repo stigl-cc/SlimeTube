@@ -62,9 +62,10 @@ namespace SlimyTube {
     }
 
     inline void emplace_comment(const Row& row, vector<unordered_map<string, string>>& comments) {
+        const Field& ch_name = row["ch_name"];
         comments.emplace_back(unordered_map<string, string> {
                 { "channel_id", row[Comments::Cols::_channel].c_str() },
-                { "channel_name", row["ch_name"].c_str() },
+                { "channel_name", ch_name.isNull() ? "Anonymous" : ch_name.c_str() },
                 { "age", FormatUtil::FormatAge(row[Comments::Cols::_creation_time].as<int64_t>()) },
                 { "text", HttpViewData::htmlTranslate(row[Comments::Cols::_content].c_str()) }
             });
@@ -102,7 +103,7 @@ size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<strin
 }
 
 constexpr const std::string_view
-    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c INNER JOIN users AS u ON c.channel = u.id WHERE c.video = $1 ORDER BY creation_time DESC;";
+    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c LEFT OUTER JOIN users AS u ON c.channel = u.id WHERE c.video = $1 ORDER BY creation_time DESC;";
 
 size_t SlimyTube::PageController::getCommentsForVideo(const std::string& videoId, vector<unordered_map<string, string>>& comments) {
     DbClientPtr db = RecordManager::getDbClient();
