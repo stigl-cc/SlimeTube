@@ -1,4 +1,5 @@
 #include "controllers/RecordController.h"
+#include <drogon/MultiPart.h>
 #include <models/video/VideoTranscoder.h>
 #include <charconv>
 #include <controllers/ResourceController.h>
@@ -96,14 +97,18 @@ void SlimyTube::ResourceController::editThumbnail(const HttpRequestPtr& req, std
     fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::thumbnail_blob;
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
+    MultiPartParser file_upload;
+    if(file_upload.parse(req) != 0 || file_upload.getFiles().size() != 1)
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
+
     std::ofstream ofs(path, std::ios::out | std::ios::binary);
-    const std::string_view& body = req->getBody();
+    const std::string_view& body = file_upload.getFiles()[0].fileContent();
     ofs.write(body.data(), body.size());
     ofs.close();
 
     respond(HttpResponse::newHttpResponse(HttpStatusCode::k202Accepted, CT_NONE));
 
-    // let TranscodeManager figure out we're editing the thumbnail here
+    // let TranscodeManager figure out we're editing the thumbnail from here
     TranscodeManager::getInstance().enqueueJob(id);
 }
 
