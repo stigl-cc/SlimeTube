@@ -68,7 +68,7 @@
                     <hr>
 
                     <form id="post-comment-form" method="post" action="/comment/create?video=[[video_id]]">
-                        <input id="post-comment-text" name="content" type="search" placeholder="write a comment...">
+                        <input id="post-comment-text" name="content" type="search" placeholder="write a comment..." required>
                         <input id="post-comment-post" type="submit" value="post">
                     </form>
 

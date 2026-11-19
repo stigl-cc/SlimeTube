@@ -1,0 +1,54 @@
+#main-content {
+    font-size: var(--text-size-medium);
+}
+
+#centered-widget {
+    text-align: center;
+    margin-top: 30px;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    
+    outline-style: solid;
+    outline-width: 3px;
+    outline-color: var(--vertical-separator-color);
+}
+
+#comment-video {
+    width: 50%;
+    text-align: center;
+    font-size: var(--text-size-medium);
+}
+
+#comment-text {
+    width: 80%;
+    white-space: pre-line;
+    font-size: var(--text-size-medium);
+}
+
+.option-link {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+#anonymous-form {
+    width: 100%;
+    margin-top: 15px;
+    font-size: var(--text-size-medium);
+}
+
+#anonymous-form-submit {
+    margin-top: 15px;
+    font-size: var(--text-size-medium);x
+}
+
+#login-submit {
+    font-size: var(--text-size-medium);
+    margin: 0;
+}
+
+#go-back-submit {
+    font-size: var(--text-size-medium);
+    margin: 0;
+}

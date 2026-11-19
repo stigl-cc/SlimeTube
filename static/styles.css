@@ -84,11 +84,6 @@ input[type=submit]:hover {
     display: inline !important;
 }
 
-/* error */
-#error-content {
-    flex: 1;
-}
-
 /* navbar section */
 #navbar {
     position: sticky;

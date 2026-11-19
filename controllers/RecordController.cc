@@ -4,6 +4,7 @@
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpTypes.h>
+#include <drogon/HttpViewData.h>
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/DbClient.h>
 #include <drogon/orm/Mapper.h>
@@ -14,6 +15,7 @@
 #include <models/Videos.h>
 #include <models/Comments.h>
 #include <models/utils/TimeUtility.h>
+#include <models/Settings.h>
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
@@ -191,6 +193,21 @@ void SlimyTube::RecordController::videoChangeDescription(const HttpRequestPtr& r
     api_redirect_error(HttpStatusCode::k200OK, "/video/edit/" + video_id);
 }
 
+void SlimyTube::RecordController::commentCreateAnonymous(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
+    define_api_used();
+
+    const std::string& video = req->getParameter(Query::videoId.data());
+    if(video.empty())
+        api_ui_error(HttpStatusCode::k400BadRequest, "/");
+
+    const std::string& content = req->getParameter(Query::commentContent.data());
+    if(content.empty())
+        api_ui_error(HttpStatusCode::k400BadRequest, "/watch/" + video);
+
+    RecordManager::createComment(0, video, content);
+    api_redirect_error(HttpStatusCode::k201Created, "/watch/" + video);
+}
+
 void SlimyTube::RecordController::commentCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     define_api_used();
 
@@ -202,6 +219,21 @@ void SlimyTube::RecordController::commentCreate(const HttpRequestPtr& req, std::
     if(content.empty())
         api_ui_error(HttpStatusCode::k400BadRequest, "/watch/" + video);
 
+    define_login_method();
+    if(loginMethod == Attributes::LoginMethod::LaxNone) {
+        if(api)
+            return (void)HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE);
+
+        if(!Settings::getInstance().allow_anonymous_comments)
+            return (void)respond(PageController::errorResponse(HttpStatusCode::k401Unauthorized, "/watch/" + video));
+
+        HttpViewData data = Settings::getInstance().getData();
+        data.insert("comment_video_id", video);
+        data.insert("comment_text", HttpViewData::htmlTranslate(content));
+
+        return (void)respond(HttpResponse::newHttpViewResponse("anonymous.csp", std::move(data)));
+    }
+
     RecordManager::createComment(user_id(), video, content);
-    api_redirect_error(HttpStatusCode::k200OK, "/watch/" + video);
+    api_redirect_error(HttpStatusCode::k201Created, "/watch/" + video);
 }

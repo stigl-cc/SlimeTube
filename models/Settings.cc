@@ -70,6 +70,7 @@ int SlimyTube::Settings::parse(Json::Value config) {
     audio_samprate = config.get("audio_sample_rate", 48000).as<int>();
 
     use_embeded_pages = config.get("use_embeded_pages", 1).as<int>() != 0;
+    allow_anonymous_comments = config.get("allow_anonymous_comments", 0).as<int>() != 0;
 
     thumbnail_res = {
         config.get("thumbnail_width", 640).as<dimension_t>(),

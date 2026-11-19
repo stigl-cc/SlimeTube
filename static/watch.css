@@ -140,7 +140,7 @@ hr {
 }
 
 .comment-text {
-
+    pre-line: pre-line;
 }
 
 #post-comment-form {

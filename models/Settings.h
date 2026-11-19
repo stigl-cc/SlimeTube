@@ -35,6 +35,7 @@ namespace SlimyTube {
         std::set<std::pair<int, int>> supported_ratios;
         bool allow_unlisted_ratios;
         bool use_embeded_pages;
+        bool allow_anonymous_comments;
 
         int audio_bitrate;
         int audio_samprate;

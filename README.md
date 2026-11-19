@@ -49,6 +49,7 @@ The setting "custom_config" contains all settings for this app specifically.
 - `audio_bitrate` - what bitrate to use for videos
 - `audio_sample_rate` - what sample rate to use for videos
 - `use_embeded_pages` - which about and privacy page content should be used: 0 - static/about.html(+ privacy.html), 1 (or anything else) views/about.csp(+ privacy.csp)
+- `allow_anonymous_comments` - 1 allows not logged in users to post comments
 
 ### Endpoints
 | URL                                                | Description                         | Headers/Query    | Success Codes | Error Codes | Authentication Required |
@@ -86,3 +87,5 @@ The setting "custom_config" contains all settings for this app specifically.
 | GET `/video/upload/<video_id>`                     | upload video and its thumbnail      |                  | 200           | 403 404     | Yes                     |
 | GET `/video/edit/<video_id>`                       | edit video properties               |                  | 200           | 403 404     | Yes                     |
 | GET `/channel/<user_id>`                           | page with all videos made by a user |                  | 200           | 404         | No                      |
+| POST `/comment/create`                             | create comment                      | video, content   | 303           | 400, 401    | Yes                     |
+| POST `/comment/create/anonymous`                   | create comment(anonymous)           | video, content   | 303           | 400         | No                      |

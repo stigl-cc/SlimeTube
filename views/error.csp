@@ -9,7 +9,7 @@
     </head>
     <body>
         <%view navbar %>
-        <div id="error-content">
+        <div id="main-content">
             <h1>[[error-text]]</h1>
             <a id="error-goback" href="[[back]]">go back</a>
         </div>

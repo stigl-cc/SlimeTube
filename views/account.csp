@@ -23,13 +23,13 @@
                 <div id="change-details-text">Change User Details</div>
                 <form class="user-change" method="post" action="/user/name">
                     <label for="user">username:</label>
-                    <input class="user-change-input" id="user-input" name="new_name" type="text" />
+                    <input class="user-change-input" id="user-input" name="new_name" type="text" required/>
                     <input class="user-change-submit" id="new-name-submit" type="submit" value="change username" />
                 </form>
 
                 <form class="user-change" method="post" action="/user/password">
                     <label for="user">password:</label>
-                    <input class="user-change-input" id="pass-input" name="new_pass" type="password" />
+                    <input class="user-change-input" id="pass-input" name="new_pass" type="password" required/>
                     <input class="user-change-submit" id="new-pass-submit" type="submit" value="change password" />
                 </form>
             </div>

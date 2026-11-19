@@ -58,7 +58,8 @@ namespace SlimyTube {
         ADD_METHOD_TO(RecordController::userChangePass, "/api/user/password", Post, "SlimyTube::StrictApiAuthenticator");
         ADD_METHOD_TO(RecordController::userChangePass, "/user/password", Post, "SlimyTube::StrictAuthenticator");
 
-        ADD_METHOD_TO(RecordController::commentCreate, "/comment/create", Post, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::commentCreate, "/comment/create", Post, "SlimyTube::LaxAuthenticator");
+        ADD_METHOD_TO(RecordController::commentCreateAnonymous, "/comment/create/anonymous", Post);
 
         // headers: Cookie(for session login method)
         // errors: 400(!title || !desc) 401
@@ -94,6 +95,7 @@ namespace SlimyTube {
         void userChangePass(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
 
         void commentCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
+        void commentCreateAnonymous(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
 
         void videoChangeTitle(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const;
         void videoChangeDescription(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const;

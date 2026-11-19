@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>[[title]] - Anonymous Comment</title>
+        <link rel="stylesheet" type="text/css" href="/styles.css">
+        <link rel="stylesheet" type="text/css" href="/anonymous.css">
+    </head>
+    <body>
+        <%view navbar %>
+        <div id="main-content">
+            <div id="centered-widget">
+                <strong>Posting comment while not logged in!</strong> <br />
+
+                <form class="option-link" id="anonymous-form" method="post" action="/comment/create/anonymous">
+                    <label for="comment-video">Video:</label>
+                    <br />
+                    <input id="comment-video" type="text" value="[[comment_video_id]]" name="video" readonly="readonly"/>
+                    <br />
+
+                    <label for="comment-content">Comment:</label>
+                    <br />
+                    <input id="comment-text" type="text" value="[[comment_text]]" name="content" readonly="readonly"/>
+                    <br />
+
+                    <input id="anonymous-form-submit" type="submit" value="post as anonymous"/>
+                </form>
+
+
+                <div>or</div>
+                <a class="option-link" href="/account">login</a>
+                -
+                <a class="option-link"  href="/watch/[[comment_video_id]]">go back</a>
+            </div>
+        </div>
+        <%view footer %>
+    </body>
+</html>
