@@ -58,5 +58,6 @@ namespace SlimyTube {
         static std::string generateVideoId(size_t size = 6);
 
         static void createComment(uint64_t channel, const std::string& video, const std::string& text);
+        static void deleteComment(const Comments& comment);
     };
 };

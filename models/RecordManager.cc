@@ -1,6 +1,7 @@
 #include "Attributes.h"
 #include "Comments.h"
 #include <RecordManager.h>
+#include <drogon/orm/DbClient.h>
 #include <models/utils/TimeUtility.h>
 #include <models/Settings.h>
 
@@ -103,6 +104,11 @@ void SlimyTube::RecordManager::deleteUser(userId_t user_id) {
     for(const Videos& video : videos)
         RecordManager::deleteVideo(video);
 
+    // Delete all comments made by the user
+    const std::vector<Comments> comments = user.getComments(db);
+    for(const Comments& comment : comments)
+        RecordManager::deleteComment(comment);
+
     user_mapper.deleteByPrimaryKey(user_id);
 }
 
@@ -128,8 +134,18 @@ std::string SlimyTube::RecordManager::createVideo(uint64_t channel, const std::s
     return id;
 }
 
+void SlimyTube::RecordManager::deleteComment(const Comments& comment) {
+    getCommentMapper().deleteByPrimaryKey(comment.getPrimaryKey());
+}
+
 void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
-    Mapper<Videos> video_mapper = getVideosMapper();
+    DbClientPtr db = getDbClient();
+    // Delete all comments made on the video
+    const std::vector<Comments> comments = video.getComments(db);
+    for(const Comments& comment : comments)
+        RecordManager::deleteComment(comment);
+
+    Mapper<Videos> video_mapper(db);
     if(video.getValueOfState() == static_cast<int64_t>(VideoState::Encode)) {
         video_mapper.updateBy(
             {Videos::Cols::_state, Videos::Cols::_resolutions},
@@ -138,6 +154,7 @@ void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
         );
         return;
     }
+
     std::error_code ec;
     fs::remove_all(Settings::getInstance().videos_dir / video.getValueOfId(), ec);
     if(ec)

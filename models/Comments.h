@@ -39,6 +39,7 @@ namespace drogon_model
 namespace SlimyTube
 {
 class Users;
+class Videos;
 
 class Comments
 {
@@ -156,6 +157,10 @@ class Comments
     void getUser(const drogon::orm::DbClientPtr &clientPtr,
                  const std::function<void(Users)> &rcb,
                  const drogon::orm::ExceptionCallback &ecb) const;
+    Videos getVideo(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getVideo(const drogon::orm::DbClientPtr &clientPtr,
+                  const std::function<void(Videos)> &rcb,
+                  const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Comments>;
     friend drogon::orm::BaseBuilder<Comments, true, true>;

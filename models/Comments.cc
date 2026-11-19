@@ -7,6 +7,7 @@
 
 #include "Comments.h"
 #include "Users.h"
+#include "Videos.h"
 #include <drogon/utils/Utilities.h>
 #include <string>
 
@@ -1005,6 +1006,49 @@ void Comments::getUser(const DbClientPtr &clientPtr,
                     else
                     {
                         rcb(Users(r[0]));
+                    }
+               }
+               >> ecb;
+}
+Videos Comments::getVideo(const DbClientPtr &clientPtr) const {
+    static const std::string sql = "select * from videos where id = ?";
+    Result r(nullptr);
+    {
+        auto binder = *clientPtr << sql;
+        binder << *channel_ << Mode::Blocking >>
+            [&r](const Result &result) { r = result; };
+        binder.exec();
+    }
+    if (r.size() == 0)
+    {
+        throw UnexpectedRows("0 rows found");
+    }
+    else if (r.size() > 1)
+    {
+        throw UnexpectedRows("Found more than one row");
+    }
+    return Videos(r[0]);
+}
+
+void Comments::getVideo(const DbClientPtr &clientPtr,
+                        const std::function<void(Videos)> &rcb,
+                        const ExceptionCallback &ecb) const
+{
+    static const std::string sql = "select * from videos where id = ?";
+    *clientPtr << sql
+               << *channel_
+               >> [rcb = std::move(rcb), ecb](const Result &r){
+                    if (r.size() == 0)
+                    {
+                        ecb(UnexpectedRows("0 rows found"));
+                    }
+                    else if (r.size() > 1)
+                    {
+                        ecb(UnexpectedRows("Found more than one row"));
+                    }
+                    else
+                    {
+                        rcb(Videos(r[0]));
                     }
                }
                >> ecb;

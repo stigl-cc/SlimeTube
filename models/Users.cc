@@ -871,7 +871,7 @@ void Users::getVideos(const DbClientPtr &clientPtr,
                }
                >> ecb;
 }
-std::vector<Comments> Users::getComment(const DbClientPtr &clientPtr) const {
+std::vector<Comments> Users::getComments(const DbClientPtr &clientPtr) const {
     static const std::string sql = "select * from comments where channel = ?";
     Result r(nullptr);
     {
@@ -889,9 +889,9 @@ std::vector<Comments> Users::getComment(const DbClientPtr &clientPtr) const {
     return ret;
 }
 
-void Users::getComment(const DbClientPtr &clientPtr,
-                       const std::function<void(std::vector<Comments>)> &rcb,
-                       const ExceptionCallback &ecb) const
+void Users::getComments(const DbClientPtr &clientPtr,
+                        const std::function<void(std::vector<Comments>)> &rcb,
+                        const ExceptionCallback &ecb) const
 {
     static const std::string sql = "select * from comments where channel = ?";
     *clientPtr << sql
