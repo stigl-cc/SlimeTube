@@ -428,8 +428,12 @@ void SlimyTube::VideoEncoder::putAudioFrame(const frame_ptr_t& frame) {
 void SlimyTube::VideoEncoder::finish() {
     // Flush the stream
     frame_ptr_t null_frame = { nullptr };
-    putVideoFrame(null_frame);
-    putAudioFrame(null_frame);
+
+    if(mVideoFilterGraph)
+        putVideoFrame(null_frame);
+
+    if(mAudioFilterGraph)
+        putAudioFrame(null_frame);
 
     mVideoStream->codecpar->bit_rate = mVideoCodecContext->bit_rate;
     mAudioStream->codecpar->bit_rate = mAudioCodecContext->bit_rate;

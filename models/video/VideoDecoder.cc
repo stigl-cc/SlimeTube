@@ -132,8 +132,12 @@ void SlimyTube::VideoDecoder::getFrames(video_callback_t videoCallback, audio_ca
 }
 
 void SlimyTube::VideoDecoder::getTimeBase(AVRational& video, AVRational& audio) const {
-    video = mFormatContext->streams[mVideoStreamIndex]->time_base;
-    audio = mFormatContext->streams[mAudioStreamIndex]->time_base;
+    if(mVideoStreamIndex != -1)
+        video = mFormatContext->streams[mVideoStreamIndex]->time_base;
+    else video = {1, 1};
+    if(mAudioStreamIndex != -1)
+        audio = mFormatContext->streams[mAudioStreamIndex]->time_base;
+    else audio = {1, 1};
 }
 
 void SlimyTube::VideoDecoder::getMetaData(int& width, int& height, int& bitRate) const {
