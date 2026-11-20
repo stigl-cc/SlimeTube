@@ -147,6 +147,12 @@ void SlimyTube::VideoEncoder::setupVideoFilter(AVRational targetFps) {
     ret = avfilter_graph_config(mVideoFilterGraph.get(), nullptr);
     if(ret < 0)
         throw video_proc_error(false, "configure filter graph");
+
+    mVideoFilteredFrame.reset(av_frame_alloc(), [](AVFrame* p) -> void {
+        av_frame_free(&p);
+    });
+    if(!mVideoFilteredFrame)
+        throw video_proc_error(false, "alloc (filter) frame");
 }
 
 void SlimyTube::VideoEncoder::setupAudioFilter(int srcRate, AVSampleFormat srcFormat, const AVChannelLayout& srcLayout) {
@@ -209,6 +215,12 @@ void SlimyTube::VideoEncoder::setupAudioFilter(int srcRate, AVSampleFormat srcFo
     ret = avfilter_graph_config(mAudioFilterGraph.get(), nullptr);
     if(ret < 0)
         throw video_proc_error(false, "configure filter graph");
+
+    mAudioFilteredFrame.reset(av_frame_alloc(), [](AVFrame* p) -> void {
+        av_frame_free(&p);
+    });
+    if(!mAudioFilteredFrame)
+        throw video_proc_error(false, "alloc audio (filter) frame");
 }
 
 SlimyTube::VideoEncoder::VideoEncoder(const std::string& path, const VideoTarget& target,
@@ -340,27 +352,20 @@ void SlimyTube::VideoEncoder::putVideoFrame(const frame_ptr_t& frame) {
             throw video_proc_error(false, "push frame to filter");
     }
 
-    AVFrame* filtered_frame = av_frame_alloc();
-    if(!filtered_frame)
-        throw video_proc_error(false, "alloc (filter) frame");
-
     while(true) {
-        int ret = av_buffersink_get_frame(mVideoFilterContextSink.get(), filtered_frame);
+        int ret = av_buffersink_get_frame(mVideoFilterContextSink.get(), mVideoFilteredFrame.get());
         if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             break;
-        else if(ret < 0) {
-            av_frame_free(&filtered_frame);
+        else if(ret < 0)
             throw video_proc_error(false, "pull frame from filter");
-        }
 
-        putVideoPacket(output_packet, filtered_frame);
+        putVideoPacket(output_packet, mVideoFilteredFrame.get());
     }
 
     if(!frame)
         putVideoPacket(output_packet, nullptr);
 
     av_packet_free(&output_packet);
-    av_frame_free(&filtered_frame);
 }
 
 void SlimyTube::VideoEncoder::putAudioPacket(AVPacket* output_packet, AVFrame* frame) {
@@ -402,20 +407,15 @@ void SlimyTube::VideoEncoder::putAudioFrame(const frame_ptr_t& frame) {
             throw video_proc_error(false, "push frame to filter");
     }
 
-    AVFrame* filtered_frame = av_frame_alloc();
-    if(!filtered_frame)
-        throw video_proc_error(false, "alloc (filter) frame");
-
     while(true) {
-        int ret = av_buffersink_get_frame(mAudioFilterContextSink.get(), filtered_frame);
+        int ret = av_buffersink_get_frame(mAudioFilterContextSink.get(), mAudioFilteredFrame.get());
         if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             break;
         else if(ret < 0) {
-            av_frame_free(&filtered_frame);
             throw video_proc_error(false, "pull frame from filter");
         }
 
-        putAudioPacket(output_packet, filtered_frame);
+        putAudioPacket(output_packet, mAudioFilteredFrame.get());
     }
 
     if(!frame)

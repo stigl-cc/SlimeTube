@@ -35,10 +35,12 @@ namespace SlimyTube {
         filter_graph_ptr_t mVideoFilterGraph;
         filter_cxt_ptr_t mVideoFilterContextSource;
         filter_cxt_ptr_t mVideoFilterContextSink;
+        frame_ptr_t mVideoFilteredFrame;
 
         filter_graph_ptr_t mAudioFilterGraph;
         filter_cxt_ptr_t mAudioFilterContextSource;
         filter_cxt_ptr_t mAudioFilterContextSink;
+        frame_ptr_t mAudioFilteredFrame;
 
         AVCodecParameters mAudioCodecParams;
         AVCodecParameters mVideoCodecParams;
