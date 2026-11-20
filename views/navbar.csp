@@ -1,4 +1,6 @@
-<div id="navbar">
+<nav id="navbar">
+    <a href="#main-content" id="skip-link">skip to main content</a>
+
     <div id="navbar-links">
         <a href="/" id="navbar-platform-title">
             <img src="/favicon.ico" id="navbar-icon" />
@@ -10,4 +12,4 @@
         </form>
         <a href="/account" id="navbar-account-link">account</a>
     </div>
-</div>
+</nav>

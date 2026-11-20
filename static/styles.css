@@ -84,6 +84,22 @@ input[type=submit]:hover {
     display: inline !important;
 }
 
+/* skip navbar link */
+#skip-link {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+#skip-link:focus {
+    position: static;
+    width: auto;
+    height: auto;
+}
+
 /* navbar section */
 #navbar {
     position: sticky;
