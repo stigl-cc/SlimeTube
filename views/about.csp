@@ -18,29 +18,31 @@
                 [[title]] is an open-source video platform that is inspired by the old web.
                 It encourages original and creative content instead of blind repetition.
                 [[title]] also supports many resolutions, although 640x480 is highly popular on it because it looks nice.
-                Since [[title]] uses barely any JavaScript, you can also run it on old browsers, or environments where JavaScript may not be available (e.g. the Tor Browser).
+                Since [[title]] uses barely any JavaScript, you can also run it on old browsers or environments where JavaScript may not be available (e.g., the Tor Browser).
                 You will only need JavaScript when uploading videos, and there is some optional JavaScript on the watch page if you want to use keyboard shortcuts.
                 <br /> <br />
 
                 <strong>Author's Thoughts</strong> <br />
-                I decided to make [[title]] because I felt like YouTube had become way too corporate and monetary motivated.
+                I decided to make [[title]] because I felt like YouTube had become way too corporate and monetarily motivated (both YouTube and its creators).
                 I also looked at some self-hosted alternatives, but most of them were not great at what I really wanted.
                 Either they used a ton of JavaScript, which does make sense for a video platform - but I knew, and proved, that it is possible without that,
                 or they used a scalable microservice architecture, but it wasn't my intention to grow the platform to hundreds of thousands of users anyway,
-                and even now, from my benchmarks of [[title]], I know it could probably handle millions of regular monthly users without one.
+                and even now, from my benchmarks of [[title]], with 20 000 requests per second with reasonable latency,
+                I know it could probably handle millions of regular monthly users without one.
                 And so? I decided to make my own thing. And well, here it is!
                 <br /> <br />
 
                 <strong>Self-Hosting</strong> <br />
-                [[title]] is also very easy to self-host. It is just one docker container you can pull, add 1 volume, expose 1 port, and you're done.
+                [[title]] is also very easy to self-host. It is just one Docker container you can pull, add 1 volume, expose 1 port, and you're done.
                 [[title]] also uses very little CPU and RAM (under 30MB when idle), so you can host it on practically anything.
                 If you decide to switch to something else afterward, you can do that too.
                 All the video files are simply in the "videos" directory with a simple structure, encoded with MP4(h264 + AAC) for compatibility, with all other data being in an SQLite database with a fairly basic layout.
                 <br /> <br />
 
                 <strong>Support</strong> <br />
-                [[title]] does not come with any official support.
-                However, if you have any issues, want to give feedback, or just want to tell me something, feel free to email me on the address below or create an issue on GitHub.
+                [[title]] does not come with any official support, nor any guaranteed moderation (or content rules) to speak of,
+                although I will be trying my best to moderate [[title]] to the best of my ability and common sense.
+                However, if you have any issues, want to give feedback, or just want to tell me something, feel free to email me at the address below or create an issue on GitHub.
                 <br /> <br />
 
                 Email: <a href="mailto:slime.tube@ireview.games">slime.tube@ireview.games</a> <br />
