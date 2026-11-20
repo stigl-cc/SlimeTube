@@ -10,7 +10,7 @@
     </head>
     <body>
         <%view navbar %>
-        <div id="logged-out-container">
+        <div id="main-content" class="logged-out-container">
             <div id="logged-out-text">Logged out</div>
             <form id="login-form" class="account-container" method="post" action="/login">
                 <div id="login-text">Login</div>
@@ -26,7 +26,7 @@
                 </div>
 
                 <input id="login-submit" type="submit" value="Login" />
-                <a href="/register">
+                <a id="register-link" href="/register">
                     <button type="button" id="register-btn">Register</button>
                 </a>
             </form>

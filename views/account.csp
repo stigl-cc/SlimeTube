@@ -10,7 +10,7 @@
     </head>
     <body>
         <%view navbar %>
-        <div id="logged-in-container">
+        <div id="main-content" class="logged-in-container">
             <div id="logged-in-text">
                 <div id="logged-in-as-text">Logged in as:</div>
                 <div id="username">[[user_name]]([[user_id]])</div>

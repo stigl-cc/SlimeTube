@@ -1,7 +1,5 @@
 /* Logged In Section */
-#logged-in-container {
-    flex: 1;
-
+.logged-in-container {
     text-align: center;
     align-items: center;
 }
@@ -148,7 +146,7 @@
     #videos-table {
         width: 100% !important;
         max-width: 100% !important;
-        table-layout: auto;
+        overflow: hidden;
     }
 
     #videos-table colgroup {
@@ -190,9 +188,7 @@
 }
 
 /* Logged Out Section */
-#logged-out-container {
-    flex: 1;
-
+.logged-out-container {
     text-align: center;
 }
 
@@ -232,9 +228,12 @@
     width: 100%;
 }
 
+#register-link {
+    margin-top: 8px;
+}
+
 #register-btn {
     font-size: var(--small-text-size);
-    margin-top: 8px;
     width: 100%;
 }
 

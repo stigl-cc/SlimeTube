@@ -10,7 +10,7 @@
     </head>
     <body>
         <%view navbar %>
-        <div id="logged-out-container">
+        <div id="main-content" class="logged-out-container">
             <form id="login-form" class="account-container" method="post" action="/register">
                 <div id="login-text">Register</div>
                 <div>
