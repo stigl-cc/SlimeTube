@@ -11,6 +11,12 @@
     margin-bottom: 8px;
 }
 
+.preview-text-container {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
 .preview-image-container {
+    flex-shrink: 0;
     max-width: 50%;
 }

@@ -38,7 +38,7 @@
                                 <div class="preview-text preview-length">{%preview.at("length")%}</div>
                                 <%c++ }%>
                             </div>
-                            <div>
+                            <div class="preview-text-container">
                                 <div class="preview-text preview-title">{%preview.at("title")%}</div>
                                 <div class="preview-text preview-channel">{%preview.at("channel")%}</div>
                                 <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
