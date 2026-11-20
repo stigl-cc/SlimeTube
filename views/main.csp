@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="description" content="Home page for [[title]].">
+        <meta name="keywords" content="video, share, video camera, phone camera, open source">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]]</title>
