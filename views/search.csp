@@ -23,6 +23,7 @@
                     <a href="/channel/{%channel.at("id")%}">{%channel.at("name")%}</a> - {%channel.at("views")%} total views - {%channel.at("videos")%} videos<br>
                     <%c++ } %>
                 </div>
+                <br />
                 <label for="video-results">Videos:</label>
                 <div id="video-results">
                     <%c++
