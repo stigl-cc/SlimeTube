@@ -4,6 +4,7 @@
 #include <drogon/HttpRequest.h>
 #include <drogon/RequestStream.h>
 #include <shared_mutex>
+#include <models/ViewCountManager.h>
 
 namespace SlimyTube {
     using drogon::HttpMethod::Get,
@@ -14,6 +15,8 @@ namespace SlimyTube {
 
     class ResourceController : public drogon::HttpController<ResourceController> {
         static constexpr size_t mutexCount = 128;
+
+        ViewCountManager& mViewCountManager;
 
         std::array<std::shared_mutex, mutexCount> videoMutexes;
         std::array<std::shared_mutex, mutexCount> thumbnailMutexes;
@@ -51,5 +54,6 @@ namespace SlimyTube {
         void editThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
         void uploadThumbnail(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
         void uploadVideo(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, const std::string& id);
+        ResourceController();
     };
 }

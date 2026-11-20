@@ -1,3 +1,4 @@
+#include "ViewCountManager.h"
 #include "controllers/RecordController.h"
 #include <drogon/MultiPart.h>
 #include <models/video/VideoTranscoder.h>
@@ -178,7 +179,10 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
     if(range_header.empty()) {
         res = HttpResponse::newFileResponse(path, "", CT_VIDEO_MP4, "video/mp4", req);
         res->addHeader("Accept-Ranges", "bytes");
-        return(void) respond(res);
+        respond(res);
+
+        mViewCountManager.addView(id);
+        return;
     }
 
     vector<FileRange> ranges;
@@ -203,6 +207,8 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
             res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", CT_VIDEO_MP4, "video/mp4", req);
             if(res->getStatusCode() == HttpStatusCode::k200OK)
                 res->setStatusCode(HttpStatusCode::k206PartialContent);
+            if(ranges[0].start == 0)
+                mViewCountManager.addView(id);
             return(void) respond(std::move(res));
         }
     }
@@ -274,3 +280,5 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     );
     TranscodeManager::getInstance().enqueueJob(id);
 }
+
+SlimyTube::ResourceController::ResourceController() : mViewCountManager(ViewCountManager::getInstance()) {}
