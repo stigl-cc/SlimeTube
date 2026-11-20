@@ -217,7 +217,6 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     HttpViewData data = Settings::getInstance().getData();
 
     LoginMethod loginMethod = req->attributes()->get<LoginMethod>(Attributes::keyLoginMethod.data());
-    vector<unordered_map<string, string>> video_entries;
 
     if(loginMethod == LoginMethod::LaxNone) {
         data.insert("message", HttpViewData::htmlTranslate(req->getParameter("m")));
@@ -227,11 +226,13 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
 
     DbClientPtr db = drogon::app().getDbClient();
     Mapper<Users> user_mapper(db);
+    Mapper<Videos> video_mapper(db);
 
     Attributes::userId_t userId = req->attributes()->get<Attributes::userId_t>(Attributes::userId.data());
     const Users user = user_mapper.findByPrimaryKey(userId);
-    const vector<Videos> videos = user.getVideos(db);
+    const vector<Videos> videos =  video_mapper.orderBy(Videos::Cols::_creation_time, SortOrder::DESC).findBy(Criteria(Videos::Cols::_channel, CompareOperator::EQ, userId));
 
+    vector<unordered_map<string, string>> video_entries;
     for(const Videos& video : videos) {
         video_entries.emplace_back(unordered_map<string, string>{
                 { "id", video.getValueOfId() },
