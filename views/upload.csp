@@ -27,12 +27,12 @@
 
                 <div class="labeled-entry">
                     <label for="thumbnail-upload">thumbnail(max 5mib)</label><br>
-                    <input id="thumbnail-upload" type="file" accept="image/*" capture="environment" /><br>
+                    <input id="thumbnail-upload" type="file" accept="image/*" /><br>
                 </div>
 
                 <div class="labeled-entry">
                     <label for="video-upload">video(max 2gib)</label><br>
-                    <input id="video-upload" type="file" accept="video/*" capture="environment" /><br>
+                    <input id="video-upload" type="file" accept="video/*" /><br>
                 </div>
                 <div class="labeled-entry">
                     <label for="upload-progress">video upload progress</label>
