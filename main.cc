@@ -44,6 +44,13 @@ void cleanupVideos() {
         RecordManager::deleteVideo(video_to_delete);
 }
 
+#include "data/queries/create_tables.h"
+
+void createTables() {
+    DbClientPtr db = app().getDbClient();
+    for(const std::string_view& query : query_create_tables)
+        db->execSqlSync(query.data());
+}
 
 const std::vector<std::string> downloadable_file_types {
     "html",
@@ -119,6 +126,8 @@ int main() {
     // Start TranscodeManager thread
     app().getLoop()
         ->runAfter(1, TranscodeManager::getInstance);
+
+    app().registerBeginningAdvice(createTables);
 
     ViewCountManager& viewCountManager = ViewCountManager::getInstance();
     app().getLoop()
