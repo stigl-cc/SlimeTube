@@ -2,6 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
+        <meta name="description" content="[[channel_name]]'s page on [[title]] - User has [[channel_videos]] total videos and [[channel_views]] total views.">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]] - [[channel_name]]</title>
@@ -11,6 +12,7 @@
         <meta property="og:description" content="[[channel_name]]'s channel on [[title]]" />
         <meta property="og:url" content="[[url]]" />
         <meta property="og:site_name" content="[[title]]" />
+        <meta property="profile:username" content="[[channel_name]]" />
 
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/channel.css">
@@ -18,9 +20,9 @@
     <body>
         <%view navbar %>
         <div id="main-content">
-            <div id="channel_title">[[channel_name]]</div>
-            <div id="channel_views">[[channel_views]] total views</div>
-            <div id="channel_views">[[channel_videos]] videos</div>
+            <div id="channel-title">[[channel_name]]</div>
+            <div id="channel-views">[[channel_views]] total views</div>
+            <div id="channel-videos">[[channel_videos]] videos</div>
             <br>
 
             <label for="preview-section">Videos:</label>

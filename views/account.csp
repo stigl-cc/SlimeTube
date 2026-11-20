@@ -2,6 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
+        <meta name="description" content="Upload, Edit or Delete a video or change your account settings on [[title]].">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]] - Account</title>

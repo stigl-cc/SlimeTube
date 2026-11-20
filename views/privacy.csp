@@ -2,9 +2,13 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
+        <meta name="description" content="Privacy policy for [[title]] - You have no privacy on the internet, but here is what [[title]] tracks about you.">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]] - Privacy Policy</title>
+
+        <meta property="og:type" content="video.other" />
+        <meta property="og:title" content="[[title]] - Privacy Policy" />
 
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/privacy.css">

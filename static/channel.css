@@ -3,7 +3,7 @@
     --preview-width: 20%;
 }
 
-#channel_title {
+#channel-title {
     font-size: var(--text-size-big);
     width: 100%;
     border-bottom-color: var(--vertical-separator-color);

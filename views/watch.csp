@@ -2,6 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
+        <meta name="description" content="Watch '[[video_title]]' by '[[video_channel_name]]' on [[title]]. '[[video_description]]'.">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>[[title]] - [[video_title]]</title>
@@ -9,9 +10,11 @@
         <meta property="og:type" content="video.other" />
         <meta property="og:title" content="[[video_title]]" />
         <meta property="og:description" content="[[video_description]]" />
-        <meta property="og:url" content="[[url]]" />
+        <meta property="og:url" content="[[url]]/watch/[[video_id]]" />
         <meta property="og:image" content="[[url]]/rsc/thumbnail/[[video_id]]" />
         <meta property="og:site_name" content="[[title]]" />
+        <meta property="video:actor" content="[[url]]/channel/[[video_channel_id]]" />
+        <meta property="profile:username" content="[[video_channel_name]]" />
 
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/watch.css">

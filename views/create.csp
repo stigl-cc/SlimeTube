@@ -2,9 +2,10 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
+        <meta name="description" content="Create a new video on [[title]].">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>[[title]] - Account</title>
+        <title>[[title]] - Create a new video</title>
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/upload.css">
     </head>

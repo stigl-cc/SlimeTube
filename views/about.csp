@@ -6,6 +6,9 @@
 
         <title>About [[title]]</title>
 
+        <meta property="og:type" content="video.other" />
+        <meta property="og:title" content="About [[title]]" />
+
         <link rel="stylesheet" type="text/css" href="/styles.css">
         <link rel="stylesheet" type="text/css" href="/about.css">
     </head>
