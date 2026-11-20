@@ -68,11 +68,12 @@ hr {
 }
 
 #video-channel {
-    color: /*#4e6efe*/var(--link-color);
+    color: var(--link-color);
     text-decoration: none;
 }
 
 #video-description {
+    white-space: pre-wrap;
     word-wrap: break-word;
     max-width: 160ch;
     padding-bottom: 5px;
