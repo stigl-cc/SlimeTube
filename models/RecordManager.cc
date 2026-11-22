@@ -47,7 +47,8 @@ Mapper<Comments> SlimyTube::RecordManager::getCommentMapper() {
 }
 
 std::vector<uint8_t> SlimyTube::RecordManager::createSalt() {
-    std::vector<uint8_t> salt(SlimyTube::Settings::getInstance().salt_len);
+    static const Settings& settings = Settings::getInstance();
+    std::vector<uint8_t> salt(settings.salt_len);
     if(!RAND_bytes(salt.data(), salt.size())) {
         ERR_print_errors_fp(stderr);
         throw std::runtime_error("RAND_bytes Failed");
@@ -113,6 +114,7 @@ void SlimyTube::RecordManager::deleteUser(userId_t user_id) {
 }
 
 std::string SlimyTube::RecordManager::createVideo(uint64_t channel, const std::string& title, const std::string& description) {
+    static const Settings& settings = Settings::getInstance();
     Mapper<Videos> video_mapper(getDbClient());
 
     std::string id;
@@ -129,7 +131,7 @@ std::string SlimyTube::RecordManager::createVideo(uint64_t channel, const std::s
     video_mapper.insert(video);
 
     std::error_code ec;
-    fs::create_directory(Settings::getInstance().videos_dir / id, ec);
+    fs::create_directory(settings.videos_dir / id, ec);
     if(ec) throw std::runtime_error("fs::create_directories failed " + ec.message());
     return id;
 }
@@ -139,6 +141,7 @@ void SlimyTube::RecordManager::deleteComment(const Comments& comment) {
 }
 
 void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
+    static const Settings& settings = Settings::getInstance();
     DbClientPtr db = getDbClient();
     // Delete all comments made on the video
     const std::vector<Comments> comments = video.getComments(db);
@@ -156,7 +159,7 @@ void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
     }
 
     std::error_code ec;
-    fs::remove_all(Settings::getInstance().videos_dir / video.getValueOfId(), ec);
+    fs::remove_all(settings.videos_dir / video.getValueOfId(), ec);
     if(ec)
         throw std::runtime_error("fs::remove_all failed " + ec.message());
     video_mapper.deleteByPrimaryKey(video.getPrimaryKey());

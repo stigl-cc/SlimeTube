@@ -119,34 +119,30 @@ void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<vo
     vector<unordered_map<string, string>> previews;
     createPreviews("", 25, previews);
 
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
     data.insert("previews", previews);
 
     respond(HttpResponse::newHttpViewResponse("main.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::about(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    const Settings& settings = Settings::getInstance();
-
-    if(!settings.use_embeded_pages)
+    if(!mSettings.use_embeded_pages)
         return (void)respond(HttpResponse::newFileResponse("./static/about.html", "", drogon::CT_TEXT_HTML));
 
-    HttpViewData data = settings.getData();
+    HttpViewData data = mSettings.getData();
     return (void)respond(HttpResponse::newHttpViewResponse("about.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::privacy(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    const Settings& settings = Settings::getInstance();
-
-    if(!settings.use_embeded_pages)
+    if(!mSettings.use_embeded_pages)
         return (void)respond(HttpResponse::newFileResponse("./static/privacy.html", "", drogon::CT_TEXT_HTML));
 
-    HttpViewData data = settings.getData();
+    HttpViewData data = mSettings.getData();
     return (void)respond(HttpResponse::newHttpViewResponse("privacy.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
     if(!video.has_value())
@@ -189,13 +185,13 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
     data.insert("video_description", desc);
     data.insert("video_channel_name", user_name);
     data.insert("video_channel_id", user_id);
-    data.insert("url", Settings::getInstance().url);
+    data.insert("url", mSettings.url);
 
     respond(HttpResponse::newHttpViewResponse("watch.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
     vector<unordered_map<string, string>> previews, channels;
 
     const string& search_query = req->getParameter("q");
@@ -211,7 +207,7 @@ void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<
 }
 
 void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
 
     LoginMethod loginMethod = req->attributes()->get<LoginMethod>(Attributes::keyLoginMethod.data());
 
@@ -248,17 +244,17 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
 }
 
 void SlimyTube::PageController::reg(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)>&& respond) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
     respond(HttpResponse::newHttpViewResponse("reg.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::create(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
     respond(HttpResponse::newHttpViewResponse("create.csp", std::move(data)));
 }
 
 void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
     if(!video.has_value())
@@ -277,7 +273,7 @@ void SlimyTube::PageController::upload(const HttpRequestPtr& req, std::function<
 constexpr const std::string_view get_channel_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.id = $2 GROUP BY u.id;";
 
 void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const uint64_t& user_id) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
 
     DbClientPtr db = drogon::app().getDbClient();
     Mapper<Users> user_mapper(db);
@@ -305,7 +301,7 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
             });
     }
 
-    data.insert("url", Settings::getInstance().url);
+    data.insert("url", mSettings.url);
     data.insert("channel_name", user[Users::Cols::_name].c_str());
     data.insert("channel_views", user["total_views"].isNull() ? "0" : user["total_views"].c_str());
     data.insert("channel_videos", user["total_videos"].c_str());
@@ -315,7 +311,7 @@ void SlimyTube::PageController::channel(const HttpRequestPtr& req, std::function
 }
 
 void SlimyTube::PageController::edit(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const string& video_id) const {
-    HttpViewData data = Settings::getInstance().getData();
+    HttpViewData data = mSettings.getData();
 
     std::optional<Videos> video = RecordManager::getVideoIfExists(video_id);
     if(!video.has_value())
@@ -358,3 +354,5 @@ HttpResponsePtr SlimyTube::PageController::errorResponse(HttpStatusCode err, con
 void SlimyTube::PageController::error(std::function<void (const HttpResponsePtr &)> &&respond, HttpStatusCode err, const string& back) {
     respond(errorResponse(err, back));
 }
+
+SlimyTube::PageController::PageController() : mSettings(Settings::getInstance()) { }

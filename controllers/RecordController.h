@@ -5,6 +5,8 @@
 #include <drogon/HttpTypes.h>
 #include <functional>
 
+#include <models/Settings.h>
+
 namespace SlimyTube {
     using drogon::HttpMethod::Get,
         drogon::HttpMethod::Post,
@@ -14,6 +16,9 @@ namespace SlimyTube {
     using namespace std::placeholders;
 
     class RecordController : public drogon::HttpController<RecordController> {
+        private:
+        const Settings& mSettings;
+
         public:
     METHOD_LIST_BEGIN
         // unless specified otherwise
@@ -102,5 +107,7 @@ namespace SlimyTube {
 
         void videoCreate(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const;
         void videoDelete(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond, const std::string& id) const;
+
+        RecordController();
     };
 }

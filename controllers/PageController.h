@@ -4,6 +4,7 @@
 #include <drogon/HttpResponse.h>
 #include <drogon/HttpSimpleController.h>
 #include <drogon/HttpTypes.h>
+#include <models/Settings.h>
 
 #include <unordered_map>
 
@@ -15,12 +16,15 @@ namespace SlimyTube {
 
     class PageController : public drogon::HttpController<PageController> {
         private:
+        const Settings& mSettings;
+
         size_t getCommentsForVideo(const std::string& videoId, std::vector<std::unordered_map<std::string, std::string>>& comments);
         size_t createPreviews(const std::string& ignore, size_t count, std::vector<std::unordered_map<std::string, std::string>>& previews) const;
         size_t createSearchResults(
             std::vector<std::unordered_map<std::string, std::string>>& previews,
             std::vector<std::unordered_map<std::string, std::string>>& channels,
             const std::string& query, size_t count) const;
+
         public:
     METHOD_LIST_BEGIN
         // errors:
@@ -68,5 +72,7 @@ namespace SlimyTube {
         void edit(const HttpRequestPtr&, std::function<void (const HttpResponsePtr &)>&&, const std::string& video_id) const;
         static void error(std::function<void (const HttpResponsePtr &)>&&, drogon::HttpStatusCode err, const std::string& back);
         static HttpResponsePtr errorResponse(drogon::HttpStatusCode err, const std::string& back);
+
+        PageController();
     };
 }

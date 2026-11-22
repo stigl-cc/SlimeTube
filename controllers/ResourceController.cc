@@ -81,7 +81,7 @@ void SlimyTube::ResourceController::getThumbnail(const HttpRequestPtr& req, func
     if(video_id_check_error.has_value())
         return(void) respond(HttpResponse::newHttpResponse(video_id_check_error.value(), CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::thumbnail;
+    fs::path path = fs::weakly_canonical(fs::path(mSettings.videos_dir)) / fs::path(id) / Paths::thumbnail;
     shared_lock lk(getMutexForThumbnail(path));
     return(void) respond(HttpResponse::newFileResponse(path, "", CT_IMAGE_JPG, "", req));
 }
@@ -95,7 +95,7 @@ void SlimyTube::ResourceController::editThumbnail(const HttpRequestPtr& req, std
     if(video.getValueOfState() != static_cast<int32_t>(VideoState::Ready))
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::thumbnail_blob;
+    fs::path path = fs::weakly_canonical(fs::path(mSettings.videos_dir)) / fs::path(id) / Paths::thumbnail_blob;
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
     MultiPartParser file_upload;
@@ -122,7 +122,7 @@ void SlimyTube::ResourceController::uploadThumbnail(const HttpRequestPtr& req, f
     if(video.getValueOfState() != static_cast<int32_t>(VideoState::Upload))
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::thumbnail_blob;
+    fs::path path = fs::weakly_canonical(fs::path(mSettings.videos_dir)) / fs::path(id) / Paths::thumbnail_blob;
     unique_lock lk(getMutexForThumbnail(path)); // lock the thumbnail file - we are writing to it
 
     std::ofstream ofs(path, std::ios::out | std::ios::binary);
@@ -160,7 +160,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
     }
 
     // TODO: Check quality parameter to determine the suffix of the path
-    fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / quality_suffix;
+    fs::path path = fs::weakly_canonical(fs::path(mSettings.videos_dir)) / fs::path(id) / quality_suffix;
 
     shared_lock lk(getMutexForVideo(path));
     HttpResponsePtr res;
@@ -203,7 +203,7 @@ void SlimyTube::ResourceController::getVideo(const HttpRequestPtr& req, function
 
         case SinglePart:
         case MultiPart: {
-            ranges[0].end = std::min<size_t>(ranges[0].start + Settings::getInstance().limits.getVideoMaxRange, ranges[0].end);
+            ranges[0].end = std::min<size_t>(ranges[0].start + mSettings.limits.getVideoMaxRange, ranges[0].end);
             res = HttpResponse::newFileResponse(path, ranges[0].start, ranges[0].end - ranges[0].start, true, "", CT_VIDEO_MP4, "video/mp4", req);
             if(res->getStatusCode() == HttpStatusCode::k200OK)
                 res->setStatusCode(HttpStatusCode::k206PartialContent);
@@ -231,7 +231,7 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     if(offset_param_conv.ec != std::errc()) // X-Offset is not a (valid) number
         return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, CT_NONE));
 
-    const fs::path path = fs::weakly_canonical(fs::path(Settings::getInstance().videos_dir)) / fs::path(id) / Paths::video_blob;
+    const fs::path path = fs::weakly_canonical(fs::path(mSettings.videos_dir)) / fs::path(id) / Paths::video_blob;
     unique_lock lk(getMutexForVideo(path)); // lock the video file - we are writing to it
 
     std::error_code ec;
@@ -281,4 +281,6 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
     TranscodeManager::getInstance().enqueueJob(id);
 }
 
-SlimyTube::ResourceController::ResourceController() : mViewCountManager(ViewCountManager::getInstance()) {}
+SlimyTube::ResourceController::ResourceController()
+    : mViewCountManager(ViewCountManager::getInstance()),
+      mSettings(Settings::getInstance()) {}

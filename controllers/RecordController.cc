@@ -224,10 +224,10 @@ void SlimyTube::RecordController::commentCreate(const HttpRequestPtr& req, std::
         if(api)
             return (void)HttpResponse::newHttpResponse(HttpStatusCode::k400BadRequest, ContentType::CT_NONE);
 
-        if(!Settings::getInstance().allow_anonymous_comments)
+        if(!mSettings.allow_anonymous_comments)
             return (void)respond(PageController::errorResponse(HttpStatusCode::k401Unauthorized, "/watch/" + video));
 
-        HttpViewData data = Settings::getInstance().getData();
+        HttpViewData data = mSettings.getData();
         data.insert("comment_video_id", video);
         data.insert("comment_text", HttpViewData::htmlTranslate(content));
 
@@ -237,3 +237,5 @@ void SlimyTube::RecordController::commentCreate(const HttpRequestPtr& req, std::
     RecordManager::createComment(user_id(), video, content);
     api_redirect_error(HttpStatusCode::k201Created, "/watch/" + video);
 }
+
+SlimyTube::RecordController::RecordController() : mSettings(Settings::getInstance()) {}

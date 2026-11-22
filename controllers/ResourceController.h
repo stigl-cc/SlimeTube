@@ -1,10 +1,13 @@
 #pragma once
-#include <models/Videos.h>
 #include <drogon/HttpController.h>
 #include <drogon/HttpRequest.h>
 #include <drogon/RequestStream.h>
 #include <shared_mutex>
+
 #include <models/ViewCountManager.h>
+#include <models/video/VideoTranscoder.h>
+#include <models/Settings.h>
+#include <models/Videos.h>
 
 namespace SlimyTube {
     using drogon::HttpMethod::Get,
@@ -14,9 +17,10 @@ namespace SlimyTube {
         drogon::HttpResponsePtr;
 
     class ResourceController : public drogon::HttpController<ResourceController> {
-        static constexpr size_t mutexCount = 128;
-
+        const Settings& mSettings;
         ViewCountManager& mViewCountManager;
+
+        static constexpr size_t mutexCount = 128;
 
         std::array<std::shared_mutex, mutexCount> videoMutexes;
         std::array<std::shared_mutex, mutexCount> thumbnailMutexes;
