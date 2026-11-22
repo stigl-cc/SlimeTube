@@ -1,3 +1,4 @@
+<%inc #include <models/Preview.h> %>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -29,18 +30,18 @@
 
             <div id="preview-section">
                 <%c++
-                    auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
-                    for(const auto& preview : previews) {%>
-                <a class="preview-link" href="/watch/{%preview.at("id")%}">
+                    const std::vector<SlimyTube::Preview>& previews = @@.get<std::vector<SlimyTube::Preview>>("previews");
+                    for(const SlimyTube::Preview& preview : previews) {%>
+                <a class="preview-link" href="/watch/{%preview.id%}">
                     <div class="preview">
                         <div class="preview-image-container">
-                            <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
-                            <%c++ if(!preview.at("length").empty()) {%>
-                            <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                            <img class="preview-image" src="/rsc/thumbnail/{%preview.id%}">
+                            <%c++ if(!preview.length.empty()) {%>
+                            <div class="preview-text preview-length">{%preview.length%}</div>
                             <%c++ }%>
                         </div>
-                        <div class="preview-text preview-title">{%preview.at("title")%}</div>
-                        <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
+                        <div class="preview-text preview-title">{%preview.title%}</div>
+                        <div class="preview-text preview-stats">{%preview.views%} views {%preview.age%} ago </div>
                     </div>
                 </a>
                 <%c++ } if(previews.empty()) { %> <div class="centered-message">No videos to show.</div> <%c++ } %>

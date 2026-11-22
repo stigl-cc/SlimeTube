@@ -1,3 +1,4 @@
+<%inc #include <models/Preview.h> %>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -76,12 +77,12 @@
                     </form>
 
                     <%c++
-                        auto comments = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("comments");
-                        for(const auto& comment : comments) { %>
+                        const std::vector<SlimyTube::Comment>& comments = @@.get<std::vector<SlimyTube::Comment>>("comments");
+                        for(const SlimyTube::Comment& comment : comments) { %>
                     <div class="comment">
-                        <a class="comment-author" href="/channel/{%comment.at("channel_id")%}">{%comment.at("channel_name")%}</a>
-                        <div class="comment-age">{%comment.at("age")%}</div>
-                        <div class="comment-text">{%comment.at("text")%}</div>
+                        <a class="comment-author" href="/channel/{%comment.channel_id%}">{%comment.channel_name%}</a>
+                        <div class="comment-age">{%comment.age%}</div>
+                        <div class="comment-text">{%comment.text%}</div>
                     </div>
                     <%c++ } if(comments.empty()) {%>
                     There are no comments on video.
@@ -92,19 +93,19 @@
 
             <div id="right-section">
                 <%c++
-                    auto previews = @@.get<std::vector<std::unordered_map<std::string, std::string>>>("previews");
-                    for(const auto& preview : previews) {%>
-                <a class="preview-link" href="/watch/{%preview.at("id")%}">
+                    const std::vector<SlimyTube::Preview>& previews = @@.get<std::vector<SlimyTube::Preview>>("previews");
+                    for(const SlimyTube::Preview& preview : previews) {%>
+                <a class="preview-link" href="/watch/{%preview.id%}">
                     <div class="preview">
                         <div class="preview-image-container">
-                            <img class="preview-image" src="/rsc/thumbnail/{%preview.at("id")%}">
-                            <%c++ if(!preview.at("length").empty()) {%>
-                                <div class="preview-text preview-length">{%preview.at("length")%}</div>
+                            <img class="preview-image" src="/rsc/thumbnail/{%preview.id%}">
+                            <%c++ if(!preview.length.empty()) {%>
+                                <div class="preview-text preview-length">{%preview.length%}</div>
                             <%c++ }%>
                         </div>
-                        <div class="preview-text preview-title">{%preview.at("title")%}</div>
-                        <div class="preview-text preview-channel">{%preview.at("channel")%}</div>
-                        <div class="preview-text preview-stats">{%preview.at("views")%} views {%preview.at("age")%} ago </div>
+                        <div class="preview-text preview-title">{%preview.title%}</div>
+                        <div class="preview-text preview-channel">{%preview.channel%}</div>
+                        <div class="preview-text preview-stats">{%preview.views%} views {%preview.age%} ago </div>
                     </div>
                 </a>
                 <%c++ }%>

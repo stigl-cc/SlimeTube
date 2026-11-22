@@ -60,7 +60,6 @@ Below are the suboptions of `limits`:
 - `max_recommended_previews_main` - maximum number of videos recommended to users on the index page
 - `max_recommended_previews_watch` - maximum number of videos recommended to users on the watch page
 
-
 ### Endpoints
 | URL                                                | Description                         | Headers/Query    | Success Codes | Error Codes | Authentication Required |
 |----------------------------------------------------|-------------------------------------|------------------|---------------|-------------|-------------------------|
