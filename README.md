@@ -8,26 +8,26 @@ Is a fast, flexible, self-hosted C++ video platform for user uploaded videos (ok
 ### How to run
 
 #### docker/podman
-1) clone the repository **with --recursive**
-2) `docker build --rm -t slimetube:latest .`
-3) Place your certificates inside data/certs/ (server.crt and server.key) or disable https by removing it in data/config.json
-4) Review `data/config.json` and make sure it matches your settings
-6) To run: `docker run -it -d -p 8443:8443 -p 8080:8080 -v ./data:/data --name slimetube slimetube:latest`
+1. clone the repository **with --recursive**
+2. `docker build --rm -t slimetube:latest .`
+3. Place your certificates inside data/certs/ (server.crt and server.key) or disable https by removing it in data/config.json
+4. Review `data/config.json` and make sure it matches your settings
+6. To run: `docker run -it -d -p 8443:8443 -p 8080:8080 -v ./data:/data --name slimetube slimetube:latest`
    if you're using SELinux, you might need to add :z/:Z after the :/data (z - all containers can access it, Z - only this container can)
 
 #### normally
-1) clone the repository **with --recursive**
-2) cd into the repository
-3) install the following dependencies: `cmake make g++ c-ares-dev sqlite-dev jsoncpp-dev brotli-dev openssl-dev zlib-dev zstd-dev libuuid-dev ffmpeg-dev drogon` (drogon for drogon_ctl - can be installed using some package manager, you can also build from [source](https://drogon.org/))
-4) `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release`
-5) `cmake --build build --config Release -j<number-of-threads>` (replace the <number-of-threads> with the number of threads your CPU contains - to find out on linux `nproc --all`)
-6) To run: `./build/slimytube`
+1. clone the repository **with --recursive**
+2. cd into the repository
+3. install the following dependencies: `cmake make g++ c-ares-dev sqlite-dev jsoncpp-dev brotli-dev openssl-dev zlib-dev zstd-dev libuuid-dev ffmpeg-dev drogon` (drogon for drogon_ctl - can be installed using some package manager, you can also build from [source](https://drogon.org/))
+4. `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release`
+5. `cmake --build build --config Release -j<number-of-threads>` (replace the <number-of-threads> with the number of threads your CPU contains - to find out on linux `nproc --all`)
+6. To run: `./build/slimytube`
 
 ### Performance
 SlimeTube is very fast. In my benchmarks(commit c2a77f5, conditions below), I was able to get **46991** requests per second on the `/` page with **p99 latency of 10.62ms** on a Alder Lake Intel Core i5-12400F  
 How I benchmark slimetube:  
-1) Increase the file descriptor limit for and run the server `prlimit --nofile=262140:262140 ./build/slimytube`  
-2) Run benchmark via `prlimit --nofile=262140:262140 wrk --threads 4 --connections 200 --duration 10s --latency "http://127.0.0.1:8080/"`  
+1. Increase the file descriptor limit for and run the server `prlimit --nofile=262140:262140 ./build/slimytube`  
+2. Run benchmark via `prlimit --nofile=262140:262140 wrk --threads 4 --connections 200 --duration 10s --latency "http://127.0.0.1:8080/"`  
 
 I was also able to get **30.62GBps** worth of video throughput(**29538 requests per second**) when repeatedly downloading a 1.1MiB video, so the video playback should not be a big problem either.  
 
