@@ -1,6 +1,7 @@
 #include "Attributes.h"
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Mapper.h>
+#include <trantor/utils/Logger.h>
 #include <endian.h>
 #include <memory>
 #include <models/RecordManager.h>
@@ -147,13 +148,24 @@ void SlimyTube::TranscodeManager::editThumbnail(const fs::path& thumbnail_blob, 
             thumbnail_converter->encode();
         }
     } catch(const image_proc_error& err) {
-        if(err.isUserCaused) {
-            printf("Image %s\n", err.what());
-            return;
-        } else {
-            // TODO: Finish error handling here
-            printf("Image %s\n", err.what());
-        }
+        if(err.isUserCaused)
+            LOG_WARN << "Thumbnail edit failed (user caused): " << err.what();
+        else
+            LOG_ERROR << "Thumbnail edit failed: " << err.what();
+    } catch(const std::exception& err) {
+        LOG_ERROR << "Thumbnail edit failed unexpectedly: " << err.what();
+    }
+}
+
+static void markFailed(Mapper<Videos>& video_mapper, const std::string& id) {
+    try {
+        video_mapper.updateBy(
+            {Videos::Cols::_state},
+            Criteria(Videos::Cols::_id, CompareOperator::EQ, id),
+            static_cast<int32_t>(SlimyTube::VideoState::Failed)
+        );
+    } catch(const std::exception& err) {
+        LOG_ERROR << "Could not mark video " << id << " as failed: " << err.what();
     }
 }
 
@@ -223,27 +235,21 @@ void SlimyTube::TranscodeManager::worker() {
 
                 fs::remove(blob);
             } catch(const video_proc_error& err) {
-                if(err.isUserCaused) {
-                    video_mapper.updateBy(
-                        {Videos::Cols::_state},
-                        Criteria(Videos::Cols::_id, CompareOperator::EQ, current_job),
-                        static_cast<int32_t>(VideoState::Failed)
-                    );
-                } else {
-                    // TODO: Finish error handling here
-                    printf("Video %s\n", err.what());
-                }
+                if(err.isUserCaused)
+                    LOG_WARN << "Video " << current_job << " failed to encode (user caused): " << err.what();
+                else
+                    LOG_ERROR << "Video " << current_job << " failed to encode: " << err.what();
+                markFailed(video_mapper, current_job);
             } catch(const image_proc_error& err) {
-                if(err.isUserCaused) {
-                    video_mapper.updateBy(
-                        {Videos::Cols::_state},
-                        Criteria(Videos::Cols::_id, CompareOperator::EQ, current_job),
-                        static_cast<int32_t>(VideoState::Failed)
-                    );
-                } else {
-                    // TODO: Finish error handling here
-                    printf("Image %s\n", err.what());
-                }
+                if(err.isUserCaused)
+                    LOG_WARN << "Thumbnail for video " << current_job << " failed (user caused): " << err.what();
+                else
+                    LOG_ERROR << "Thumbnail for video " << current_job << " failed: " << err.what();
+                markFailed(video_mapper, current_job);
+            } catch(const std::exception& err) {
+                // Anything unexpected (filesystem, database, ...) must not kill the worker thread
+                LOG_ERROR << "Video " << current_job << " failed unexpectedly: " << err.what();
+                markFailed(video_mapper, current_job);
             }
 
             if(video.getValueOfState() == static_cast<int64_t>(VideoState::Deleted))
