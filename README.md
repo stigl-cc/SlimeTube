@@ -48,8 +48,12 @@ The setting "custom_config" contains all settings for this app specifically.
 - `encoder_frame_rate` - what frame rate to encode all videos into
 - `audio_bitrate` - what bitrate to use for videos
 - `audio_sample_rate` - what sample rate to use for videos
-- `use_embeded_pages` - which about and privacy page content should be used: 0 - static/about.html(+ privacy.html), 1 (or anything else) views/about.csp(+ privacy.csp)
-- `allow_anonymous_comments` - 1 allows not logged in users to post comments
+- `use_embeded_pages` - which about and privacy page content should be used: false - static/about.html(+ privacy.html), true: views/about.csp(+ privacy.csp)
+- `allow_anonymous_comments` - true allows not logged in users to post comments as Anonymous
+- `allow_user_creation` - allows registering a new user on the website
+- `max_search_results` - maximum number of items(users + videos, users first) that will be shown upon searching
+- `max_recommended_previews_main` - maximum number of videos recommended to users on the index page
+- `max_recommended_previews_watch` - maximum number of videos recommended to users on the watch page
 
 ### Endpoints
 | URL                                                | Description                         | Headers/Query    | Success Codes | Error Codes | Authentication Required |

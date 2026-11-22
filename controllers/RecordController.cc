@@ -65,6 +65,9 @@ void SlimyTube::RecordController::userRegister(const HttpRequestPtr& req, std::f
         name = req->getParameter(Query::username.data()),
         pass = req->getParameter(Query::password.data());
 
+    if(!mSettings.allow_user_creation)
+        api_ui_error(HttpStatusCode::k403Forbidden, "/account?m=User%20creation%20not%20allowed");
+
     // details not provided
     if(name.empty() || pass.empty())
         api_ui_error(HttpStatusCode::k400BadRequest, "/register");

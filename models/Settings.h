@@ -20,6 +20,10 @@ namespace SlimyTube {
         resolution_t max_input;
         resolution_t max_encode;
         int max_unlisted_br;
+
+        int max_search_results;
+        int max_recommended_previews_main;
+        int max_recommended_previews_watch;
     };
 
     class Settings {
@@ -36,6 +40,7 @@ namespace SlimyTube {
         bool allow_unlisted_ratios;
         bool use_embeded_pages;
         bool allow_anonymous_comments;
+        bool allow_user_creation;
 
         int audio_bitrate;
         int audio_samprate;

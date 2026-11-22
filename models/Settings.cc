@@ -51,6 +51,10 @@ void SlimyTube::Settings::parseLimits(Json::Value config, SlimyTube::Limits& lim
     limits.max_unlisted_br = user_limit_config.get("max_unlisted_bitrate", 3150000).as<int32_t>();
     if(limits.max_unlisted_br == -1) // 2gbps ish at the maximum per second of video - likely fine
         limits.max_unlisted_br = std::numeric_limits<int>::max();
+
+    limits.max_search_results = user_limit_config.get("max_search_results", 100).as<int32_t>();
+    limits.max_recommended_previews_main = user_limit_config.get("max_recommended_previews_main", 25).as<int32_t>();
+    limits.max_recommended_previews_watch = user_limit_config.get("max_recommended_previews_watch", 25).as<int32_t>();
 }
 
 int SlimyTube::Settings::parse(Json::Value config) {
@@ -69,8 +73,9 @@ int SlimyTube::Settings::parse(Json::Value config) {
     audio_bitrate = config.get("audio_bitrate", 128000).as<int>();
     audio_samprate = config.get("audio_sample_rate", 48000).as<int>();
 
-    use_embeded_pages = config.get("use_embeded_pages", 1).as<int>() != 0;
-    allow_anonymous_comments = config.get("allow_anonymous_comments", 0).as<int>() != 0;
+    use_embeded_pages = config.get("use_embeded_pages", true).as<bool>();
+    allow_anonymous_comments = config.get("allow_anonymous_comments", false).as<bool>();
+    allow_user_creation = config.get("allow_user_creation", true).as<bool>();
 
     thumbnail_res = {
         config.get("thumbnail_width", 640).as<dimension_t>(),

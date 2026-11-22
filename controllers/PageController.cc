@@ -91,13 +91,13 @@ size_t SlimyTube::PageController::createSearchResults(vector<unordered_map<strin
     DbClientPtr db = RecordManager::getDbClient();
     const string query_w_wildcards = '%' + query + '%';
 
-    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, static_cast<int32_t>(VideoState::Ready), count);
-    for(const Row& video : found_videos)
-        emplace_preview(video, previews);
-
     const Result found_users = db->execSqlSync(search_users_query.data(), static_cast<int32_t>(VideoState::Ready), query_w_wildcards, count);
     for(const Row& user : found_users)
         emplace_channel(user, channels);
+
+    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, static_cast<int32_t>(VideoState::Ready), count - found_users.size());
+    for(const Row& video : found_videos)
+        emplace_preview(video, previews);
 
     return found_videos.size() + found_users.size();
 }
@@ -117,7 +117,7 @@ size_t SlimyTube::PageController::getCommentsForVideo(const std::string& videoId
 
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     vector<unordered_map<string, string>> previews;
-    createPreviews("", 25, previews);
+    createPreviews("", mSettings.limits.max_recommended_previews_main, previews);
 
     HttpViewData data = mSettings.getData();
     data.insert("previews", previews);
@@ -171,7 +171,7 @@ void SlimyTube::PageController::watch(const HttpRequestPtr& req, std::function<v
         emplace_comment(comment, comments);
 
     vector<unordered_map<string, string>> previews;
-    createPreviews(video_id, 25, previews);
+    createPreviews(video_id, mSettings.limits.max_recommended_previews_watch, previews);
 
     data.insert("video_id", video_id);
     data.insert("previews", previews);
@@ -195,7 +195,7 @@ void SlimyTube::PageController::search(const HttpRequestPtr& req, std::function<
     vector<unordered_map<string, string>> previews, channels;
 
     const string& search_query = req->getParameter("q");
-    size_t search_result_count = createSearchResults(previews, channels, search_query, 50);
+    size_t search_result_count = createSearchResults(previews, channels, search_query, mSettings.limits.max_search_results);
 
     data.insert("result_count", search_result_count);
     data.insert("search_query", HttpViewData::htmlTranslate(search_query));
@@ -212,6 +212,7 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
     LoginMethod loginMethod = req->attributes()->get<LoginMethod>(Attributes::keyLoginMethod.data());
 
     if(loginMethod == LoginMethod::LaxNone) {
+        data.insert("register_btn", mSettings.allow_user_creation);
         data.insert("message", HttpViewData::htmlTranslate(req->getParameter("m")));
         respond(HttpResponse::newHttpViewResponse("login.csp", std::move(data)));
         return;
@@ -244,6 +245,9 @@ void SlimyTube::PageController::account(const HttpRequestPtr& req, std::function
 }
 
 void SlimyTube::PageController::reg(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)>&& respond) const {
+    if(!mSettings.allow_user_creation)
+        return(void) error(std::move(respond), HttpStatusCode::k403Forbidden, "/account?m=User%20creation%20not%20allowed");
+
     HttpViewData data = mSettings.getData();
     respond(HttpResponse::newHttpViewResponse("reg.csp", std::move(data)));
 }
