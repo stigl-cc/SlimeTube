@@ -77,6 +77,7 @@ namespace SlimyTube {
         // success: 200/303
         ADD_METHOD_TO(RecordController::videoDelete, "/api/video/{id}", Delete, "SlimyTube::StrictApiAuthenticator");
         ADD_METHOD_TO(RecordController::videoDelete, "/video/delete/{id}", Post, "SlimyTube::StrictAuthenticator");
+        ADD_METHOD_TO(RecordController::videoDelete, "/video/delete/{id}", Get, "SlimyTube::StrictAuthenticator");
 
         // headers: Cookie(for session login method)
         // errors 404 403 401

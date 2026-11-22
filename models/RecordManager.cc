@@ -151,7 +151,7 @@ void SlimyTube::RecordManager::deleteVideo(const Videos& video) {
     Mapper<Videos> video_mapper(db);
     if(video.getValueOfState() == static_cast<int64_t>(VideoState::Encode)) {
         video_mapper.updateBy(
-            {Videos::Cols::_state, Videos::Cols::_resolutions},
+            { Videos::Cols::_state },
             Criteria(Videos::Cols::_id, CompareOperator::EQ, video.getValueOfId()),
             static_cast<int32_t>(VideoState::Deleted)
         );

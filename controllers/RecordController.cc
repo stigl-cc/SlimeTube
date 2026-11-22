@@ -156,10 +156,15 @@ void SlimyTube::RecordController::videoDelete(const HttpRequestPtr& req, std::fu
     if(!video.has_value())
         api_ui_error(HttpStatusCode::k404NotFound, "/account");
 
-    if(video.value().getValueOfChannel() != user_id())
+    Videos& video_ref = video.value();
+
+    if(video_ref.getValueOfChannel() != user_id())
         api_ui_error(HttpStatusCode::k403Forbidden, "/account");
 
-    RecordManager::deleteVideo(video.value());
+    if(video_ref.getValueOfState() == static_cast<int32_t>(VideoState::Deleted))
+        api_ui_error(HttpStatusCode::k403Forbidden, "/account");
+
+    RecordManager::deleteVideo(video_ref);
     api_redirect_error(HttpStatusCode::k200OK, "/account");
 }
 

@@ -255,6 +255,16 @@ void SlimyTube::ResourceController::uploadVideo(const HttpRequestPtr& req, funct
 
     bool is_last_param = req->getHeader(Headers::last.data()) == "true";
 
+    // Fail video, the blob is too large
+    if(current_file_size + (body.size() - body_skipped) > mSettings.limits.blobSize) {
+        RecordManager::getVideosMapper().updateBy(
+            {Videos::Cols::_state},
+            Criteria(Videos::Cols::_id, CompareOperator::EQ, id),
+            static_cast<int32_t>(VideoState::Failed)
+        );
+        return(void) respond(HttpResponse::newHttpResponse(HttpStatusCode::k507InsufficientStorage, drogon::CT_NONE));
+    }
+
     if(body_skipped >= body.size() && !is_last_param) { // body already written (X-Offset too small)
         HttpResponsePtr res = HttpResponse::newHttpResponse(HttpStatusCode::k409Conflict, drogon::CT_NONE);
         res->addHeader(Headers::position.data(), std::to_string(current_file_size));
