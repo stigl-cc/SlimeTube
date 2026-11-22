@@ -1,7 +1,7 @@
 ## SlimeTube
 <sub>(or SlimyTube? SlimeyTube? I don't even know anymore)</sub>
 
-Is a flexible self-hosted C++ video platform for user videos (ok, let's face it, its just a youtube clone).
+Is a fast, flexible, self-hosted C++ video platform for user uploaded videos (ok, let's face it, its just a youtube clone).
 
 ![docs image showing example of the /watch page with recommended videos, comments and a playing video](.github/docs/image.png)
 
@@ -22,6 +22,13 @@ Is a flexible self-hosted C++ video platform for user videos (ok, let's face it,
 4) `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release`
 5) `cmake --build build --config Release -j<number-of-threads>` (replace the <number-of-threads> with the number of threads your CPU contains - to find out on linux `nproc --all`)
 6) To run: `./build/slimytube`
+
+### Performance
+SlimeTube is very fast. In my benchmarks(commit c2a77f5, conditions below), I was able to get **46991** requests per second on the `/` page with **p99 latency of 10.62ms** on a Alder Lake Intel Core i5-12400F
+How I benchmark slimetube:
+1) Increase the file descriptor limit for and run the server `prlimit --nofile=262140:262140 ./build/slimytube`
+2) Run benchmark via `prlimit --nofile=262140:262140 wrk --threads 4 --connections 200 --duration 10s --latency "http://127.0.0.1:8080/"`
+I was also able to get **30.62GBps** worth of video throughput(**29538 requests per second**) when repeatedly downloading a 1.1MiB video, so the video playback should not be a big problem either.
 
 ### Configuration
 For example values, see [data/config.json](./data/config.json)  
