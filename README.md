@@ -35,16 +35,6 @@ The setting "custom_config" contains all settings for this app specifically.
 - `ffmpeg_log` - file where the log for ffmpeg output should go
 - `ffmpeg_log_level` - how much ffmpeg should log
 - `view_count_cache` - file where views that did not get written to the database get saved for when application is started
-- `limits` - contains various limits on what the users are allowed to do on the platform
-- `limits` - `max_blob_size` - how large of a file can a user submit to be encoded currently not used
-- `limits` - `total_user_size` - ~~how much space is a user allowed to use~~ currently not used
-- `limits` - `max_get_video_range_size` - maximum amount of video data the server will allow user to download with a http range request
-- `limits` - `max_unlisted_bitrate` - maximum bitrate an uploaded video will be encoded to
-- `limits` - `max_aspect_ratio` - maximum width/height multiplier for video to be encoded
-- `limits` - `max_input_video_width` - maximum width for a video to be encoded
-- `limits` - `max_input_video_height` - maximum height for a video to be encoded
-- `limits` - `max_encode_video_width` - maximum width for a video to be encoded to
-- `limits` - `max_encode_video_height` - maximum width for a video to be encoded to
 - `resolutions` - list of resolutions natively accepted by the encoder in format: `[[ratio_width, ratio_height], width, height, video_bitrate, [also]]` also: heights of other resolutions with the same ratio (defined below this one) that will also be encoded with this one - example: `[[16, 9], 1920, 1080, 3150000, [720]]` - where 1280x720 must be defined below this line
 - `allow_unlisted_ratios` - whether to allow encoding of ratios not in the `resolutions` list
 - `encoder_frame_rate` - what frame rate to encode all videos into
@@ -53,9 +43,23 @@ The setting "custom_config" contains all settings for this app specifically.
 - `use_embeded_pages` - which about and privacy page content should be used: false - static/about.html(+ privacy.html), true: views/about.csp(+ privacy.csp)
 - `allow_anonymous_comments` - true allows not logged in users to post comments as Anonymous
 - `allow_user_creation` - allows registering a new user on the website
-- `max_search_results` - maximum number of items(users + videos, users first) that will be shown upon searching
+- `max_search_results` - maximum number of items(users + videos, users first) that will be shown upon searching  
+- `limits` - contains various limits on what the users are allowed to do on the platform
+<br />
+
+Below are the suboptions of `limits`:
+- `max_blob_size` - how large of a file can a user submit to be encoded currently not used
+- `total_user_size` - ~~how much space is a user allowed to use~~ currently not used
+- `max_get_video_range_size` - maximum amount of video data the server will allow user to download with a http range request
+- `max_unlisted_bitrate` - maximum bitrate an uploaded video will be encoded to
+- `max_aspect_ratio` - maximum width/height multiplier for video to be encoded
+- `max_input_video_width` - maximum width for a video to be encoded
+- `max_input_video_height` - maximum height for a video to be encoded
+- `max_encode_video_width` - maximum width for a video to be encoded to
+- `max_encode_video_height` - maximum width for a video to be encoded to
 - `max_recommended_previews_main` - maximum number of videos recommended to users on the index page
 - `max_recommended_previews_watch` - maximum number of videos recommended to users on the watch page
+
 
 ### Endpoints
 | URL                                                | Description                         | Headers/Query    | Success Codes | Error Codes | Authentication Required |
