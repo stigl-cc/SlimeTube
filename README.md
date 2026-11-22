@@ -3,7 +3,7 @@
 
 Is a flexible self-hosted C++ video platform for user videos (ok, let's face it, its just a youtube clone).
 
-[docs image showing example of the /watch page with recommended videos, comments and a playing video](.github/docs/image.png)
+![docs image showing example of the /watch page with recommended videos, comments and a playing video](.github/docs/image.png)
 
 ### How to run
 
