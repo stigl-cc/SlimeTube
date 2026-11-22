@@ -79,6 +79,7 @@ size_t SlimyTube::PageController::createPreviews(const string& ignore, size_t am
     DbClientPtr db = SlimyTube::RecordManager::getDbClient();
     Result queried_videos = db->execSqlSync(recommended_query.data(), static_cast<int32_t>(VideoState::Ready), ignore, amount);
 
+    previews.reserve(queried_videos.size());
     for(const Row& video : queried_videos)
         emplace_preview(video, previews);
 
@@ -94,10 +95,12 @@ size_t SlimyTube::PageController::createSearchResults(vector<Preview>& previews,
     const string query_w_wildcards = '%' + query + '%';
 
     const Result found_users = db->execSqlSync(search_users_query.data(), static_cast<int32_t>(VideoState::Ready), query_w_wildcards, count);
+    channels.reserve(found_users.size());
     for(const Row& user : found_users)
         emplace_channel(user, channels);
 
     const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, static_cast<int32_t>(VideoState::Ready), count - found_users.size());
+    previews.reserve(found_videos.size());
     for(const Row& video : found_videos)
         emplace_preview(video, previews);
 
@@ -111,13 +114,12 @@ size_t SlimyTube::PageController::getCommentsForVideo(const std::string& videoId
     DbClientPtr db = RecordManager::getDbClient();
 
     const Result found_comments = db->execSqlSync(get_comments_query.data(), videoId);
+    comments.reserve(found_comments.size());
     for(const Row& comment : found_comments)
         emplace_comment(comment, comments);
 
     return found_comments.size();
 }
-
-#include <models/Preview.h>
 
 void SlimyTube::PageController::main(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&respond) const {
     std::vector<Preview> previews;
