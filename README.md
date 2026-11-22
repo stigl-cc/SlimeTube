@@ -26,8 +26,9 @@ Is a fast, flexible, self-hosted C++ video platform for user uploaded videos (ok
 ### Performance
 SlimeTube is very fast. In my benchmarks(commit c2a77f5, conditions below), I was able to get **46991** requests per second on the `/` page with **p99 latency of 10.62ms** on a Alder Lake Intel Core i5-12400F  
 How I benchmark slimetube:  
-1) Increase the file descriptor limit for and run the server `prlimit --nofile=262140:262140 ./build/slimytube`
-2) Run benchmark via `prlimit --nofile=262140:262140 wrk --threads 4 --connections 200 --duration 10s --latency "http://127.0.0.1:8080/"`
+1) Increase the file descriptor limit for and run the server `prlimit --nofile=262140:262140 ./build/slimytube`  
+2) Run benchmark via `prlimit --nofile=262140:262140 wrk --threads 4 --connections 200 --duration 10s --latency "http://127.0.0.1:8080/"`  
+
 I was also able to get **30.62GBps** worth of video throughput(**29538 requests per second**) when repeatedly downloading a 1.1MiB video, so the video playback should not be a big problem either.  
 
 ### Configuration
