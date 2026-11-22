@@ -39,37 +39,41 @@ using
     std::string,
     std::unordered_map;
 
-constexpr const std::string_view recommended_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE state = $1 AND v.id != $2 ORDER BY RANDOM() LIMIT $3;";
-
 namespace SlimyTube {
+    constexpr const std::string_view
+        recommended_query   = "SELECT v.id, v.length, v.title, u.name, v.views, v.creation_time FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE v.state = $1 AND v.id != $2 ORDER BY RANDOM() LIMIT $3;",
+        search_videos_query = "SELECT v.id, v.length, v.title, u.name, v.views, v.creation_time FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE v.state = $1 AND (v.title LIKE $2 OR v.description LIKE $2) ORDER BY creation_time DESC LIMIT $3;";
+
     inline void emplace_preview(const Row& row, vector<Preview>& previews) {
         previews.emplace_back(
-            row[Videos::Cols::_id].as<string>(),
-            FormatUtil::FormatVideoLength(row[Videos::Cols::_length].as<int64_t>()),
-            HttpViewData::htmlTranslate(row[Videos::Cols::_title].as<string>()),
-            row["ch_name"].as<string>(),
-            FormatUtil::FormatViewCount(row[Videos::Cols::_views].as<int64_t>()),
-            FormatUtil::FormatAge(row[Videos::Cols::_creation_time].as<int64_t>())
+            row[0].as<string>(),
+            FormatUtil::FormatVideoLength(row[1].as<int64_t>()),
+            HttpViewData::htmlTranslate(row[2].as<string>()),
+            row[3].as<string>(),
+            FormatUtil::FormatViewCount(row[4].as<int64_t>()),
+            FormatUtil::FormatAge(row[5].as<int64_t>())
         );
     }
 
+    constexpr const std::string_view search_users_query = "SELECT u.id, u.name, SUM(v.views), COUNT(v.id) FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id ORDER BY name LIMIT $3;";
     inline void emplace_channel(const Row& row, vector<Channel>& channels) {
         channels.emplace_back(
-            row[Users::Cols::_id].as<int64_t>(),
-            row[Users::Cols::_name].as<string>(),
-            FormatUtil::FormatViewCount(row["total_views"].isNull() ? 0 : row["total_views"].as<int64_t>()),
-            row["total_videos"].as<int64_t>()
+            row[0].as<int64_t>(),
+            row[1].as<string>(),
+            FormatUtil::FormatViewCount(row[2].isNull() ? 0 : row[2].as<int64_t>()),
+            row[3].as<int64_t>()
         );
     }
 
+    constexpr const std::string_view get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name FROM comments AS c LEFT OUTER JOIN users AS u ON c.channel = u.id WHERE c.video = $1 ORDER BY creation_time DESC;";
     inline void emplace_comment(const Row& row, vector<Comment>& comments) {
-        const Field& ch_name = row["ch_name"];
+        const Field& ch_name = row[3];
 
         comments.emplace_back(
-            row[Comments::Cols::_channel].as<int64_t>(),
+            row[0].as<int64_t>(),
             ch_name.isNull() ? "Anonymous" : ch_name.as<string>(),
-            FormatUtil::FormatAge(row[Comments::Cols::_creation_time].as<int64_t>()),
-            HttpViewData::htmlTranslate(row[Comments::Cols::_content].as<string>())
+            FormatUtil::FormatAge(row[1].as<int64_t>()),
+            HttpViewData::htmlTranslate(row[2].as<string>())
         );
     }
 };
@@ -86,10 +90,6 @@ size_t SlimyTube::PageController::createPreviews(const string& ignore, size_t am
     return queried_videos.size();
 }
 
-constexpr const std::string_view
-    search_videos_query = "SELECT v.*, u.name AS ch_name FROM videos AS v INNER JOIN users AS u ON v.channel = u.id WHERE (v.title LIKE $1 OR v.description LIKE $1) AND v.state = $2 ORDER BY creation_time DESC LIMIT $3;",
-    search_users_query = "SELECT u.*, SUM(v.views) AS total_views, COUNT(v.id) AS total_videos FROM users AS u LEFT OUTER JOIN videos AS v ON u.id = v.channel AND v.state = $1 WHERE u.name LIKE $2 GROUP BY u.id ORDER BY name LIMIT $3;";
-
 size_t SlimyTube::PageController::createSearchResults(vector<Preview>& previews, vector<Channel>& channels, const string& query, size_t count) const {
     DbClientPtr db = RecordManager::getDbClient();
     const string query_w_wildcards = '%' + query + '%';
@@ -99,16 +99,13 @@ size_t SlimyTube::PageController::createSearchResults(vector<Preview>& previews,
     for(const Row& user : found_users)
         emplace_channel(user, channels);
 
-    const Result found_videos = db->execSqlSync(search_videos_query.data(), query_w_wildcards, static_cast<int32_t>(VideoState::Ready), count - found_users.size());
+    const Result found_videos = db->execSqlSync(search_videos_query.data(), static_cast<int32_t>(VideoState::Ready), query_w_wildcards, count - found_users.size());
     previews.reserve(found_videos.size());
     for(const Row& video : found_videos)
         emplace_preview(video, previews);
 
     return found_videos.size() + found_users.size();
 }
-
-constexpr const std::string_view
-    get_comments_query = "SELECT c.channel, c.creation_time, c.content, u.name AS ch_name FROM comments AS c LEFT OUTER JOIN users AS u ON c.channel = u.id WHERE c.video = $1 ORDER BY creation_time DESC;";
 
 size_t SlimyTube::PageController::getCommentsForVideo(const std::string& videoId, vector<Comment>& comments) {
     DbClientPtr db = RecordManager::getDbClient();
