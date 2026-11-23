@@ -63,8 +63,8 @@
                           %>
                     <tr class="video-table-{%video.at("state")%}">
                         <td>{%video.at("id")%}</td>
-                        <td>{%video.at("title")%}</td>
-                        <td>{%video.at("description")%}</td>
+                        <td title="{%video.at("title")%}">{%video.at("title")%}</td>
+                        <td title="{%video.at("description")%}">{%video.at("description")%}</td>
                         <td>{%video.at("size")%}</td>
                         <td><a href="/video/{%action%}/{%video.at("id")%}">{%action%}</td>
                     </tr>

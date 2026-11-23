@@ -45,6 +45,10 @@ hr {
 #video-title {
     font-size: var(--text-size-medium);
     padding-right: 150px;
+
+    max-width: 93%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #video-info-section {

@@ -41,7 +41,7 @@
                 </video>
 
                 <div id="video-info-section">
-                    <div id="video-title">[[video_title]]</div>
+                    <div id="video-title" title="[[video_title]]">[[video_title]]</div>
                     <div id="video-controls">
                         <select onchange= "change_playback_quality()" id="quality-selector">
                             <%c++ auto resolutions = @@.get<std::vector<std::string>>("resolutions");
@@ -61,10 +61,10 @@
                     <div id="video-statline">
                         <div class="video-stat" id="video-views">[[video_views]] views</div>
                         <div class="video-stat" id="video-age">[[video_age]] ago</div>
-                        <a class="video-stat" id="video-channel" href="/channel/[[video_channel_id]]">[[video_channel_name]]</a>
+                        <a class="video-stat" id="video-channel" href="/channel/[[video_channel_id]]" title="[[video_channel_name]]">[[video_channel_name]]</a>
                     </div>
                     <hr>
-                    <div id="video-description">[[video_description]]</div>
+                    <div id="video-description" title="[[video_description]]">[[video_description]]</div>
                 </div>
 
                 <div id="comment-section">
@@ -80,9 +80,9 @@
                         const std::vector<SlimyTube::Comment>& comments = @@.get<std::vector<SlimyTube::Comment>>("comments");
                         for(const SlimyTube::Comment& comment : comments) { %>
                     <div class="comment">
-                        <a class="comment-author" href="/channel/{%comment.channel_id%}">{%comment.channel_name%}</a>
+                        <a class="comment-author" href="/channel/{%comment.channel_id%}" title="{%comment.channel_name%}">{%comment.channel_name%}</a>
                         <div class="comment-age">{%comment.age%}</div>
-                        <div class="comment-text">{%comment.text%}</div>
+                        <div class="comment-text" title="{%comment.text%}">{%comment.text%}</div>
                     </div>
                     <%c++ } if(comments.empty()) {%>
                     There are no comments on video.
@@ -103,8 +103,8 @@
                                 <div class="preview-text preview-length">{%preview.length%}</div>
                             <%c++ }%>
                         </div>
-                        <div class="preview-text preview-title">{%preview.title%}</div>
-                        <div class="preview-text preview-channel">{%preview.channel%}</div>
+                        <div class="preview-text preview-title" title="{%preview.title%}">{%preview.title%}</div>
+                        <div class="preview-text preview-channel" title="{%preview.channel%}">{%preview.channel%}</div>
                         <div class="preview-text preview-stats">{%preview.views%} views {%preview.age%} ago </div>
                     </div>
                 </a>
