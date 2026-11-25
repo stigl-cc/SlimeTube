@@ -45,6 +45,7 @@ hr {
 #video-title {
     font-size: var(--text-size-medium);
     padding-right: 150px;
+    text-wrap: nowrap;
 
     max-width: 93%;
     overflow: hidden;
@@ -71,9 +72,17 @@ hr {
     margin-left: 10px;
 }
 
+.video-stat {
+    text-wrap: nowrap;
+}
+
 #video-channel {
     color: var(--link-color);
     text-decoration: none;
+
+    max-width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #video-description {

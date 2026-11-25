@@ -21,7 +21,7 @@
     <body>
         <%view navbar %>
         <div id="main-content">
-            <div id="channel-title">[[channel_name]]</div>
+            <div id="channel-title" title="[[channel_name]]">[[channel_name]]</div>
             <div id="channel-views">[[channel_views]] total views</div>
             <div id="channel-videos">[[channel_videos]] videos</div>
             <br>

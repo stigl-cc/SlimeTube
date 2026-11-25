@@ -19,10 +19,10 @@
                 <div id="channel-results">
                     <%c++
                         const std::vector<SlimyTube::Channel>& channels = @@.get<std::vector<SlimyTube::Channel>>("channels");
-                        if(channels.empty()) { %>
+                        for(const SlimyTube::Channel& channel : channels) { %>
+                    <a class="channel-link" href="/channel/{%channel.id%}">{%channel.name%}</a> - {%channel.total_views%} total views - {%channel.total_videos%} videos<br>
+                    <%c++ } if(channels.empty()) { %>
                     No channels found.
-                    <%c++ } for(const SlimyTube::Channel& channel : channels) { %>
-                    <a href="/channel/{%channel.id%}">{%channel.name%}</a> - {%channel.total_views%} total views - {%channel.total_videos%} videos<br>
                     <%c++ } %>
                 </div>
                 <br />

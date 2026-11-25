@@ -7,6 +7,9 @@
     font-size: var(--text-size-big);
     width: 100%;
     border-bottom-color: var(--vertical-separator-color);
+
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #preview-section {
